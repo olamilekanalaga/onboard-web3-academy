@@ -64,7 +64,7 @@ const Course = () => {
   const completedCount = completedChapters.length;
   const progressPercentage = (completedCount / totalChapters) * 100;
 
-  // Function to format chapter content with proper typography
+  // Function to format chapter content with proper typography and spacing
   const formatContent = (content: string) => {
     return content
       .split('\n\n')
@@ -74,7 +74,7 @@ const Course = () => {
         // Handle headers (lines starting with ##)
         if (paragraph.startsWith('##')) {
           return (
-            <h3 key={index} className="text-xl font-bold text-slate-900 mt-6 mb-3">
+            <h3 key={index} className="text-2xl font-bold text-slate-900 mt-8 mb-4 border-b border-slate-200 pb-2">
               {paragraph.replace(/^##\s*/, '')}
             </h3>
           );
@@ -83,7 +83,7 @@ const Course = () => {
         // Handle subheaders (lines starting with ###)
         if (paragraph.startsWith('###')) {
           return (
-            <h4 key={index} className="text-lg font-semibold text-slate-800 mt-4 mb-2">
+            <h4 key={index} className="text-xl font-semibold text-slate-800 mt-6 mb-3">
               {paragraph.replace(/^###\s*/, '')}
             </h4>
           );
@@ -99,13 +99,16 @@ const Course = () => {
           
           if (isBulletList) {
             return (
-              <ul key={index} className="space-y-2 my-4 ml-4">
+              <ul key={index} className="space-y-3 my-6 ml-6">
                 {lines.map((line, lineIndex) => (
-                  <li key={lineIndex} className="flex items-start space-x-2 text-slate-700">
-                    <span className="text-emerald-600 font-bold mt-1">•</span>
-                    <span dangerouslySetInnerHTML={{ 
-                      __html: line.replace(/^[•-]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900">$1</strong>')
-                    }} />
+                  <li key={lineIndex} className="flex items-start space-x-3 text-slate-700">
+                    <span className="text-emerald-600 font-bold mt-1.5 text-lg">•</span>
+                    <span 
+                      className="flex-1 leading-relaxed"
+                      dangerouslySetInnerHTML={{ 
+                        __html: line.replace(/^[•-]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900">$1</strong>')
+                      }} 
+                    />
                   </li>
                 ))}
               </ul>
@@ -113,11 +116,11 @@ const Course = () => {
           }
         }
         
-        // Regular paragraphs
+        // Regular paragraphs with better spacing
         return (
           <p 
             key={index} 
-            className="text-slate-700 leading-relaxed mb-4"
+            className="text-slate-700 leading-relaxed mb-6 text-base"
             dangerouslySetInnerHTML={{ __html: formattedParagraph }}
           />
         );
@@ -274,9 +277,9 @@ const Course = () => {
                     </TabsList>
                     
                     <TabsContent value="content" className="space-y-6 mt-6">
-                      {/* Chapter Content with improved formatting */}
+                      {/* Chapter Content with improved formatting and spacing */}
                       <div className="prose max-w-none">
-                        <div className="text-slate-700 leading-relaxed">
+                        <div className="space-y-1">
                           {formatContent(currentChapter.content)}
                         </div>
                       </div>
