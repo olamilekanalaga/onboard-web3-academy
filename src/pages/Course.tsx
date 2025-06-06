@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, CheckCircle, Lock, PlayCircle, BookOpen, Clock, Target, Star, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import ChapterQA from "@/components/ChapterQA";
+import TradingDemo from "@/components/TradingDemo";
 import { courses } from "@/data/courses";
 
 const Course = () => {
@@ -34,12 +35,12 @@ const Course = () => {
 
   const currentModule = course.modules[selectedModule];
   const currentChapter = currentModule?.chapters[selectedChapter];
-  
+
   const getChapterId = (moduleId: number, chapterId: number) => `${courseId}-${moduleId}-${chapterId}`;
-  
-  const isChapterCompleted = (moduleId: number, chapterId: number) => 
+
+  const isChapterCompleted = (moduleId: number, chapterId: number) =>
     completedChapters.includes(getChapterId(moduleId, chapterId));
-  
+
   const isChapterUnlocked = (moduleId: number, chapterId: number) => {
     if (moduleId === 0 && chapterId === 0) return true;
     if (chapterId === 0) {
@@ -70,7 +71,7 @@ const Course = () => {
       .split('\n\n')
       .map((paragraph, index) => {
         if (paragraph.trim() === '') return null;
-        
+
         // Handle headers (lines starting with ##)
         if (paragraph.startsWith('##')) {
           return (
@@ -79,7 +80,7 @@ const Course = () => {
             </h3>
           );
         }
-        
+
         // Handle subheaders (lines starting with ###)
         if (paragraph.startsWith('###')) {
           return (
@@ -88,26 +89,26 @@ const Course = () => {
             </h4>
           );
         }
-        
+
         // Handle bold text (replace **text** with proper bold)
         const formattedParagraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900">$1</strong>');
-        
+
         // Handle bullet points
         if (paragraph.includes('•') || paragraph.includes('-')) {
           const lines = paragraph.split('\n').filter(line => line.trim());
           const isBulletList = lines.every(line => line.trim().startsWith('•') || line.trim().startsWith('-'));
-          
+
           if (isBulletList) {
             return (
               <ul key={index} className="space-y-3 my-6 ml-6">
                 {lines.map((line, lineIndex) => (
                   <li key={lineIndex} className="flex items-start space-x-3 text-slate-700">
                     <span className="text-emerald-600 font-bold mt-1.5 text-lg">•</span>
-                    <span 
+                    <span
                       className="flex-1 leading-relaxed"
-                      dangerouslySetInnerHTML={{ 
+                      dangerouslySetInnerHTML={{
                         __html: line.replace(/^[•-]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900">$1</strong>')
-                      }} 
+                      }}
                     />
                   </li>
                 ))}
@@ -115,11 +116,11 @@ const Course = () => {
             );
           }
         }
-        
+
         // Regular paragraphs with better spacing
         return (
-          <p 
-            key={index} 
+          <p
+            key={index}
             className="text-slate-700 leading-relaxed mb-6 text-base"
             dangerouslySetInnerHTML={{ __html: formattedParagraph }}
           />
@@ -131,7 +132,7 @@ const Course = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
-      
+
       <div className="container mx-auto max-w-7xl px-4 py-6">
         {/* Back Button and Course Header */}
         <div className="mb-6">
@@ -139,13 +140,13 @@ const Course = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Courses
           </Link>
-          
+
           <div className="bg-white rounded-lg p-6 shadow-sm border">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">{course.title}</h1>
                 <p className="text-slate-600 mb-4">{course.longDescription}</p>
-                
+
                 <div className="flex flex-wrap gap-2 mb-4">
                   <Badge className="bg-slate-100 text-slate-700">{course.level}</Badge>
                   <Badge className="bg-emerald-100 text-emerald-700">{course.duration}</Badge>
@@ -157,7 +158,7 @@ const Course = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="grid md:grid-cols-3 gap-4 text-sm text-slate-600 mb-4">
               <div className="flex items-center space-x-2">
                 <BookOpen className="h-4 w-4 text-emerald-600" />
@@ -172,7 +173,7 @@ const Course = () => {
                 <span>{Math.round(progressPercentage)}% progress</span>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600">Course Progress</span>
@@ -185,66 +186,66 @@ const Course = () => {
 
         {/* Course Content */}
         <div className="grid lg:grid-cols-4 gap-6">
-          {/* Sidebar - Module and Chapter Navigation */}
+          {/* Fixed Sidebar - Module and Chapter Navigation */}
           <div className="lg:col-span-1">
-            <Card className="h-fit">
-              <CardHeader>
-                <CardTitle className="text-lg">Course Content</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="space-y-1">
-                  {course.modules.map((module, moduleIndex) => (
-                    <div key={module.id}>
-                      {/* Module Header */}
-                      <div className="px-4 py-3 bg-slate-50 border-b">
-                        <h4 className="font-medium text-slate-900 text-sm">{module.title}</h4>
-                        <p className="text-xs text-slate-500">{module.estimatedTime}</p>
-                      </div>
-                      
-                      {/* Chapters */}
-                      {module.chapters.map((chapter, chapterIndex) => (
-                        <button
-                          key={chapter.id}
-                          onClick={() => {
-                            setSelectedModule(moduleIndex);
-                            setSelectedChapter(chapterIndex);
-                          }}
-                          disabled={!isChapterUnlocked(moduleIndex, chapterIndex)}
-                          className={`w-full text-left p-3 border-l-4 transition-all ${
-                            selectedModule === moduleIndex && selectedChapter === chapterIndex
+            <div className="lg:sticky lg:top-8">
+              <Card className="h-fit">
+                <CardHeader>
+                  <CardTitle className="text-lg">Course Content</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="space-y-1">
+                    {course.modules.map((module, moduleIndex) => (
+                      <div key={module.id}>
+                        {/* Module Header */}
+                        <div className="px-4 py-3 bg-slate-50 border-b">
+                          <h4 className="font-medium text-slate-900 text-sm">{module.title}</h4>
+                          <p className="text-xs text-slate-500">{module.estimatedTime}</p>
+                        </div>
+
+                        {/* Chapters */}
+                        {module.chapters.map((chapter, chapterIndex) => (
+                          <button
+                            key={chapter.id}
+                            onClick={() => {
+                              setSelectedModule(moduleIndex);
+                              setSelectedChapter(chapterIndex);
+                            }}
+                            disabled={!isChapterUnlocked(moduleIndex, chapterIndex)}
+                            className={`w-full text-left p-3 border-l-4 transition-all ${selectedModule === moduleIndex && selectedChapter === chapterIndex
                               ? 'border-emerald-500 bg-emerald-50'
                               : 'border-transparent hover:bg-slate-50'
-                          } ${
-                            !isChapterUnlocked(moduleIndex, chapterIndex) 
-                              ? 'opacity-50 cursor-not-allowed' 
-                              : 'cursor-pointer'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              {isChapterCompleted(moduleIndex, chapterIndex) ? (
-                                <CheckCircle className="h-4 w-4 text-emerald-600" />
-                              ) : isChapterUnlocked(moduleIndex, chapterIndex) ? (
-                                <PlayCircle className="h-4 w-4 text-slate-400" />
-                              ) : (
-                                <Lock className="h-4 w-4 text-slate-300" />
-                              )}
-                              <div>
-                                <div className="font-medium text-slate-900 text-sm">{chapter.title}</div>
-                                <div className="flex items-center space-x-1 text-xs text-slate-500">
-                                  <Clock className="h-3 w-3" />
-                                  <span>{chapter.duration}</span>
+                              } ${!isChapterUnlocked(moduleIndex, chapterIndex)
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'cursor-pointer'
+                              }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                {isChapterCompleted(moduleIndex, chapterIndex) ? (
+                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                ) : isChapterUnlocked(moduleIndex, chapterIndex) ? (
+                                  <PlayCircle className="h-4 w-4 text-slate-400" />
+                                ) : (
+                                  <Lock className="h-4 w-4 text-slate-300" />
+                                )}
+                                <div>
+                                  <div className="font-medium text-slate-900 text-sm">{chapter.title}</div>
+                                  <div className="flex items-center space-x-1 text-xs text-slate-500">
+                                    <Clock className="h-3 w-3" />
+                                    <span>{chapter.duration}</span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                          </button>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Main Content */}
@@ -268,14 +269,14 @@ const Course = () => {
                     )}
                   </div>
                 </CardHeader>
-                
+
                 <CardContent>
                   <Tabs defaultValue="content" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="content">Chapter Content</TabsTrigger>
                       <TabsTrigger value="summary">Key Takeaways</TabsTrigger>
                     </TabsList>
-                    
+
                     <TabsContent value="content" className="space-y-6 mt-6">
                       {/* Chapter Content with improved formatting and spacing */}
                       <div className="prose max-w-none">
@@ -289,15 +290,46 @@ const Course = () => {
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                           <div className="flex items-start space-x-2">
                             <Target className="h-5 w-5 text-blue-600 mt-0.5" />
-                            <div>
-                              <h4 className="font-semibold text-blue-900 mb-1">Practical Task</h4>
-                              <p className="text-blue-800 text-sm">{currentChapter.practicalTask}</p>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-blue-900 mb-2">{currentChapter.practicalTask.title}</h4>
+                              <p className="text-blue-800 text-sm mb-3">{currentChapter.practicalTask.description}</p>
+
+                              {currentChapter.practicalTask.instructions && (
+                                <div className="mb-3">
+                                  <h5 className="font-medium text-blue-900 text-xs mb-2">Instructions:</h5>
+                                  <ol className="list-decimal list-inside space-y-1 text-xs text-blue-700">
+                                    {currentChapter.practicalTask.instructions.map((instruction, index) => (
+                                      <li key={index}>{instruction}</li>
+                                    ))}
+                                  </ol>
+                                </div>
+                              )}
+
+                              <div className="flex items-center justify-between text-xs text-blue-600">
+                                <span>⏱️ {currentChapter.practicalTask.estimatedTime}</span>
+                                {currentChapter.practicalTask.points && (
+                                  <span>🏆 {currentChapter.practicalTask.points} points</span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
                       )}
+
+                      {/* Trading Demo Component */}
+                      {(currentChapter as any).demoComponent === "TradingDemo" && (
+                        <div className="mt-8">
+                          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mb-6">
+                            <h4 className="text-xl font-bold text-blue-900 mb-2">🎮 Interactive Trading Demo</h4>
+                            <p className="text-blue-800 mb-4">
+                              Practice your trading skills with our advanced simulator. All trades are virtual - no real money at risk!
+                            </p>
+                          </div>
+                          <TradingDemo courseType={(currentChapter as any).demoProps?.courseType || "degen"} />
+                        </div>
+                      )}
                     </TabsContent>
-                    
+
                     <TabsContent value="summary" className="space-y-6 mt-6">
                       <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                         <div className="flex items-start space-x-2 mb-3">
@@ -319,7 +351,7 @@ const Course = () => {
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t mt-6">
                     {!isChapterCompleted(selectedModule, selectedChapter) && (
-                      <Button 
+                      <Button
                         onClick={markChapterComplete}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white"
                       >
@@ -327,8 +359,8 @@ const Course = () => {
                         Mark as Complete
                       </Button>
                     )}
-                    
-                    <Button 
+
+                    <Button
                       variant="outline"
                       onClick={() => {
                         // Navigate to next chapter logic
@@ -340,7 +372,7 @@ const Course = () => {
                         }
                       }}
                       disabled={
-                        selectedModule === course.modules.length - 1 && 
+                        selectedModule === course.modules.length - 1 &&
                         selectedChapter === currentModule.chapters.length - 1
                       }
                     >
@@ -349,7 +381,7 @@ const Course = () => {
                   </div>
 
                   {/* AI Q&A Component */}
-                  <ChapterQA 
+                  <ChapterQA
                     chapterTitle={currentChapter.title}
                     courseId={course.id}
                     moduleId={selectedModule}

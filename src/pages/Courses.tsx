@@ -14,14 +14,18 @@ const Courses = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("all");
 
-  const levels = ["all", "Beginner", "Intermediate", "Advanced"];
+  const levels = ["all", "Foundation", "Beginner", "Intermediate", "Advanced", "Expert"];
 
-  const filteredCourses = Object.values(courses).filter(course => {
+  // Only show the modern courses we want to feature
+  const featuredCourseIds = ["foundation", "defi", "degen", "advanced-trading", "development"];
+  const allCourses = Object.values(courses).filter(course => featuredCourseIds.includes(course.id));
+
+  const filteredCourses = allCourses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.description.toLowerCase().includes(searchTerm.toLowerCase());
+      course.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLevel = selectedLevel === "all" || course.level === selectedLevel;
     return matchesSearch && matchesLevel;
-  });
+  }).sort((a, b) => a.difficulty - b.difficulty); // Sort by difficulty
 
   const getCourseStats = (courseId: string) => {
     const course = courses[courseId];
@@ -33,7 +37,7 @@ const Courses = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
-      
+
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-emerald-600 to-emerald-700 text-white py-16 px-4 md:px-6">
         <div className="container mx-auto max-w-6xl">
@@ -95,12 +99,12 @@ const Courses = () => {
                       <div className={`p-3 rounded-lg ${course.color}`}>
                         <course.icon className="h-6 w-6 text-white" />
                       </div>
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className={`
                           ${course.level === 'Beginner' ? 'bg-green-100 text-green-700' :
                             course.level === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'}
+                              'bg-red-100 text-red-700'}
                         `}
                       >
                         {course.level}
@@ -115,7 +119,7 @@ const Courses = () => {
                       </CardDescription>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-6">
                     <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
                       <div className="flex items-center space-x-2">

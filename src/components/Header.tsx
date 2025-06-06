@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Search, User, BookOpen, Menu, ChevronDown } from "lucide-react";
+import { Bell, Search, User, BookOpen, Menu, ChevronDown, Trophy, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -26,7 +26,7 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
             <div className="relative">
-              <button 
+              <button
                 className="flex items-center space-x-1 text-slate-700 hover:text-emerald-600 transition-colors"
                 onMouseEnter={() => setExploreDropdownOpen(true)}
                 onMouseLeave={() => setExploreDropdownOpen(false)}
@@ -35,38 +35,66 @@ const Header = () => {
                 <ChevronDown className="h-4 w-4" />
               </button>
               {exploreDropdownOpen && (
-                <div 
-                  className="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-200 rounded-lg shadow-lg py-4"
+                <div
+                  className="absolute top-full left-0 mt-2 w-80 bg-white border border-slate-200 rounded-lg shadow-lg py-4"
                   onMouseEnter={() => setExploreDropdownOpen(true)}
                   onMouseLeave={() => setExploreDropdownOpen(false)}
                 >
-                  <Link to="/courses/foundations" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
-                    Web3 Foundations
+                  <Link to="/course/foundation" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-emerald-500">⭐</span>
+                      <div>
+                        <div className="font-medium">Crypto Foundation</div>
+                        <div className="text-xs text-slate-500">Start here • 2 weeks</div>
+                      </div>
+                    </div>
                   </Link>
-                  <Link to="/courses/defi" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
-                    DeFi Mastery
+                  <Link to="/course/defi" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-purple-500">🏦</span>
+                      <div>
+                        <div className="font-medium">DeFi Mastery</div>
+                        <div className="text-xs text-slate-500">Yield farming, liquidity • 3 weeks</div>
+                      </div>
+                    </div>
                   </Link>
-                  <Link to="/courses/development" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
-                    Smart Contracts & dApps
+                  <Link to="/course/degen" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-orange-500">🚀</span>
+                      <div>
+                        <div className="font-medium">Degen Trading</div>
+                        <div className="text-xs text-slate-500">Memecoins, leverage, airdrops • 2 weeks</div>
+                      </div>
+                    </div>
                   </Link>
-                  <Link to="/courses/trading" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
-                    Crypto Trading
+                  <Link to="/course/advanced-trading" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-red-500">📈</span>
+                      <div>
+                        <div className="font-medium">Advanced Trading</div>
+                        <div className="text-xs text-slate-500">Technical analysis, derivatives • 3 weeks</div>
+                      </div>
+                    </div>
                   </Link>
-                  <Link to="/courses/daos" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
-                    DAOs & Governance
-                  </Link>
-                  <Link to="/courses/security" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
-                    Security & Privacy
+                  <Link to="/course/development" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-indigo-500">⚡</span>
+                      <div>
+                        <div className="font-medium">Smart Contract Development</div>
+                        <div className="text-xs text-slate-500">Solidity, dApps • 4 weeks</div>
+                      </div>
+                    </div>
                   </Link>
                 </div>
               )}
             </div>
-            <a href="#" className="text-slate-700 hover:text-emerald-600 transition-colors">
-              For Students
-            </a>
-            <a href="#" className="text-slate-700 hover:text-emerald-600 transition-colors">
-              For Enterprise
-            </a>
+            <Link to="/gamification" className="flex items-center space-x-1 text-slate-700 hover:text-emerald-600 transition-colors">
+              <Trophy className="h-4 w-4" />
+              <span>Gamification</span>
+            </Link>
+            <Link to="/tools" className="text-slate-700 hover:text-emerald-600 transition-colors">
+              Tools
+            </Link>
           </nav>
 
           {/* User Actions */}
@@ -80,7 +108,7 @@ const Header = () => {
                 Log In
               </Button>
             </div>
-            
+
             <Link to="/courses">
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2">
                 Join for Free
@@ -88,9 +116,9 @@ const Header = () => {
             </Link>
 
             {/* Mobile Menu Button */}
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="lg:hidden p-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
@@ -103,19 +131,28 @@ const Header = () => {
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-slate-200 py-4 space-y-4">
             <nav className="flex flex-col space-y-3">
-              <Link 
-                to="/courses" 
+              <Link
+                to="/courses"
                 className="text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 All Courses
               </Link>
-              <a href="#" className="text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1">
-                For Students
-              </a>
-              <a href="#" className="text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1">
-                For Enterprise
-              </a>
+              <Link
+                to="/gamification"
+                className="flex items-center space-x-2 text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Trophy className="h-4 w-4" />
+                <span>Gamification</span>
+              </Link>
+              <Link
+                to="/tools"
+                className="text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Tools
+              </Link>
             </nav>
             <div className="flex flex-col space-y-3 px-2 pt-2 border-t border-slate-100">
               <Button variant="ghost" className="justify-start p-2">

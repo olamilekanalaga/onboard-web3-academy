@@ -1,56 +1,67 @@
 
-import { Play, Clock, CheckCircle, BookOpen } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Play, Clock, CheckCircle, BookOpen, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import BottomNavigation from "./BottomNavigation";
+import { courses } from "@/data/courses";
 
 const MobileCourses = () => {
-  const enrolledCourses = [
-    {
-      title: "Web3 Foundations",
-      progress: 65,
-      totalLessons: 24,
-      completedLessons: 16,
-      nextLesson: "Understanding Smart Contracts",
-      duration: "12 min",
-      thumbnail: "🎓"
-    },
-    {
-      title: "DeFi Mastery",
-      progress: 30,
-      totalLessons: 32,
-      completedLessons: 10,
-      nextLesson: "Yield Farming Basics",
-      duration: "18 min",
-      thumbnail: "💰"
-    },
-    {
-      title: "Crypto Security",
-      progress: 85,
-      totalLessons: 18,
-      completedLessons: 15,
-      nextLesson: "Hardware Wallets",
-      duration: "15 min",
-      thumbnail: "🔒"
-    }
-  ];
+  const navigate = useNavigate();
+  const [completedChapters, setCompletedChapters] = useState<string[]>([]);
 
-  const completedCourses = [
-    {
-      title: "Bitcoin Basics",
-      completedDate: "2 weeks ago",
-      certificate: true,
-      thumbnail: "₿"
-    },
-    {
-      title: "Wallet Setup Guide",
-      completedDate: "1 month ago",
-      certificate: true,
-      thumbnail: "👛"
+  // Get real course data - only show the modern courses we want to feature
+  const featuredCourseIds = ["foundation", "defi", "degen", "advanced-trading", "development"];
+  const courseList = Object.values(courses).filter(course => featuredCourseIds.includes(course.id));
+
+  // Simulate enrolled courses with progress
+  const enrolledCourses = courseList.map((course, index) => {
+    const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
+    const completedCount = Math.floor(Math.random() * totalChapters); // Simulate progress
+    const progress = Math.round((completedCount / totalChapters) * 100);
+
+    return {
+      id: course.id,
+      title: course.title,
+      progress: progress,
+      totalLessons: totalChapters,
+      completedLessons: completedCount,
+      nextLesson: course.modules[0]?.chapters[0]?.title || "Getting Started",
+      duration: course.modules[0]?.chapters[0]?.duration || "15 min",
+      thumbnail: getIconForCourse(course.id),
+      level: course.level,
+      category: course.category
+    };
+  });
+
+  // Filter to show only courses with some progress
+  const inProgressCourses = enrolledCourses.filter(course => course.progress > 0 && course.progress < 100);
+  const completedCourses = enrolledCourses.filter(course => course.progress === 100);
+
+  const getIconForCourse = (courseId: string) => {
+    switch (courseId) {
+      case "foundation": return "🎓";
+      case "defi": return "💰";
+      case "degen": return "🚀";
+      case "advanced-trading": return "📈";
+      case "development": return "💻";
+      default: return "📚";
     }
-  ];
+  };
+
+  const getDifficultyColor = (level: string) => {
+    switch (level.toLowerCase()) {
+      case "foundation": return "bg-emerald-100 text-emerald-700";
+      case "beginner": return "bg-green-100 text-green-700";
+      case "intermediate": return "bg-yellow-100 text-yellow-700";
+      case "advanced": return "bg-orange-100 text-orange-700";
+      case "expert": return "bg-red-100 text-red-700";
+      default: return "bg-gray-100 text-gray-700";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -64,28 +75,33 @@ const MobileCourses = () => {
       <div className="px-6 py-6">
         <h2 className="text-xl font-bold text-slate-900 mb-4">Continue Learning</h2>
         <div className="space-y-4">
-          {enrolledCourses.map((course, index) => (
-            <Card key={index} className="border-0 shadow-sm">
+          {inProgressCourses.map((course, index) => (
+            <Card key={course.id} className="border-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-start space-x-4">
-                  <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center text-2xl">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-2xl">
                     {course.thumbnail}
                   </div>
-                  
+
                   <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900 mb-2">{course.title}</h3>
-                    
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-slate-900">{course.title}</h3>
+                      <Badge variant="secondary" className={`text-xs ${getDifficultyColor(course.level)}`}>
+                        {course.level}
+                      </Badge>
+                    </div>
+
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm text-slate-600">
-                        {course.completedLessons}/{course.totalLessons} lessons
+                        {course.completedLessons}/{course.totalLessons} chapters
                       </span>
                       <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                         {course.progress}%
                       </Badge>
                     </div>
-                    
+
                     <Progress value={course.progress} className="h-2 mb-3" />
-                    
+
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-slate-700 mb-1">Next: {course.nextLesson}</p>
@@ -94,7 +110,11 @@ const MobileCourses = () => {
                           {course.duration}
                         </div>
                       </div>
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                      <Button
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() => navigate(`/mobile/course/${course.id}`)}
+                      >
                         <Play className="h-4 w-4 mr-1" />
                         Continue
                       </Button>
@@ -105,6 +125,20 @@ const MobileCourses = () => {
             </Card>
           ))}
         </div>
+
+        {inProgressCourses.length === 0 && (
+          <div className="text-center py-8">
+            <div className="text-4xl mb-4">📚</div>
+            <h3 className="text-lg font-medium text-slate-900 mb-2">No courses in progress</h3>
+            <p className="text-slate-600 mb-4">Start learning by exploring our courses</p>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => navigate("/mobile/explore")}
+            >
+              Explore Courses
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Completed Courses */}
@@ -112,31 +146,41 @@ const MobileCourses = () => {
         <h2 className="text-xl font-bold text-slate-900 mb-4">Completed</h2>
         <div className="space-y-4">
           {completedCourses.map((course, index) => (
-            <Card key={index} className="border-0 shadow-sm">
+            <Card key={course.id} className="border-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-xl">
                     {course.thumbnail}
                   </div>
-                  
+
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
                       <h3 className="font-semibold text-slate-900">{course.title}</h3>
                       <CheckCircle className="h-4 w-4 text-green-600" />
                     </div>
-                    <p className="text-sm text-slate-600">Completed {course.completedDate}</p>
+                    <p className="text-sm text-slate-600">Completed recently</p>
+                    <div className="flex items-center text-xs text-slate-500 mt-1">
+                      <Target className="h-3 w-3 mr-1" />
+                      {course.totalLessons} chapters completed
+                    </div>
                   </div>
-                  
-                  {course.certificate && (
-                    <Button variant="outline" size="sm">
-                      Certificate
-                    </Button>
-                  )}
+
+                  <Button variant="outline" size="sm">
+                    Certificate
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+
+        {completedCourses.length === 0 && (
+          <div className="text-center py-8">
+            <div className="text-4xl mb-4">🏆</div>
+            <h3 className="text-lg font-medium text-slate-900 mb-2">No completed courses yet</h3>
+            <p className="text-slate-600">Complete your first course to earn a certificate</p>
+          </div>
+        )}
       </div>
 
       {/* Quick Stats */}
@@ -146,16 +190,16 @@ const MobileCourses = () => {
             <h3 className="text-lg font-bold mb-4">Your Learning Stats</h3>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold">5</div>
-                <div className="text-xs text-purple-100">Courses</div>
+                <div className="text-2xl font-bold">{enrolledCourses.length}</div>
+                <div className="text-xs text-purple-100">Total Courses</div>
               </div>
               <div>
-                <div className="text-2xl font-bold">32h</div>
-                <div className="text-xs text-purple-100">Learned</div>
+                <div className="text-2xl font-bold">{completedCourses.length}</div>
+                <div className="text-xs text-purple-100">Completed</div>
               </div>
               <div>
-                <div className="text-2xl font-bold">2</div>
-                <div className="text-xs text-purple-100">Certificates</div>
+                <div className="text-2xl font-bold">{inProgressCourses.length}</div>
+                <div className="text-xs text-purple-100">In Progress</div>
               </div>
             </div>
           </CardContent>
