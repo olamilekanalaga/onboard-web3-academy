@@ -5,52 +5,65 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CheckCircle, Lock, PlayCircle, BookOpen, Clock } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, CheckCircle, Lock, PlayCircle, BookOpen, Clock, Target, Star, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
+import ChapterQA from "@/components/ChapterQA";
+import { courses } from "@/data/courses";
 
 const Course = () => {
   const { courseId } = useParams();
-  const [completedModules, setCompletedModules] = useState([1, 2]);
+  const [completedChapters, setCompletedChapters] = useState<string[]>([]);
+  const [selectedModule, setSelectedModule] = useState(0);
+  const [selectedChapter, setSelectedChapter] = useState(0);
 
-  const courseData = {
-    foundations: {
-      title: "Web3 Foundations",
-      description: "Start your journey into Web3, wallets, tokens, and blockchain basics",
-      modules: [
-        { id: 1, title: "What is Web3?", duration: "15 min", content: "Web3 represents the third generation of the internet, built on blockchain technology..." },
-        { id: 2, title: "Setting up MetaMask", duration: "20 min", content: "MetaMask is your gateway to Web3. Learn how to install and secure your wallet..." },
-        { id: 3, title: "Understanding Tokens", duration: "25 min", content: "Tokens are digital assets that represent value on blockchain networks..." },
-        { id: 4, title: "DeFi Basics", duration: "30 min", content: "Decentralized Finance (DeFi) allows you to lend, borrow, and trade without banks..." },
-        { id: 5, title: "Layer 1 vs Layer 2", duration: "20 min", content: "Understanding the difference between base blockchains and scaling solutions..." },
-      ]
-    },
-    defi: {
-      title: "DeFi Mastery",
-      description: "Master decentralized finance: lending, borrowing, AMMs, and yield strategies",
-      modules: [
-        { id: 1, title: "Introduction to DeFi", duration: "20 min", content: "Decentralized Finance is revolutionizing traditional banking..." },
-        { id: 2, title: "Lending Protocols", duration: "25 min", content: "Learn how to lend your crypto assets to earn yield..." },
-        { id: 3, title: "Automated Market Makers", duration: "30 min", content: "AMMs enable decentralized trading without order books..." },
-      ]
+  const course = courses.find(c => c.id === courseId);
+
+  if (!course) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <div className="container mx-auto max-w-4xl px-4 py-12 text-center">
+          <h1 className="text-2xl font-bold text-slate-900 mb-4">Course Not Found</h1>
+          <Link to="/">
+            <Button>Back to Courses</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const currentModule = course.modules[selectedModule];
+  const currentChapter = currentModule?.chapters[selectedChapter];
+  
+  const getChapterId = (moduleId: number, chapterId: number) => `${courseId}-${moduleId}-${chapterId}`;
+  
+  const isChapterCompleted = (moduleId: number, chapterId: number) => 
+    completedChapters.includes(getChapterId(moduleId, chapterId));
+  
+  const isChapterUnlocked = (moduleId: number, chapterId: number) => {
+    if (moduleId === 0 && chapterId === 0) return true;
+    if (chapterId === 0) {
+      // First chapter of module - check if previous module is completed
+      if (moduleId === 0) return true;
+      const prevModule = course.modules[moduleId - 1];
+      const lastChapterPrevModule = prevModule.chapters.length - 1;
+      return isChapterCompleted(moduleId - 1, lastChapterPrevModule);
+    }
+    // Check if previous chapter is completed
+    return isChapterCompleted(moduleId, chapterId - 1);
+  };
+
+  const markChapterComplete = () => {
+    const chapterId = getChapterId(selectedModule, selectedChapter);
+    if (!completedChapters.includes(chapterId)) {
+      setCompletedChapters([...completedChapters, chapterId]);
     }
   };
 
-  const course = courseData[courseId as keyof typeof courseData] || courseData.foundations;
-  const [selectedModule, setSelectedModule] = useState(course.modules[0]);
-
-  const isModuleCompleted = (moduleId: number) => completedModules.includes(moduleId);
-  const isModuleUnlocked = (moduleId: number) => {
-    if (moduleId === 1) return true;
-    return completedModules.includes(moduleId - 1);
-  };
-
-  const markModuleComplete = () => {
-    if (!completedModules.includes(selectedModule.id)) {
-      setCompletedModules([...completedModules, selectedModule.id]);
-    }
-  };
-
-  const progressPercentage = (completedModules.length / course.modules.length) * 100;
+  const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
+  const completedCount = completedChapters.length;
+  const progressPercentage = (completedCount / totalChapters) * 100;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -65,148 +78,231 @@ const Course = () => {
           </Link>
           
           <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">{course.title}</h1>
-            <p className="text-slate-600 mb-4">{course.description}</p>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">{course.title}</h1>
+                <p className="text-slate-600 mb-4">{course.longDescription}</p>
+                
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Badge className="bg-slate-100 text-slate-700">{course.level}</Badge>
+                  <Badge className="bg-emerald-100 text-emerald-700">{course.duration}</Badge>
+                  {course.prerequisites && (
+                    <Badge className="bg-yellow-100 text-yellow-700">
+                      Requires: {course.prerequisites.join(", ")}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
             
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <div className="flex items-center space-x-4 text-sm text-slate-600">
-                <div className="flex items-center space-x-1">
-                  <BookOpen className="h-4 w-4" />
-                  <span>{course.modules.length} modules</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <CheckCircle className="h-4 w-4 text-emerald-600" />
-                  <span>{completedModules.length} completed</span>
-                </div>
+            <div className="grid md:grid-cols-3 gap-4 text-sm text-slate-600 mb-4">
+              <div className="flex items-center space-x-2">
+                <BookOpen className="h-4 w-4 text-emerald-600" />
+                <span>{course.modules.length} modules, {totalChapters} chapters</span>
               </div>
-              
-              <div className="w-full sm:w-48">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-slate-600">Progress</span>
-                  <span className="text-slate-900 font-medium">{Math.round(progressPercentage)}%</span>
-                </div>
-                <Progress value={progressPercentage} className="h-2" />
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                <span>{completedCount} completed</span>
               </div>
+              <div className="flex items-center space-x-2">
+                <Target className="h-4 w-4 text-emerald-600" />
+                <span>{Math.round(progressPercentage)}% progress</span>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600">Course Progress</span>
+                <span className="text-slate-900 font-medium">{Math.round(progressPercentage)}%</span>
+              </div>
+              <Progress value={progressPercentage} className="h-2" />
             </div>
           </div>
         </div>
 
         {/* Course Content */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Module List - Mobile: Stack on top, Desktop: Sidebar */}
+        <div className="grid lg:grid-cols-4 gap-6">
+          {/* Sidebar - Module and Chapter Navigation */}
           <div className="lg:col-span-1">
             <Card className="h-fit">
               <CardHeader>
-                <CardTitle className="text-lg">Course Modules</CardTitle>
+                <CardTitle className="text-lg">Course Content</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="space-y-1">
-                  {course.modules.map((module) => (
-                    <button
-                      key={module.id}
-                      onClick={() => setSelectedModule(module)}
-                      disabled={!isModuleUnlocked(module.id)}
-                      className={`w-full text-left p-4 border-l-4 transition-all ${
-                        selectedModule.id === module.id
-                          ? 'border-emerald-500 bg-emerald-50'
-                          : 'border-transparent hover:bg-slate-50'
-                      } ${
-                        !isModuleUnlocked(module.id) 
-                          ? 'opacity-50 cursor-not-allowed' 
-                          : 'cursor-pointer'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          {isModuleCompleted(module.id) ? (
-                            <CheckCircle className="h-5 w-5 text-emerald-600" />
-                          ) : isModuleUnlocked(module.id) ? (
-                            <PlayCircle className="h-5 w-5 text-slate-400" />
-                          ) : (
-                            <Lock className="h-5 w-5 text-slate-300" />
-                          )}
-                          <div>
-                            <div className="font-medium text-slate-900 text-sm">{module.title}</div>
-                            <div className="flex items-center space-x-1 text-xs text-slate-500">
-                              <Clock className="h-3 w-3" />
-                              <span>{module.duration}</span>
+                  {course.modules.map((module, moduleIndex) => (
+                    <div key={module.id}>
+                      {/* Module Header */}
+                      <div className="px-4 py-3 bg-slate-50 border-b">
+                        <h4 className="font-medium text-slate-900 text-sm">{module.title}</h4>
+                        <p className="text-xs text-slate-500">{module.estimatedTime}</p>
+                      </div>
+                      
+                      {/* Chapters */}
+                      {module.chapters.map((chapter, chapterIndex) => (
+                        <button
+                          key={chapter.id}
+                          onClick={() => {
+                            setSelectedModule(moduleIndex);
+                            setSelectedChapter(chapterIndex);
+                          }}
+                          disabled={!isChapterUnlocked(moduleIndex, chapterIndex)}
+                          className={`w-full text-left p-3 border-l-4 transition-all ${
+                            selectedModule === moduleIndex && selectedChapter === chapterIndex
+                              ? 'border-emerald-500 bg-emerald-50'
+                              : 'border-transparent hover:bg-slate-50'
+                          } ${
+                            !isChapterUnlocked(moduleIndex, chapterIndex) 
+                              ? 'opacity-50 cursor-not-allowed' 
+                              : 'cursor-pointer'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              {isChapterCompleted(moduleIndex, chapterIndex) ? (
+                                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                              ) : isChapterUnlocked(moduleIndex, chapterIndex) ? (
+                                <PlayCircle className="h-4 w-4 text-slate-400" />
+                              ) : (
+                                <Lock className="h-4 w-4 text-slate-300" />
+                              )}
+                              <div>
+                                <div className="font-medium text-slate-900 text-sm">{chapter.title}</div>
+                                <div className="flex items-center space-x-1 text-xs text-slate-500">
+                                  <Clock className="h-3 w-3" />
+                                  <span>{chapter.duration}</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    </button>
+                        </button>
+                      ))}
+                    </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Module Content */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl">{selectedModule.title}</CardTitle>
-                    <CardDescription className="flex items-center space-x-1 mt-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{selectedModule.duration}</span>
-                    </CardDescription>
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {currentChapter ? (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl">{currentChapter.title}</CardTitle>
+                      <CardDescription className="flex items-center space-x-1 mt-1">
+                        <Clock className="h-4 w-4" />
+                        <span>{currentChapter.duration}</span>
+                      </CardDescription>
+                    </div>
+                    {isChapterCompleted(selectedModule, selectedChapter) && (
+                      <Badge className="bg-emerald-100 text-emerald-700">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Completed
+                      </Badge>
+                    )}
                   </div>
-                  {isModuleCompleted(selectedModule.id) && (
-                    <Badge className="bg-emerald-100 text-emerald-700">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Completed
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-6">
-                {/* Module Content */}
-                <div className="prose max-w-none">
-                  <p className="text-slate-700 leading-relaxed text-base">
-                    {selectedModule.content}
-                  </p>
-                  
-                  {/* Placeholder for rich content */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 my-6">
-                    <h4 className="font-semibold text-slate-900 mb-2">Interactive Example</h4>
-                    <p className="text-slate-600 text-sm">
-                      This would contain interactive elements, code examples, or embedded videos specific to this module.
-                    </p>
-                  </div>
-                </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <Tabs defaultValue="content" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="content">Chapter Content</TabsTrigger>
+                      <TabsTrigger value="summary">Key Takeaways</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="content" className="space-y-6 mt-6">
+                      {/* Chapter Content */}
+                      <div className="prose max-w-none">
+                        <div className="text-slate-700 leading-relaxed whitespace-pre-line">
+                          {currentChapter.content}
+                        </div>
+                      </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
-                  {!isModuleCompleted(selectedModule.id) && (
-                    <Button 
-                      onClick={markModuleComplete}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Mark as Complete
-                    </Button>
-                  )}
-                  
-                  {selectedModule.id < course.modules.length && (
+                      {/* Practical Task */}
+                      {currentChapter.practicalTask && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="flex items-start space-x-2">
+                            <Target className="h-5 w-5 text-blue-600 mt-0.5" />
+                            <div>
+                              <h4 className="font-semibold text-blue-900 mb-1">Practical Task</h4>
+                              <p className="text-blue-800 text-sm">{currentChapter.practicalTask}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </TabsContent>
+                    
+                    <TabsContent value="summary" className="space-y-6 mt-6">
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                        <div className="flex items-start space-x-2 mb-3">
+                          <Star className="h-5 w-5 text-emerald-600 mt-0.5" />
+                          <h4 className="font-semibold text-emerald-900">Key Takeaways</h4>
+                        </div>
+                        <ul className="space-y-2">
+                          {currentChapter.keyTakeaways.map((takeaway, index) => (
+                            <li key={index} className="flex items-start space-x-2 text-emerald-800">
+                              <CheckCircle className="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                              <span className="text-sm">{takeaway}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t mt-6">
+                    {!isChapterCompleted(selectedModule, selectedChapter) && (
+                      <Button 
+                        onClick={markChapterComplete}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Mark as Complete
+                      </Button>
+                    )}
+                    
                     <Button 
                       variant="outline"
                       onClick={() => {
-                        const nextModule = course.modules.find(m => m.id === selectedModule.id + 1);
-                        if (nextModule && isModuleUnlocked(nextModule.id)) {
-                          setSelectedModule(nextModule);
+                        // Navigate to next chapter logic
+                        if (selectedChapter < currentModule.chapters.length - 1) {
+                          setSelectedChapter(selectedChapter + 1);
+                        } else if (selectedModule < course.modules.length - 1) {
+                          setSelectedModule(selectedModule + 1);
+                          setSelectedChapter(0);
                         }
                       }}
-                      disabled={!isModuleUnlocked(selectedModule.id + 1)}
+                      disabled={
+                        selectedModule === course.modules.length - 1 && 
+                        selectedChapter === currentModule.chapters.length - 1
+                      }
                     >
-                      Next Module
+                      Next Chapter
                     </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+
+                  {/* AI Q&A Component */}
+                  <ChapterQA 
+                    chapterTitle={currentChapter.title}
+                    courseId={course.id}
+                    moduleId={selectedModule}
+                    chapterId={selectedChapter}
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-900 mb-2">No Chapter Selected</h3>
+                  <p className="text-slate-600">Select a chapter from the sidebar to begin learning.</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
