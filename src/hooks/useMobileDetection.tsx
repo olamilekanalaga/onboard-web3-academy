@@ -6,17 +6,29 @@ export const useMobileDetection = () => {
 
   useEffect(() => {
     const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor;
+      // Check if we're in a browser environment
+      if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+        return false;
+      }
+
+      const userAgent = navigator.userAgent || navigator.vendor || '';
       const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
       const isSmallScreen = window.innerWidth <= 768;
-      
-      setIsMobile(mobileRegex.test(userAgent.toLowerCase()) || isSmallScreen);
+
+      return mobileRegex.test(userAgent.toLowerCase()) || isSmallScreen;
     };
 
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    // Initial check
+    setIsMobile(checkMobile());
+
+    // Add resize listener
+    const handleResize = () => {
+      setIsMobile(checkMobile());
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return isMobile;

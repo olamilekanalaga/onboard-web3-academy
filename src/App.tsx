@@ -29,28 +29,27 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          {isMobile ? (
-            <Routes>
-              <Route path="/" element={<MobileApp />} />
-              <Route path="/mobile/home" element={<MobileHome />} />
-              <Route path="/mobile/explore" element={<MobileExplore />} />
-              <Route path="/mobile/courses" element={<MobileCourses />} />
-              <Route path="/mobile/course/:courseId" element={<MobileCourse />} />
-              <Route path="/mobile/progress" element={<MobileProgress />} />
-              <Route path="/mobile/profile" element={<MobileProfile />} />
-              <Route path="*" element={<MobileApp />} />
-            </Routes>
-          ) : (
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/courses" element={<Courses />} />
-              <Route path="/courses/:courseId" element={<Course />} />
-              <Route path="/course/:courseId" element={<Course />} />
-              <Route path="/gamification" element={<Gamification />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          )}
+          <Routes>
+            {/* Mobile routes */}
+            <Route path="/mobile/home" element={<MobileHome />} />
+            <Route path="/mobile/explore" element={<MobileExplore />} />
+            <Route path="/mobile/courses" element={<MobileCourses />} />
+            <Route path="/mobile/course/:courseId" element={<MobileCourse />} />
+            <Route path="/mobile/progress" element={<MobileProgress />} />
+            <Route path="/mobile/profile" element={<MobileProfile />} />
+
+            {/* Web routes */}
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/courses/:courseId" element={<Course />} />
+            <Route path="/course/:courseId" element={<Course />} />
+            <Route path="/gamification" element={<Gamification />} />
+
+            {/* Root route - redirect based on device */}
+            <Route path="/" element={isMobile ? <MobileApp /> : <Index />} />
+
+            {/* Catch-all route */}
+            <Route path="*" element={isMobile ? <MobileApp /> : <NotFound />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
