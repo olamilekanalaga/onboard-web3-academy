@@ -10,6 +10,11 @@ import Courses from "./pages/Courses";
 import Course from "./pages/Course";
 import NotFound from "./pages/NotFound";
 import MobileApp from "./components/mobile/MobileApp";
+import MobileExplore from "./components/mobile/MobileExplore";
+import MobileCourses from "./components/mobile/MobileCourses";
+import MobileProgress from "./components/mobile/MobileProgress";
+import MobileProfile from "./components/mobile/MobileProfile";
+import MobileHome from "./components/mobile/MobileHome";
 
 const queryClient = new QueryClient();
 
@@ -23,7 +28,15 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           {isMobile ? (
-            <MobileApp />
+            <Routes>
+              <Route path="/" element={<MobileApp />} />
+              <Route path="/mobile/home" element={<MobileHome />} />
+              <Route path="/mobile/explore" element={<MobileExplore />} />
+              <Route path="/mobile/courses" element={<MobileCourses />} />
+              <Route path="/mobile/progress" element={<MobileProgress />} />
+              <Route path="/mobile/profile" element={<MobileProfile />} />
+              <Route path="*" element={<MobileApp />} />
+            </Routes>
           ) : (
             <Routes>
               <Route path="/" element={<Index />} />
