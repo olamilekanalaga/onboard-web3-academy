@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,7 @@ const Course = () => {
   const [selectedModule, setSelectedModule] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
 
-  const course = courses.find(c => c.id === courseId);
+  const course = courseId ? courses[courseId] : undefined;
 
   if (!course) {
     return (
