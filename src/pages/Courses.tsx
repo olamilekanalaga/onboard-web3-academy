@@ -110,7 +110,7 @@ const Courses = () => {
                       <CardTitle className="text-xl group-hover:text-emerald-600 transition-colors">
                         {course.title}
                       </CardTitle>
-                      <CardDescription className="text-slate-600 mt-2 line-clamp-2">
+                      <CardDescription className="text-slate-600 mt-2">
                         {course.description}
                       </CardDescription>
                     </div>
