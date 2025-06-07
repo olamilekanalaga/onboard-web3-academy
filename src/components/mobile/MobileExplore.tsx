@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Filter, TrendingUp, Clock, Star, Users, Target, Code, BarChart3 } from "lucide-react";
+import { Search, Filter, TrendingUp, Clock, Star, Users, Target, Code, BarChart3, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,15 +18,25 @@ const MobileExplore = () => {
   const featuredCourseIds = ["foundation", "defi", "degen", "advanced-trading", "development"];
   const courseList = Object.values(courses).filter(course => featuredCourseIds.includes(course.id));
 
-  // Create categories from actual course data
+  // Create categories from actual course data with better icons
   const categories = [
-    { name: "All", key: "all", icon: "🎯", count: courseList.length },
-    { name: "Foundation", key: "fundamentals", icon: "🎓", count: courseList.filter(c => c.category === "fundamentals").length },
-    { name: "DeFi", key: "defi", icon: "💰", count: courseList.filter(c => c.category === "defi").length },
-    { name: "Trading", key: "trading", icon: "📈", count: courseList.filter(c => c.category === "trading").length },
-    { name: "Development", key: "development", icon: "💻", count: courseList.filter(c => c.category === "development").length },
-    { name: "Security", key: "security", icon: "🔒", count: courseList.filter(c => c.category === "security").length }
+    { name: "All", key: "all", icon: "📖", count: courseList.length },
+    { name: "Foundation", key: "fundamentals", icon: "🏗️", count: courseList.filter(c => c.category === "fundamentals").length },
+    { name: "DeFi", key: "defi", icon: "🏦", count: courseList.filter(c => c.category === "defi").length },
+    { name: "Trading", key: "trading", icon: "💹", count: courseList.filter(c => c.category === "trading").length },
+    { name: "Development", key: "development", icon: "⚡", count: courseList.filter(c => c.category === "development").length },
+    { name: "Security", key: "security", icon: "🛡️", count: courseList.filter(c => c.category === "security").length }
   ];
+
+  // Course progression system - only foundation is unlocked initially
+  const isUnlocked = (courseId: string) => {
+    // Foundation course is always unlocked
+    if (courseId === "foundation") return true;
+
+    // For now, all courses are locked except foundation
+    // TODO: Implement real progression based on completed courses
+    return false;
+  };
 
   // Filter and sort courses based on search and category
   const filteredCourses = courseList
@@ -43,12 +53,12 @@ const MobileExplore = () => {
 
   const getIconForCourse = (courseId: string) => {
     switch (courseId) {
-      case "foundation": return "🎓";
-      case "defi": return "💰";
-      case "degen": return "🚀";
-      case "advanced-trading": return "📈";
-      case "development": return "💻";
-      default: return "📚";
+      case "foundation": return "🏗️";
+      case "defi": return "🏦";
+      case "degen": return "⚡";
+      case "advanced-trading": return "💹";
+      case "development": return "🔧";
+      default: return "📖";
     }
   };
 
@@ -119,66 +129,73 @@ const MobileExplore = () => {
         </div>
 
         <div className="space-y-4">
-          {filteredCourses.map((course, index) => (
-            <Card key={course.id} className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-2xl">
-                    {getIconForCourse(course.id)}
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-slate-900 mb-1">{course.title}</h3>
-                      <Badge
-                        variant="secondary"
-                        className={`text-xs ${getDifficultyColor(course.level)}`}
-                      >
-                        {course.level}
-                      </Badge>
+          {filteredCourses.map((course, index) => {
+            const unlocked = isUnlocked(course.id);
+            return (
+              <Card key={course.id} className={`border-0 shadow-sm ${!unlocked ? 'opacity-60' : ''}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start space-x-4">
+                    <div className={`w-16 h-16 rounded-lg flex items-center justify-center text-2xl relative ${unlocked
+                      ? 'bg-gradient-to-br from-emerald-500 to-blue-600'
+                      : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                      }`}>
+                      {unlocked ? getIconForCourse(course.id) : <Lock className="h-8 w-8 text-white" />}
                     </div>
 
-                    <p className="text-sm text-slate-600 mb-3 line-clamp-2">{course.description}</p>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-slate-900 mb-1">{course.title}</h3>
+                        <Badge
+                          variant="secondary"
+                          className={`text-xs ${getDifficultyColor(course.level)}`}
+                        >
+                          {course.level}
+                        </Badge>
+                      </div>
 
-                    <div className="flex items-center justify-between text-sm text-slate-600 mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {course.duration}
-                        </div>
-                        <div className="flex items-center">
-                          <Target className="h-4 w-4 mr-1" />
-                          {course.totalXP || 1000} XP
+                      <p className="text-sm text-slate-600 mb-3 line-clamp-2">{course.description}</p>
+
+                      <div className="flex items-center justify-between text-sm text-slate-600 mb-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1" />
+                            {course.duration}
+                          </div>
+                          <div className="flex items-center">
+                            <Target className="h-4 w-4 mr-1" />
+                            {course.totalXP || 1000} XP
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-wrap gap-1">
-                        {course.skills?.slice(0, 2).map((skill, skillIndex) => (
-                          <Badge key={skillIndex} variant="outline" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                        {course.skills && course.skills.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{course.skills.length - 2} more
-                          </Badge>
-                        )}
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap gap-1">
+                          {course.skills?.slice(0, 2).map((skill, skillIndex) => (
+                            <Badge key={skillIndex} variant="outline" className="text-xs">
+                              {skill}
+                            </Badge>
+                          ))}
+                          {course.skills && course.skills.length > 2 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{course.skills.length - 2} more
+                            </Badge>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          className={unlocked ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400 cursor-not-allowed"}
+                          onClick={() => unlocked && navigate(`/mobile/course/${course.id}`)}
+                          disabled={!unlocked}
+                        >
+                          {unlocked ? "Start Learning" : "Locked"}
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        className="bg-blue-600 hover:bg-blue-700"
-                        onClick={() => navigate(`/mobile/course/${course.id}`)}
-                      >
-                        Start Learning
-                      </Button>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {filteredCourses.length === 0 && (

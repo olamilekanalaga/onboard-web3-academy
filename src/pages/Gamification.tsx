@@ -30,58 +30,38 @@ import {
 } from "@/data/gamification";
 
 const Gamification = () => {
-  // Mock user data - in a real app, this would come from your backend
+  // Real user data - starts at zero until courses are completed
   const [userProgress] = useState<UserProgress>({
     userId: "user123",
-    totalXP: 2500,
-    level: levelSystem.getLevel(2500),
-    currentStreak: 15,
-    longestStreak: 28,
-    coursesCompleted: ["foundation", "beginner"],
-    chaptersCompleted: ["money_basics", "blockchain_intro", "bitcoin_basics"],
-    achievementsUnlocked: ["first_steps", "foundation_master", "streak_warrior"],
-    badges: ["Money Master", "Bitcoin Pioneer", "Security Guardian"],
-    practiceSessionsCompleted: 12,
-    communityContributions: 5,
+    totalXP: 0,
+    level: levelSystem.getLevel(0),
+    currentStreak: 0,
+    longestStreak: 0,
+    coursesCompleted: [],
+    chaptersCompleted: [],
+    achievementsUnlocked: [],
+    badges: [],
+    practiceSessionsCompleted: 0,
+    communityContributions: 0,
     lastActiveDate: new Date(),
     skillLevels: {
-      "Crypto Fundamentals": 4,
-      "Blockchain Technology": 3,
-      "DeFi Protocols": 2,
-      "Security Practices": 3
+      "Crypto Fundamentals": 0,
+      "Blockchain Technology": 0,
+      "DeFi Protocols": 0,
+      "Security Practices": 0
     }
   });
 
   const [leaderboard] = useState<LeaderboardEntry[]>([
     {
-      userId: "user1",
-      username: "CryptoMaster",
-      totalXP: 15000,
-      level: 12,
-      rank: 1,
-      weeklyXP: 850,
-      monthlyXP: 3200,
-      specializations: ["DeFi", "Trading"]
-    },
-    {
-      userId: "user2",
-      username: "BlockchainDev",
-      totalXP: 12500,
-      level: 10,
-      rank: 2,
-      weeklyXP: 720,
-      monthlyXP: 2800,
-      specializations: ["Development", "Security"]
-    },
-    {
       userId: "user123",
       username: "You",
-      totalXP: 2500,
-      level: 6,
-      rank: 15,
-      weeklyXP: 320,
-      monthlyXP: 1200,
-      specializations: ["Fundamentals"]
+      totalXP: 0,
+      level: 1,
+      rank: 1,
+      weeklyXP: 0,
+      monthlyXP: 0,
+      specializations: []
     }
   ]);
 

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Clock, Users, Star, ArrowRight, Filter, Search } from "lucide-react";
+import { BookOpen, Clock, Users, Star, ArrowRight, Filter, Search, Coins, Target, TrendingUp, Code, BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
 import { courses } from "@/data/courses";
@@ -15,6 +15,16 @@ const Courses = () => {
   const [selectedLevel, setSelectedLevel] = useState("all");
 
   const levels = ["all", "Foundation", "Beginner", "Intermediate", "Advanced", "Expert"];
+
+  // Icon mapping for course icons stored as strings
+  const iconMap: Record<string, React.ComponentType<any>> = {
+    Coins,
+    Target,
+    TrendingUp,
+    Code,
+    BarChart3,
+    BookOpen, // fallback
+  };
 
   // Only show the modern courses we want to feature
   const featuredCourseIds = ["foundation", "defi", "degen", "advanced-trading", "development"];
@@ -97,7 +107,10 @@ const Courses = () => {
                   <CardHeader className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className={`p-3 rounded-lg ${course.color}`}>
-                        <course.icon className="h-6 w-6 text-white" />
+                        {(() => {
+                          const IconComponent = iconMap[course.icon] || BookOpen;
+                          return <IconComponent className="h-6 w-6 text-white" />;
+                        })()}
                       </div>
                       <Badge
                         variant="secondary"
@@ -131,12 +144,12 @@ const Courses = () => {
                         <span>{stats.estimatedHours}h total</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Users className="h-4 w-4" />
-                        <span>2.5k+ students</span>
+                        <Star className="h-4 w-4 text-emerald-500" />
+                        <span>{course.level}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span>4.8 rating</span>
+                        <TrendingUp className="h-4 w-4 text-blue-500" />
+                        <span>{course.totalXP} XP</span>
                       </div>
                     </div>
 

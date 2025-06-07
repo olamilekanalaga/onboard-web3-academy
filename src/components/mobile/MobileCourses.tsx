@@ -28,28 +28,29 @@ const MobileCourses = () => {
   const featuredCourseIds = ["foundation", "defi", "degen", "advanced-trading", "development"];
   const courseList = Object.values(courses).filter(course => featuredCourseIds.includes(course.id));
 
-  // Simulate enrolled courses with realistic progress data
-  const progressData = [35, 75, 20, 90, 55]; // Fixed progress values to ensure variety
+  // Real enrolled courses - no progress until user actually starts
+  // Only show foundation course initially (others are locked)
+  const enrolledCourses = courseList
+    .filter(course => course.id === "foundation") // Only show unlocked courses
+    .map((course, index) => {
+      const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
+      const progress = 0; // No progress until user actually starts
+      const completedCount = 0;
 
-  const enrolledCourses = courseList.map((course, index) => {
-    const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
-    const progress = progressData[index] || 25;
-    const completedCount = Math.floor((progress / 100) * totalChapters);
-
-    return {
-      id: course.id,
-      title: course.title,
-      progress: progress,
-      totalLessons: totalChapters,
-      completedLessons: completedCount,
-      nextLesson: course.modules[0]?.chapters[0]?.title || "Getting Started",
-      duration: course.modules[0]?.chapters[0]?.duration || "15 min",
-      thumbnail: getIconForCourse(course.id),
-      level: course.level,
-      category: course.category,
-      lastAccessed: ["2 hours ago", "Yesterday", "3 days ago", "1 week ago", "2 days ago"][index] || "Recently"
-    };
-  });
+      return {
+        id: course.id,
+        title: course.title,
+        progress: progress,
+        totalLessons: totalChapters,
+        completedLessons: completedCount,
+        nextLesson: course.modules[0]?.chapters[0]?.title || "Getting Started",
+        duration: course.modules[0]?.chapters[0]?.duration || "15 min",
+        thumbnail: getIconForCourse(course.id),
+        level: course.level,
+        category: course.category,
+        lastAccessed: "Not started"
+      };
+    });
 
   // Filter courses by progress status
   const inProgressCourses = enrolledCourses.filter(course => course.progress > 0 && course.progress < 100);
