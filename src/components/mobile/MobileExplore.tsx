@@ -1,18 +1,23 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSocialVerification } from "@/contexts/SocialVerificationContext";
 import { Search, Filter, TrendingUp, Clock, Star, Users, Target, Code, BarChart3, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import BottomNavigation from "./BottomNavigation";
+import SocialVerification from "../SocialVerification";
 import { courses } from "@/data/courses";
 
 const MobileExplore = () => {
   const navigate = useNavigate();
+  const { isVerified, setVerified } = useSocialVerification();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [showSocialVerification, setShowSocialVerification] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
 
   // Get real course data - only show the modern courses we want to feature
   const featuredCourseIds = ["foundation", "defi", "degen", "advanced-trading", "development"];
@@ -71,6 +76,30 @@ const MobileExplore = () => {
       case "expert": return "bg-red-100 text-red-700";
       default: return "bg-gray-100 text-gray-700";
     }
+  };
+
+  const handleCourseNavigation = (courseId: string, courseName: string) => {
+    if (isVerified) {
+      // User is already verified, navigate directly
+      navigate(`/mobile/course/${courseId}`);
+    } else {
+      // Show social verification modal
+      setSelectedCourse(courseName);
+      setShowSocialVerification(true);
+    }
+  };
+
+  const handleSocialVerificationComplete = () => {
+    setVerified(true);
+    setShowSocialVerification(false);
+    // Navigate to the selected course
+    const courseId = courseList.find(c => c.title === selectedCourse)?.id || "foundation";
+    navigate(`/mobile/course/${courseId}`);
+  };
+
+  const handleSocialVerificationCancel = () => {
+    setShowSocialVerification(false);
+    setSelectedCourse("");
   };
 
   return (
@@ -184,7 +213,7 @@ const MobileExplore = () => {
                         <Button
                           size="sm"
                           className={unlocked ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400 cursor-not-allowed"}
-                          onClick={() => unlocked && navigate(`/mobile/course/${course.id}`)}
+                          onClick={() => unlocked && handleCourseNavigation(course.id, course.title)}
                           disabled={!unlocked}
                         >
                           {unlocked ? "Start Learning" : "Locked"}
@@ -208,6 +237,15 @@ const MobileExplore = () => {
       </div>
 
       <BottomNavigation />
+
+      {/* Social Verification Modal */}
+      {showSocialVerification && (
+        <SocialVerification
+          courseName={selectedCourse}
+          onComplete={handleSocialVerificationComplete}
+          onCancel={handleSocialVerificationCancel}
+        />
+      )}
     </div>
   );
 };

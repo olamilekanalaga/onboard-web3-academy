@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useMobileDetection } from "./hooks/useMobileDetection";
 import { MobileUserProvider } from "./contexts/MobileUserContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { SocialVerificationProvider } from "./contexts/SocialVerificationContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Courses from "./pages/Courses";
@@ -36,83 +37,85 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            {isMobile ? (
-              <MobileUserProvider>
+            <SocialVerificationProvider>
+              {isMobile ? (
+                <MobileUserProvider>
+                  <Routes>
+                    {/* Mobile auth route */}
+                    <Route path="/auth" element={<MobileAuth />} />
+
+                    {/* Mobile routes - all protected by auth guard */}
+                    <Route path="/mobile/home" element={
+                      <MobileAuthGuard>
+                        <MobileHome />
+                      </MobileAuthGuard>
+                    } />
+                    <Route path="/mobile/explore" element={
+                      <MobileAuthGuard>
+                        <MobileExplore />
+                      </MobileAuthGuard>
+                    } />
+                    <Route path="/mobile/courses" element={
+                      <MobileAuthGuard>
+                        <MobileCourses />
+                      </MobileAuthGuard>
+                    } />
+                    <Route path="/mobile/course/:courseId" element={
+                      <MobileAuthGuard>
+                        <MobileCourse />
+                      </MobileAuthGuard>
+                    } />
+                    <Route path="/mobile/progress" element={
+                      <MobileAuthGuard>
+                        <MobileProgress />
+                      </MobileAuthGuard>
+                    } />
+                    <Route path="/mobile/profile" element={
+                      <MobileAuthGuard>
+                        <MobileProfile />
+                      </MobileAuthGuard>
+                    } />
+
+                    {/* Root route - onboarding flow */}
+                    <Route path="/" element={<MobileApp />} />
+
+                    {/* Catch-all route - redirect to onboarding */}
+                    <Route path="*" element={<MobileApp />} />
+                  </Routes>
+                </MobileUserProvider>
+              ) : (
                 <Routes>
-                  {/* Mobile auth route */}
-                  <Route path="/auth" element={<MobileAuth />} />
+                  {/* Public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
 
-                  {/* Mobile routes - all protected by auth guard */}
-                  <Route path="/mobile/home" element={
-                    <MobileAuthGuard>
-                      <MobileHome />
-                    </MobileAuthGuard>
+                  {/* Protected routes */}
+                  <Route path="/courses" element={
+                    <AuthGuard>
+                      <Courses />
+                    </AuthGuard>
                   } />
-                  <Route path="/mobile/explore" element={
-                    <MobileAuthGuard>
-                      <MobileExplore />
-                    </MobileAuthGuard>
+                  <Route path="/courses/:courseId" element={
+                    <AuthGuard>
+                      <Course />
+                    </AuthGuard>
                   } />
-                  <Route path="/mobile/courses" element={
-                    <MobileAuthGuard>
-                      <MobileCourses />
-                    </MobileAuthGuard>
+                  <Route path="/course/:courseId" element={
+                    <AuthGuard>
+                      <Course />
+                    </AuthGuard>
                   } />
-                  <Route path="/mobile/course/:courseId" element={
-                    <MobileAuthGuard>
-                      <MobileCourse />
-                    </MobileAuthGuard>
-                  } />
-                  <Route path="/mobile/progress" element={
-                    <MobileAuthGuard>
-                      <MobileProgress />
-                    </MobileAuthGuard>
-                  } />
-                  <Route path="/mobile/profile" element={
-                    <MobileAuthGuard>
-                      <MobileProfile />
-                    </MobileAuthGuard>
+                  <Route path="/gamification" element={
+                    <AuthGuard>
+                      <Gamification />
+                    </AuthGuard>
                   } />
 
-                  {/* Root route - onboarding flow */}
-                  <Route path="/" element={<MobileApp />} />
-
-                  {/* Catch-all route - redirect to onboarding */}
-                  <Route path="*" element={<MobileApp />} />
+                  {/* Catch-all route */}
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
-              </MobileUserProvider>
-            ) : (
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-
-                {/* Protected routes */}
-                <Route path="/courses" element={
-                  <AuthGuard>
-                    <Courses />
-                  </AuthGuard>
-                } />
-                <Route path="/courses/:courseId" element={
-                  <AuthGuard>
-                    <Course />
-                  </AuthGuard>
-                } />
-                <Route path="/course/:courseId" element={
-                  <AuthGuard>
-                    <Course />
-                  </AuthGuard>
-                } />
-                <Route path="/gamification" element={
-                  <AuthGuard>
-                    <Gamification />
-                  </AuthGuard>
-                } />
-
-                {/* Catch-all route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            )}
+              )}
+            </SocialVerificationProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
