@@ -1,6 +1,8 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useMobileUser } from '@/contexts/MobileUserContext';
+import { useAuth } from '@/contexts/AuthContext';
 import MobileSplash from './MobileSplash';
 import MobileOnboarding from './MobileOnboarding';
 import MobileSignup from './MobileSignup';
@@ -11,19 +13,29 @@ interface MobileAuthGuardProps {
 
 const MobileAuthGuard: React.FC<MobileAuthGuardProps> = ({ children }) => {
   const { userState, completeOnboarding, setCurrentStep } = useMobileUser();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if user has completed onboarding
+  // Check authentication and onboarding status
   useEffect(() => {
-    // If user hasn't completed onboarding and is trying to access protected routes
+    if (loading) return; // Wait for auth to load
+
+    // If user is not authenticated, redirect to auth page
+    if (!user) {
+      sessionStorage.setItem('mobile_intended_destination', location.pathname);
+      navigate('/auth', { replace: true });
+      return;
+    }
+
+    // If user is authenticated but hasn't completed onboarding and is trying to access protected routes
     if (!userState.hasCompletedOnboarding && location.pathname !== '/') {
       // Store the intended destination
       sessionStorage.setItem('mobile_intended_destination', location.pathname);
       // Redirect to onboarding flow
       navigate('/', { replace: true });
     }
-  }, [userState.hasCompletedOnboarding, location.pathname, navigate]);
+  }, [user, loading, userState.hasCompletedOnboarding, location.pathname, navigate]);
 
   // Handle onboarding completion
   const handleSplashComplete = () => {
@@ -47,7 +59,21 @@ const MobileAuthGuard: React.FC<MobileAuthGuardProps> = ({ children }) => {
     }
   };
 
-  // If user hasn't completed onboarding, show onboarding flow
+  // Show loading while auth is initializing
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  // If user is not authenticated, don't render anything (will redirect to auth)
+  if (!user) {
+    return null;
+  }
+
+  // If user is authenticated but hasn't completed onboarding, show onboarding flow
   if (!userState.hasCompletedOnboarding) {
     switch (userState.currentStep) {
       case 'splash':
@@ -61,7 +87,7 @@ const MobileAuthGuard: React.FC<MobileAuthGuardProps> = ({ children }) => {
     }
   }
 
-  // User has completed onboarding, show the protected content
+  // User is authenticated and has completed onboarding, show the protected content
   return <>{children}</>;
 };
 
