@@ -7,6 +7,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  showFollowFlow: boolean;
+  setShowFollowFlow: (show: boolean) => void;
   signUp: (email: string, password: string, userData?: any) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
@@ -19,6 +21,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showFollowFlow, setShowFollowFlow] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener
@@ -42,7 +45,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signUp = async (email: string, password: string, userData?: any) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -69,7 +72,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const resetPassword = async (email: string) => {
     const redirectUrl = `${window.location.origin}/reset-password`;
-    
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
     });
@@ -81,6 +84,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       user,
       session,
       loading,
+      showFollowFlow,
+      setShowFollowFlow,
       signUp,
       signIn,
       signOut,

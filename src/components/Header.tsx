@@ -110,9 +110,6 @@ const Header = () => {
                 </div>
               )}
             </div>
-            <Link to={user ? "/book-session" : "/auth"} className="text-slate-700 hover:text-emerald-600 transition-colors">
-              Book Session
-            </Link>
             <Link to={user ? "/gamification" : "/auth"} className="flex items-center space-x-1 text-slate-700 hover:text-emerald-600 transition-colors">
               <Trophy className="h-4 w-4" />
               <span>Gamification</span>
@@ -197,20 +194,6 @@ const Header = () => {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 All Courses
-              </Link>
-              <Link
-                to={user ? "/book-session" : "/auth"}
-                className="text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Book Session
-              </Link>
-              <Link
-                to={user ? "/my-sessions" : "/auth"}
-                className="text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                My Sessions
               </Link>
               <Link
                 to={user ? "/gamification" : "/auth"}

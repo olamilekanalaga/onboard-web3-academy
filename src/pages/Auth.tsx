@@ -12,7 +12,8 @@ import * as z from "zod";
 import { Eye, EyeOff, BookOpen, Users, Award, TrendingUp, Sparkles, Shield, Zap, Globe } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
-import { useCountries } from "@/hooks/useBookings";
+import { useCountries } from "@/hooks/useCountries";
+import FollowFlow from "@/components/FollowFlow";
 
 const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -30,7 +31,7 @@ const signUpSchema = z.object({
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn, signUp, user, loading } = useAuth();
+  const { signIn, signUp, user, loading, showFollowFlow, setShowFollowFlow } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -90,10 +91,16 @@ const Auth = () => {
     } else {
       toast({
         title: "Account Created!",
-        description: "Please check your email to verify your account.",
+        description: "Welcome to Web3 Academy! Let's get you connected.",
       });
-      setActiveTab("signin");
+      // Show follow flow instead of switching to signin
+      setShowFollowFlow(true);
     }
+  };
+
+  const handleFollowFlowComplete = () => {
+    setShowFollowFlow(false);
+    navigate(from, { replace: true });
   };
 
   const features = [
@@ -109,6 +116,11 @@ const Auth = () => {
     { value: "95%", label: "Success Rate" },
     { value: "24/7", label: "Support" },
   ];
+
+  // Show follow flow if user just signed up
+  if (showFollowFlow) {
+    return <FollowFlow onComplete={handleFollowFlowComplete} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-blue-900 relative overflow-hidden">

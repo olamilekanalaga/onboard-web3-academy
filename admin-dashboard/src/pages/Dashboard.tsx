@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
+import { Button } from "@/components/ui/button";
 import {
   Users,
   Calendar,
@@ -9,27 +12,36 @@ import {
   CheckCircle,
   AlertCircle,
   Star,
-  LogOut
+  LogOut,
+  Eye,
+  MessageSquare,
+  Video,
+  X,
+  Filter,
+  Download,
+  BarChart3
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import BookingManagement from "@/components/BookingManagement.tsx";
+import UserAnalytics from "@/components/UserAnalytics.tsx";
+import SessionManagement from "@/components/SessionManagement.tsx";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState("overview");
 
   const handleSignOut = async () => {
     await signOut();
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">Admin Dashboard</h1>
-            <p className="text-xl text-slate-600">
-              Manage bookings, analyze user data, and monitor platform performance
-            </p>
+            <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
+            <p className="text-slate-600">Manage your Web3 Academy platform</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-right">
@@ -45,131 +57,119 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">Total Bookings</p>
-                <p className="text-3xl font-bold text-slate-900">156</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="w-4 h-4 mr-1 text-green-600" />
-                  <span className="text-sm font-medium text-green-600">+12% from last month</span>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="sessions">Sessions</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Real-time stats will be loaded here */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Total Bookings</p>
+                      <p className="text-2xl font-bold text-slate-900">Loading...</p>
+                    </div>
+                    <Calendar className="w-8 h-8 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Pending Reviews</p>
+                      <p className="text-2xl font-bold text-slate-900">Loading...</p>
+                    </div>
+                    <Clock className="w-8 h-8 text-yellow-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Total Revenue</p>
+                      <p className="text-2xl font-bold text-slate-900">Loading...</p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Active Users</p>
+                      <p className="text-2xl font-bold text-slate-900">Loading...</p>
+                    </div>
+                    <Users className="w-8 h-8 text-purple-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button
+                    onClick={() => setActiveTab("bookings")}
+                    className="h-20 flex flex-col items-center justify-center space-y-2"
+                  >
+                    <Calendar className="w-6 h-6" />
+                    <span>Manage Bookings</span>
+                  </Button>
+
+                  <Button
+                    onClick={() => setActiveTab("analytics")}
+                    variant="outline"
+                    className="h-20 flex flex-col items-center justify-center space-y-2"
+                  >
+                    <BarChart3 className="w-6 h-6" />
+                    <span>View Analytics</span>
+                  </Button>
+
+                  <Button
+                    onClick={() => setActiveTab("sessions")}
+                    variant="outline"
+                    className="h-20 flex flex-col items-center justify-center space-y-2"
+                  >
+                    <Video className="w-6 h-6" />
+                    <span>Create Sessions</span>
+                  </Button>
                 </div>
-              </div>
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
-                <Calendar className="w-8 h-8 text-blue-600" />
-              </div>
-            </div>
-          </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-          <div className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">Total Revenue</p>
-                <p className="text-3xl font-bold text-slate-900">$23,450</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="w-4 h-4 mr-1 text-green-600" />
-                  <span className="text-sm font-medium text-green-600">+8% from last month</span>
-                </div>
-              </div>
-              <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center">
-                <DollarSign className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-          </div>
+          <TabsContent value="bookings" className="space-y-6">
+            <BookingManagement />
+          </TabsContent>
 
-          <div className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">Pending Bookings</p>
-                <p className="text-3xl font-bold text-slate-900">12</p>
-                <div className="flex items-center mt-2">
-                  <AlertCircle className="w-4 h-4 mr-1 text-yellow-600" />
-                  <span className="text-sm font-medium text-yellow-600">Needs attention</span>
-                </div>
-              </div>
-              <div className="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center">
-                <Clock className="w-8 h-8 text-yellow-600" />
-              </div>
-            </div>
-          </div>
+          <TabsContent value="analytics" className="space-y-6">
+            <UserAnalytics />
+          </TabsContent>
 
-          <div className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">Completed Sessions</p>
-                <p className="text-3xl font-bold text-slate-900">134</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="w-4 h-4 mr-1 text-green-600" />
-                  <span className="text-sm font-medium text-green-600">+15% from last month</span>
-                </div>
-              </div>
-              <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
-                <CheckCircle className="w-8 h-8 text-emerald-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">Average Rating</p>
-                <p className="text-3xl font-bold text-slate-900">4.8</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="w-4 h-4 mr-1 text-green-600" />
-                  <span className="text-sm font-medium text-green-600">+0.2 from last month</span>
-                </div>
-              </div>
-              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center">
-                <Star className="w-8 h-8 text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">Global Users</p>
-                <p className="text-3xl font-bold text-slate-900">2,847</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="w-4 h-4 mr-1 text-green-600" />
-                  <span className="text-sm font-medium text-green-600">+25% from last month</span>
-                </div>
-              </div>
-              <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center">
-                <Globe className="w-8 h-8 text-indigo-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Coming Soon Section */}
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Admin Dashboard</h2>
-          <p className="text-slate-600 mb-6">
-            Welcome to your admin dashboard! This is a simplified version showing key metrics.
-            Full booking management, user analytics, and session controls are coming soon.
-          </p>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <Calendar className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-              <h3 className="font-semibold text-slate-900">Booking Management</h3>
-              <p className="text-sm text-slate-600">Approve, manage, and track all session bookings</p>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <Users className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <h3 className="font-semibold text-slate-900">User Analytics</h3>
-              <p className="text-sm text-slate-600">View user demographics and behavior insights</p>
-            </div>
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <Star className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-              <h3 className="font-semibold text-slate-900">Session Control</h3>
-              <p className="text-sm text-slate-600">Create and manage available session slots</p>
-            </div>
-          </div>
-        </div>
+          <TabsContent value="sessions" className="space-y-6">
+            <SessionManagement />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

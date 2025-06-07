@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import TestConnection from "./pages/TestConnection";
+import Debug from "./pages/Debug";
 import { AuthProvider } from "./contexts/AuthContext";
 import AdminAuthGuard from "./components/AdminAuthGuard";
 
@@ -18,6 +19,7 @@ function App() {
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/test" element={<TestConnection />} />
+            <Route path="/debug" element={<Debug />} />
 
             {/* Protected admin routes */}
             <Route path="/" element={

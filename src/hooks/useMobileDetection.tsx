@@ -13,15 +13,16 @@ export const useMobileDetection = () => {
 
       const userAgent = navigator.userAgent || navigator.vendor || '';
       const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
-      const isSmallScreen = window.innerWidth <= 768;
 
-      return mobileRegex.test(userAgent.toLowerCase()) || isSmallScreen;
+      // Only use user agent detection, not screen size
+      // This prevents desktop browsers from being detected as mobile
+      return mobileRegex.test(userAgent.toLowerCase());
     };
 
     // Initial check
     setIsMobile(checkMobile());
 
-    // Add resize listener
+    // Add resize listener (but only check user agent, not screen size)
     const handleResize = () => {
       setIsMobile(checkMobile());
     };

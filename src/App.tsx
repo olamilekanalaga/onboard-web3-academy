@@ -12,8 +12,6 @@ import Auth from "./pages/Auth";
 import Courses from "./pages/Courses";
 import Course from "./pages/Course";
 import Gamification from "./pages/Gamification";
-import BookSession from "./pages/BookSession";
-import MySessions from "./pages/MySessions";
 import NotFound from "./pages/NotFound";
 import AuthGuard from "./components/auth/AuthGuard";
 import MobileApp from "./components/mobile/MobileApp";
@@ -29,7 +27,8 @@ import MobileAuth from "./components/mobile/MobileAuth";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const isMobile = useMobileDetection();
+  // Temporarily disable mobile detection to fix auth issues
+  const isMobile = false; // useMobileDetection();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -108,16 +107,6 @@ const App = () => {
                 <Route path="/gamification" element={
                   <AuthGuard>
                     <Gamification />
-                  </AuthGuard>
-                } />
-                <Route path="/book-session" element={
-                  <AuthGuard>
-                    <BookSession />
-                  </AuthGuard>
-                } />
-                <Route path="/my-sessions" element={
-                  <AuthGuard>
-                    <MySessions />
                   </AuthGuard>
                 } />
 
