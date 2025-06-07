@@ -10,6 +10,8 @@ import * as z from "zod";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import FollowFlow from "@/components/FollowFlow";
+import { useNavigate } from "react-router-dom";
 
 const signUpSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -32,8 +34,9 @@ type AuthMode = 'signin' | 'signup' | 'reset';
 const MobileAuth = () => {
   const [mode, setMode] = useState<AuthMode>('signin');
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn, signUp, resetPassword, loading } = useAuth();
+  const { signIn, signUp, resetPassword, loading, showFollowFlow, setShowFollowFlow } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const signInForm = useForm({
     resolver: zodResolver(signInSchema),
@@ -74,10 +77,17 @@ const MobileAuth = () => {
       });
     } else {
       toast({
-        title: "Success",
-        description: "Check your email to confirm your account",
+        title: "Account Created!",
+        description: "Welcome to Web3 Academy! Let's get you connected.",
       });
+      // Show follow flow instead of just showing success
+      setShowFollowFlow(true);
     }
+  };
+
+  const handleFollowFlowComplete = () => {
+    setShowFollowFlow(false);
+    navigate('/mobile/home', { replace: true });
   };
 
   const handleReset = async (values: z.infer<typeof resetSchema>) => {
@@ -96,6 +106,11 @@ const MobileAuth = () => {
       setMode('signin');
     }
   };
+
+  // Show follow flow if user just signed up
+  if (showFollowFlow) {
+    return <FollowFlow onComplete={handleFollowFlowComplete} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 flex items-center justify-center p-4">

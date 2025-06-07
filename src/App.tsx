@@ -27,8 +27,7 @@ import MobileAuth from "./components/mobile/MobileAuth";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Temporarily disable mobile detection to fix auth issues
-  const isMobile = false; // useMobileDetection();
+  const isMobile = useMobileDetection();
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -11,12 +11,21 @@ import {
   HelpCircle,
   Sparkles
 } from "lucide-react";
+import { useMobileDetection } from "@/hooks/useMobileDetection";
+import MobileFollowFlow from "@/components/mobile/MobileFollowFlow";
 
 interface FollowFlowProps {
   onComplete: () => void;
 }
 
 const FollowFlow: React.FC<FollowFlowProps> = ({ onComplete }) => {
+  const isMobile = useMobileDetection();
+
+  // Use mobile version if on mobile device
+  if (isMobile) {
+    return <MobileFollowFlow onComplete={onComplete} />;
+  }
+
   const [telegramFollowed, setTelegramFollowed] = useState(false);
   const [twitterFollowed, setTwitterFollowed] = useState(false);
 
@@ -192,8 +201,8 @@ const FollowFlow: React.FC<FollowFlowProps> = ({ onComplete }) => {
                 onClick={onComplete}
                 disabled={!canContinue}
                 className={`w-full py-4 text-lg font-semibold transition-all duration-300 ${canContinue
-                    ? 'bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white shadow-lg'
-                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white shadow-lg'
+                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                   }`}
               >
                 {canContinue ? (
