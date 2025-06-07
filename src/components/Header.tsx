@@ -1,13 +1,35 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Search, User, BookOpen, Menu, ChevronDown, Trophy, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Bell, Search, User, BookOpen, Menu, ChevronDown, Trophy, Zap, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [exploreDropdownOpen, setExploreDropdownOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Signed Out",
+        description: "You have been successfully signed out.",
+      });
+      navigate("/");
+    }
+  };
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
@@ -40,7 +62,7 @@ const Header = () => {
                   onMouseEnter={() => setExploreDropdownOpen(true)}
                   onMouseLeave={() => setExploreDropdownOpen(false)}
                 >
-                  <Link to="/course/foundation" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
+                  <Link to={user ? "/course/foundation" : "/auth"} className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
                     <div className="flex items-center space-x-2">
                       <span className="text-emerald-500">⭐</span>
                       <div>
@@ -49,7 +71,7 @@ const Header = () => {
                       </div>
                     </div>
                   </Link>
-                  <Link to="/course/defi" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
+                  <Link to={user ? "/course/defi" : "/auth"} className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
                     <div className="flex items-center space-x-2">
                       <span className="text-purple-500">🏦</span>
                       <div>
@@ -58,7 +80,7 @@ const Header = () => {
                       </div>
                     </div>
                   </Link>
-                  <Link to="/course/degen" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
+                  <Link to={user ? "/course/degen" : "/auth"} className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
                     <div className="flex items-center space-x-2">
                       <span className="text-orange-500">🚀</span>
                       <div>
@@ -67,7 +89,7 @@ const Header = () => {
                       </div>
                     </div>
                   </Link>
-                  <Link to="/course/advanced-trading" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
+                  <Link to={user ? "/course/advanced-trading" : "/auth"} className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
                     <div className="flex items-center space-x-2">
                       <span className="text-red-500">📈</span>
                       <div>
@@ -76,7 +98,7 @@ const Header = () => {
                       </div>
                     </div>
                   </Link>
-                  <Link to="/course/development" className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
+                  <Link to={user ? "/course/development" : "/auth"} className="block px-4 py-2 text-slate-700 hover:bg-slate-50">
                     <div className="flex items-center space-x-2">
                       <span className="text-indigo-500">⚡</span>
                       <div>
@@ -88,32 +110,70 @@ const Header = () => {
                 </div>
               )}
             </div>
-            <Link to="/gamification" className="flex items-center space-x-1 text-slate-700 hover:text-emerald-600 transition-colors">
+            <Link to={user ? "/book-session" : "/auth"} className="text-slate-700 hover:text-emerald-600 transition-colors">
+              Book Session
+            </Link>
+            <Link to={user ? "/gamification" : "/auth"} className="flex items-center space-x-1 text-slate-700 hover:text-emerald-600 transition-colors">
               <Trophy className="h-4 w-4" />
               <span>Gamification</span>
             </Link>
-            <Link to="/tools" className="text-slate-700 hover:text-emerald-600 transition-colors">
+            <Link to={user ? "/tools" : "/auth"} className="text-slate-700 hover:text-emerald-600 transition-colors">
               Tools
             </Link>
           </nav>
 
           {/* User Actions */}
           <div className="flex items-center space-x-4">
-            {/* Desktop Actions */}
-            <div className="hidden md:flex items-center space-x-3">
-              <Button variant="ghost" size="sm" className="p-2">
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" className="text-slate-700 hover:text-emerald-600">
-                Log In
-              </Button>
-            </div>
+            {user ? (
+              /* Authenticated User Actions */
+              <div className="hidden md:flex items-center space-x-3">
+                <Button variant="ghost" size="sm" className="p-2">
+                  <Search className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="p-2">
+                  <Bell className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-medium">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <Button variant="ghost" onClick={handleSignOut} className="text-slate-700 hover:text-red-600">
+                    <LogOut className="h-4 w-4 mr-1" />
+                    Sign Out
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Unauthenticated User Actions */
+              <div className="hidden md:flex items-center space-x-3">
+                <Button variant="ghost" size="sm" className="p-2">
+                  <Search className="h-4 w-4" />
+                </Button>
+                <Link to="/auth">
+                  <Button variant="ghost" className="text-slate-700 hover:text-emerald-600">
+                    Log In
+                  </Button>
+                </Link>
+              </div>
+            )}
 
-            <Link to="/courses">
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2">
-                Join for Free
-              </Button>
-            </Link>
+            {!user && (
+              <Link to="/auth">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2">
+                  Join for Free
+                </Button>
+              </Link>
+            )}
+
+            {user && (
+              <Link to="/courses">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2">
+                  My Courses
+                </Button>
+              </Link>
+            )}
 
             {/* Mobile Menu Button */}
             <Button
@@ -132,14 +192,28 @@ const Header = () => {
           <div className="lg:hidden border-t border-slate-200 py-4 space-y-4">
             <nav className="flex flex-col space-y-3">
               <Link
-                to="/courses"
+                to={user ? "/courses" : "/auth"}
                 className="text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 All Courses
               </Link>
               <Link
-                to="/gamification"
+                to={user ? "/book-session" : "/auth"}
+                className="text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Book Session
+              </Link>
+              <Link
+                to={user ? "/my-sessions" : "/auth"}
+                className="text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                My Sessions
+              </Link>
+              <Link
+                to={user ? "/gamification" : "/auth"}
                 className="flex items-center space-x-2 text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -147,7 +221,7 @@ const Header = () => {
                 <span>Gamification</span>
               </Link>
               <Link
-                to="/tools"
+                to={user ? "/tools" : "/auth"}
                 className="text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -159,9 +233,36 @@ const Header = () => {
                 <Search className="h-4 w-4 mr-2" />
                 Search
               </Button>
-              <Button variant="ghost" className="justify-start p-2">
-                Log In
-              </Button>
+              {user ? (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 px-2 py-1">
+                    <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-medium">
+                        {user.email?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="text-sm text-slate-700">{user.email}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="justify-start p-2 text-red-600 hover:text-red-700"
+                    onClick={() => {
+                      handleSignOut();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" className="justify-start p-2 w-full">
+                    <User className="h-4 w-4 mr-2" />
+                    Log In
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         )}

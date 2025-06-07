@@ -189,7 +189,7 @@ const Index = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/courses">
+                <Link to="/auth">
                   <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50 px-10 py-4 text-lg font-semibold">
                     Start Learning Free
                   </Button>
@@ -248,7 +248,7 @@ const Index = () => {
                       <span>12.5k students</span>
                     </div>
                   </div>
-                  <Link to="/course/foundation">
+                  <Link to="/auth">
                     <Button className="w-full bg-blue-600 hover:bg-blue-700">
                       Start Free Course
                     </Button>
@@ -398,7 +398,7 @@ const Index = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {learningPaths.map((path) => (
-              <Link key={path.id} to={`/course/${path.id}`}>
+              <Link key={path.id} to="/auth">
                 <Card className="group cursor-pointer h-full bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                   <div className={`h-2 bg-gradient-to-r ${path.gradient}`} />
 

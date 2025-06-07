@@ -8,10 +8,14 @@ import { useMobileDetection } from "./hooks/useMobileDetection";
 import { MobileUserProvider } from "./contexts/MobileUserContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
 import Courses from "./pages/Courses";
 import Course from "./pages/Course";
 import Gamification from "./pages/Gamification";
+import BookSession from "./pages/BookSession";
+import MySessions from "./pages/MySessions";
 import NotFound from "./pages/NotFound";
+import AuthGuard from "./components/auth/AuthGuard";
 import MobileApp from "./components/mobile/MobileApp";
 import MobileAuthGuard from "./components/mobile/MobileAuthGuard";
 import MobileExplore from "./components/mobile/MobileExplore";
@@ -39,7 +43,7 @@ const App = () => {
                 <Routes>
                   {/* Mobile auth route */}
                   <Route path="/auth" element={<MobileAuth />} />
-                  
+
                   {/* Mobile routes - all protected by auth guard */}
                   <Route path="/mobile/home" element={
                     <MobileAuthGuard>
@@ -81,14 +85,41 @@ const App = () => {
               </MobileUserProvider>
             ) : (
               <Routes>
-                {/* Web routes */}
-                <Route path="/courses" element={<Courses />} />
-                <Route path="/courses/:courseId" element={<Course />} />
-                <Route path="/course/:courseId" element={<Course />} />
-                <Route path="/gamification" element={<Gamification />} />
-
-                {/* Root route */}
+                {/* Public routes */}
                 <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+
+                {/* Protected routes */}
+                <Route path="/courses" element={
+                  <AuthGuard>
+                    <Courses />
+                  </AuthGuard>
+                } />
+                <Route path="/courses/:courseId" element={
+                  <AuthGuard>
+                    <Course />
+                  </AuthGuard>
+                } />
+                <Route path="/course/:courseId" element={
+                  <AuthGuard>
+                    <Course />
+                  </AuthGuard>
+                } />
+                <Route path="/gamification" element={
+                  <AuthGuard>
+                    <Gamification />
+                  </AuthGuard>
+                } />
+                <Route path="/book-session" element={
+                  <AuthGuard>
+                    <BookSession />
+                  </AuthGuard>
+                } />
+                <Route path="/my-sessions" element={
+                  <AuthGuard>
+                    <MySessions />
+                  </AuthGuard>
+                } />
 
                 {/* Catch-all route */}
                 <Route path="*" element={<NotFound />} />
