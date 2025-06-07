@@ -54,13 +54,23 @@ const MobileAuth = () => {
   });
 
   const handleSignIn = async (values: z.infer<typeof signInSchema>) => {
+    console.log('Mobile sign in attempt:', values.email);
     const { error } = await signIn(values.email, values.password);
     if (error) {
+      console.error('Mobile sign in error:', error);
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
+    } else {
+      console.log('Mobile sign in success');
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
+      });
+      // Navigate to mobile home after successful sign in
+      navigate('/mobile/home', { replace: true });
     }
   };
 

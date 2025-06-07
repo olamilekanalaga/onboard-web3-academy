@@ -1,49 +1,32 @@
 
 import { useNavigate } from "react-router-dom";
-import { useMobileUser } from "@/contexts/MobileUserContext";
-import MobileSplash from "./MobileSplash";
-import MobileOnboarding from "./MobileOnboarding";
-import MobileSignup from "./MobileSignup";
+import { useAuth } from "@/contexts/AuthContext";
+import MobileAuth from "./MobileAuth";
+import MobileHome from "./MobileHome";
 
 const MobileApp = () => {
-  const { userState, completeOnboarding, setCurrentStep } = useMobileUser();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const handleSplashComplete = () => {
-    setCurrentStep('onboarding');
-  };
-
-  const handleOnboardingComplete = () => {
-    setCurrentStep('signup');
-  };
-
-  const handleSignupComplete = () => {
-    completeOnboarding();
-
-    // Check if there's an intended destination
-    const intendedDestination = sessionStorage.getItem('mobile_intended_destination');
-    if (intendedDestination && intendedDestination !== '/') {
-      sessionStorage.removeItem('mobile_intended_destination');
-      navigate(intendedDestination, { replace: true });
-    } else {
-      navigate('/mobile/home', { replace: true });
-    }
-  };
-
-  switch (userState.currentStep) {
-    case 'splash':
-      return <MobileSplash onComplete={handleSplashComplete} />;
-    case 'onboarding':
-      return <MobileOnboarding onComplete={handleOnboardingComplete} />;
-    case 'signup':
-      return <MobileSignup onComplete={handleSignupComplete} />;
-    case 'home':
-      // If we reach here, redirect to mobile home
-      navigate('/mobile/home', { replace: true });
-      return null;
-    default:
-      return <MobileSplash onComplete={handleSplashComplete} />;
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="w-16 h-16 bg-white/20 rounded-full animate-pulse mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
   }
+
+  // If user is authenticated, show mobile home
+  if (user) {
+    return <MobileHome />;
+  }
+
+  // If not authenticated, show mobile auth
+  return <MobileAuth />;
 };
 
 export default MobileApp;
