@@ -1,12 +1,13 @@
 
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useMobileUser } from "@/contexts/MobileUserContext";
 import MobileSplash from "./MobileSplash";
 import MobileOnboarding from "./MobileOnboarding";
 import MobileSignup from "./MobileSignup";
-import MobileHome from "./MobileHome";
 
 const MobileApp = () => {
-  const [currentStep, setCurrentStep] = useState<'splash' | 'onboarding' | 'signup' | 'home'>('splash');
+  const { userState, completeOnboarding, setCurrentStep } = useMobileUser();
+  const navigate = useNavigate();
 
   const handleSplashComplete = () => {
     setCurrentStep('onboarding');
@@ -17,10 +18,19 @@ const MobileApp = () => {
   };
 
   const handleSignupComplete = () => {
-    setCurrentStep('home');
+    completeOnboarding();
+
+    // Check if there's an intended destination
+    const intendedDestination = sessionStorage.getItem('mobile_intended_destination');
+    if (intendedDestination && intendedDestination !== '/') {
+      sessionStorage.removeItem('mobile_intended_destination');
+      navigate(intendedDestination, { replace: true });
+    } else {
+      navigate('/mobile/home', { replace: true });
+    }
   };
 
-  switch (currentStep) {
+  switch (userState.currentStep) {
     case 'splash':
       return <MobileSplash onComplete={handleSplashComplete} />;
     case 'onboarding':
@@ -28,7 +38,9 @@ const MobileApp = () => {
     case 'signup':
       return <MobileSignup onComplete={handleSignupComplete} />;
     case 'home':
-      return <MobileHome />;
+      // If we reach here, redirect to mobile home
+      navigate('/mobile/home', { replace: true });
+      return null;
     default:
       return <MobileSplash onComplete={handleSplashComplete} />;
   }

@@ -1,12 +1,15 @@
 
-import { User, Settings, Bell, HelpCircle, LogOut, Edit, Award, BookOpen, Clock } from "lucide-react";
+import { User, Settings, Bell, HelpCircle, LogOut, Edit, Award, BookOpen, Clock, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { useMobileUser } from "@/contexts/MobileUserContext";
 import BottomNavigation from "./BottomNavigation";
 
 const MobileProfile = () => {
+  const { resetOnboarding } = useMobileUser();
+
   const userStats = [
     { label: "Courses Completed", value: "8", icon: BookOpen },
     { label: "Hours Learned", value: "45", icon: Clock },
@@ -19,8 +22,25 @@ const MobileProfile = () => {
     { icon: Bell, label: "Notifications", action: "notifications", toggle: true, enabled: true },
     { icon: Settings, label: "Settings", action: "settings" },
     { icon: HelpCircle, label: "Help & Support", action: "help" },
+    { icon: RotateCcw, label: "Reset Onboarding", action: "reset", danger: true },
     { icon: LogOut, label: "Sign Out", action: "logout", danger: true }
   ];
+
+  const handleMenuAction = (action: string) => {
+    switch (action) {
+      case 'reset':
+        if (confirm('Are you sure you want to reset the onboarding? This will show the splash screen again.')) {
+          resetOnboarding();
+        }
+        break;
+      case 'logout':
+        // Handle logout
+        break;
+      default:
+        // Handle other actions
+        break;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -85,7 +105,11 @@ const MobileProfile = () => {
         <Card className="border-0 shadow-sm">
           <CardContent className="p-0">
             {menuItems.map((item, index) => (
-              <div key={index} className={`flex items-center justify-between p-4 ${index !== menuItems.length - 1 ? 'border-b border-slate-100' : ''}`}>
+              <button
+                key={index}
+                onClick={() => handleMenuAction(item.action)}
+                className={`w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition-colors ${index !== menuItems.length - 1 ? 'border-b border-slate-100' : ''}`}
+              >
                 <div className="flex items-center space-x-3">
                   <item.icon className={`h-5 w-5 ${item.danger ? 'text-red-600' : 'text-slate-600'}`} />
                   <span className={`font-medium ${item.danger ? 'text-red-600' : 'text-slate-900'}`}>
@@ -97,7 +121,7 @@ const MobileProfile = () => {
                 ) : (
                   <div className="text-slate-400">›</div>
                 )}
-              </div>
+              </button>
             ))}
           </CardContent>
         </Card>

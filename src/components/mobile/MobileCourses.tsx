@@ -13,15 +13,28 @@ const MobileCourses = () => {
   const navigate = useNavigate();
   const [completedChapters, setCompletedChapters] = useState<string[]>([]);
 
+  const getIconForCourse = (courseId: string) => {
+    switch (courseId) {
+      case "foundation": return "🎓";
+      case "defi": return "💰";
+      case "degen": return "🚀";
+      case "advanced-trading": return "📈";
+      case "development": return "💻";
+      default: return "📚";
+    }
+  };
+
   // Get real course data - only show the modern courses we want to feature
   const featuredCourseIds = ["foundation", "defi", "degen", "advanced-trading", "development"];
   const courseList = Object.values(courses).filter(course => featuredCourseIds.includes(course.id));
 
-  // Simulate enrolled courses with progress
+  // Simulate enrolled courses with realistic progress data
+  const progressData = [35, 75, 20, 90, 55]; // Fixed progress values to ensure variety
+
   const enrolledCourses = courseList.map((course, index) => {
     const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
-    const completedCount = Math.floor(Math.random() * totalChapters); // Simulate progress
-    const progress = Math.round((completedCount / totalChapters) * 100);
+    const progress = progressData[index] || 25;
+    const completedCount = Math.floor((progress / 100) * totalChapters);
 
     return {
       id: course.id,
@@ -33,24 +46,14 @@ const MobileCourses = () => {
       duration: course.modules[0]?.chapters[0]?.duration || "15 min",
       thumbnail: getIconForCourse(course.id),
       level: course.level,
-      category: course.category
+      category: course.category,
+      lastAccessed: ["2 hours ago", "Yesterday", "3 days ago", "1 week ago", "2 days ago"][index] || "Recently"
     };
   });
 
-  // Filter to show only courses with some progress
+  // Filter courses by progress status
   const inProgressCourses = enrolledCourses.filter(course => course.progress > 0 && course.progress < 100);
-  const completedCourses = enrolledCourses.filter(course => course.progress === 100);
-
-  const getIconForCourse = (courseId: string) => {
-    switch (courseId) {
-      case "foundation": return "🎓";
-      case "defi": return "💰";
-      case "degen": return "🚀";
-      case "advanced-trading": return "📈";
-      case "development": return "💻";
-      default: return "📚";
-    }
-  };
+  const completedCourses = enrolledCourses.filter(course => course.progress >= 100);
 
   const getDifficultyColor = (level: string) => {
     switch (level.toLowerCase()) {
