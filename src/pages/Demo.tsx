@@ -10,16 +10,36 @@ import {
   Target,
   Play,
   BookOpen,
-  ArrowRight
+  ArrowRight,
+  Activity,
+  Globe,
+  Shield
 } from "lucide-react";
 import Header from "@/components/Header";
 import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
-import TradingDemo from "@/components/TradingDemo";
+import RealisticTradingDemo from "@/components/RealisticTradingDemo";
 
 const Demo = () => {
   const [selectedDemo, setSelectedDemo] = useState<string>('');
 
   const demos = [
+    {
+      id: 'realistic',
+      title: 'Professional Trading Platform',
+      description: 'Experience a realistic trading environment with live order books, real-time charts, and professional trading tools',
+      icon: BarChart3,
+      color: 'from-blue-600 to-indigo-600',
+      features: [
+        'Real-time order book simulation',
+        'Professional trading interface',
+        'Portfolio management & P&L tracking',
+        'Market & limit order execution',
+        'Live price feeds with spreads',
+        'Trading history & analytics'
+      ],
+      difficulty: 'Professional',
+      difficultyColor: 'bg-blue-100 text-blue-700'
+    },
     {
       id: 'crosschain',
       title: 'Cross-Chain Trading Simulator',
@@ -36,31 +56,15 @@ const Demo = () => {
       ],
       difficulty: 'Advanced',
       difficultyColor: 'bg-purple-100 text-purple-700'
-    },
-    {
-      id: 'basic',
-      title: 'Basic Trading Demo',
-      description: 'Learn fundamental trading concepts with major cryptocurrencies',
-      icon: BarChart3,
-      color: 'from-blue-500 to-emerald-600',
-      features: [
-        'Major cryptocurrency pairs',
-        'Basic order types',
-        'Chart reading practice',
-        'Risk management basics',
-        'Portfolio fundamentals'
-      ],
-      difficulty: 'Beginner',
-      difficultyColor: 'bg-green-100 text-green-700'
     }
   ];
 
   const renderDemo = () => {
     switch (selectedDemo) {
+      case 'realistic':
+        return <RealisticTradingDemo />;
       case 'crosschain':
         return <CrossChainTradingDemo />;
-      case 'basic':
-        return <TradingDemo courseType="degen" />;
       default:
         return null;
     }
@@ -71,7 +75,7 @@ const Demo = () => {
       <div className="min-h-screen bg-background">
         <Header />
 
-        <div className="container mx-auto max-w-6xl px-4 py-8">
+        <div className="container mx-auto max-w-7xl px-4 py-8">
           {/* Back Button */}
           <div className="mb-6">
             <Button
@@ -99,10 +103,10 @@ const Demo = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">
-            Trading Demos
+            Trading Simulators
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Practice your trading skills in a risk-free environment with our interactive simulators
+            Practice your trading skills with professional-grade simulators in a completely risk-free environment
           </p>
         </div>
 
@@ -126,7 +130,7 @@ const Demo = () => {
               <CardContent className="space-y-4">
                 {/* Features */}
                 <div>
-                  <h4 className="font-semibold text-foreground mb-3">What you'll practice:</h4>
+                  <h4 className="font-semibold text-foreground mb-3">What you'll experience:</h4>
                   <ul className="space-y-2">
                     {demo.features.map((feature, index) => (
                       <li key={index} className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -143,7 +147,7 @@ const Demo = () => {
                   className={`w-full bg-gradient-to-r ${demo.color} hover:opacity-90 text-white`}
                 >
                   <Play className="h-4 w-4 mr-2" />
-                  Start Demo
+                  Launch Simulator
                 </Button>
               </CardContent>
             </Card>
@@ -158,24 +162,24 @@ const Demo = () => {
                 <Target className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-foreground">
-                Learn by Doing
+                Learn Through Simulation
               </h3>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Our trading demos provide a safe environment to practice your skills without risking real money.
-                Perfect for beginners learning the basics or advanced traders testing new strategies.
+                Our advanced trading simulators provide a completely safe environment to practice your skills with realistic market conditions, 
+                professional tools, and zero financial risk.
               </p>
               <div className="flex flex-wrap justify-center gap-4 pt-4">
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <BookOpen className="h-4 w-4 text-emerald-600" />
-                  <span>Educational Focus</span>
+                  <Shield className="h-4 w-4 text-emerald-600" />
+                  <span>100% Safe Environment</span>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <Target className="h-4 w-4 text-emerald-600" />
-                  <span>Risk-Free Practice</span>
+                  <Activity className="h-4 w-4 text-emerald-600" />
+                  <span>Real-time Market Data</span>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <TrendingUp className="h-4 w-4 text-emerald-600" />
-                  <span>Real Market Simulation</span>
+                  <Globe className="h-4 w-4 text-emerald-600" />
+                  <span>Professional Tools</span>
                 </div>
               </div>
             </div>
