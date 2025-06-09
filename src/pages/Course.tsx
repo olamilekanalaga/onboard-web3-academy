@@ -9,6 +9,7 @@ import { ArrowLeft, CheckCircle, Lock, PlayCircle, BookOpen, Clock, Target, Star
 import Header from "@/components/Header";
 import ChapterQA from "@/components/ChapterQA";
 import TradingDemo from "@/components/TradingDemo";
+import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
 import { courses } from "@/data/courses";
 
 const Course = () => {
@@ -325,7 +326,11 @@ const Course = () => {
                               Practice your trading skills with our advanced simulator. All trades are virtual - no real money at risk!
                             </p>
                           </div>
-                          <TradingDemo courseType={(currentChapter as any).demoProps?.courseType || "degen"} />
+                          {(currentChapter as any).demoProps?.courseType === "degen" ? (
+                            <CrossChainTradingDemo />
+                          ) : (
+                            <TradingDemo courseType={(currentChapter as any).demoProps?.courseType || "basic"} />
+                          )}
                         </div>
                       )}
                     </TabsContent>

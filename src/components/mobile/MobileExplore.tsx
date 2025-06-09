@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSocialVerification } from "@/contexts/SocialVerificationContext";
+import { useCourseProgression } from "@/hooks/useCourseProgression";
 import { Search, Filter, TrendingUp, Clock, Star, Users, Target, Code, BarChart3, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import { courses } from "@/data/courses";
 const MobileExplore = () => {
   const navigate = useNavigate();
   const { isVerified, setVerified } = useSocialVerification();
+  const { isCourseUnlocked } = useCourseProgression();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showSocialVerification, setShowSocialVerification] = useState(false);
@@ -33,14 +35,9 @@ const MobileExplore = () => {
     { name: "Security", key: "security", icon: "🛡️", count: courseList.filter(c => c.category === "security").length }
   ];
 
-  // Course progression system - only foundation is unlocked initially
+  // Use real course progression system
   const isUnlocked = (courseId: string) => {
-    // Foundation course is always unlocked
-    if (courseId === "foundation") return true;
-
-    // For now, all courses are locked except foundation
-    // TODO: Implement real progression based on completed courses
-    return false;
+    return isCourseUnlocked(courseId);
   };
 
   // Filter and sort courses based on search and category

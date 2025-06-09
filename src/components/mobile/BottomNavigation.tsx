@@ -1,5 +1,5 @@
 
-import { Home, BookOpen, User, Search, Award, Settings } from "lucide-react";
+import { Home, User, Search, Zap, Trophy } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
 const BottomNavigation = () => {
@@ -19,22 +19,22 @@ const BottomNavigation = () => {
       isActive: location.pathname === "/mobile/explore"
     },
     {
-      icon: BookOpen,
-      label: "My Courses",
-      path: "/mobile/courses",
-      isActive: location.pathname === "/mobile/courses"
+      icon: Trophy,
+      label: "Rewards",
+      path: "/mobile/gamification",
+      isActive: location.pathname === "/mobile/gamification"
     },
     {
-      icon: Award,
-      label: "Progress",
-      path: "/mobile/progress",
-      isActive: location.pathname === "/mobile/progress"
+      icon: Zap,
+      label: "Demo",
+      path: "/demo",
+      isActive: location.pathname === "/demo"
     },
     {
-      icon: Settings,
-      label: "Settings",
-      path: "/mobile/settings",
-      isActive: location.pathname === "/mobile/settings"
+      icon: User,
+      label: "Profile",
+      path: "/mobile/profile",
+      isActive: location.pathname === "/mobile/profile"
     }
   ];
 

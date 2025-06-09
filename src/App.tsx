@@ -15,6 +15,7 @@ import Courses from "./pages/Courses";
 import Course from "./pages/Course";
 import Gamification from "./pages/Gamification";
 import Profile from "./pages/Profile";
+import Demo from "./pages/Demo";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import AuthGuard from "./components/auth/AuthGuard";
@@ -28,6 +29,7 @@ import MobileProfile from "./components/mobile/MobileProfile";
 import MobileSettings from "./components/mobile/MobileSettings";
 import MobileHome from "./components/mobile/MobileHome";
 import MobileAuth from "./components/mobile/MobileAuth";
+import MobileGamification from "./components/mobile/MobileGamification";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +87,11 @@ const App = () => {
                           <MobileSettings />
                         </MobileAuthGuard>
                       } />
+                      <Route path="/mobile/gamification" element={
+                        <MobileAuthGuard>
+                          <MobileGamification />
+                        </MobileAuthGuard>
+                      } />
 
                       {/* Root route - onboarding flow */}
                       <Route path="/" element={<MobileApp />} />
@@ -113,6 +120,11 @@ const App = () => {
                     <Route path="/course/:courseId" element={
                       <AuthGuard>
                         <Course />
+                      </AuthGuard>
+                    } />
+                    <Route path="/demo" element={
+                      <AuthGuard>
+                        <Demo />
                       </AuthGuard>
                     } />
                     <Route path="/gamification" element={

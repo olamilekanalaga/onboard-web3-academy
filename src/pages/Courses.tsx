@@ -4,15 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Clock, Users, Star, ArrowRight, Filter, Search, Coins, Target, TrendingUp, Code, BarChart3 } from "lucide-react";
+import { BookOpen, Clock, Users, Star, ArrowRight, Filter, Search, Coins, Target, TrendingUp, Code, BarChart3, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
 import { courses } from "@/data/courses";
 import { useState } from "react";
+import { useCourseProgression } from "@/hooks/useCourseProgression";
 
 const Courses = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("all");
+  const { userProgress, isCourseUnlocked, isCourseCompleted, getCourseProgress } = useCourseProgression();
 
   const levels = ["all", "Foundation", "Beginner", "Intermediate", "Advanced", "Expert"];
 
@@ -42,6 +44,11 @@ const Courses = () => {
     const totalChapters = course.modules.reduce((acc, module) => acc + module.chapters.length, 0);
     const estimatedHours = Math.ceil(totalChapters * 0.5); // 30 min per chapter
     return { totalChapters, estimatedHours };
+  };
+
+  const getCourseProgressPercentage = (courseId: string) => {
+    const progress = getCourseProgress(courseId);
+    return progress ? progress.progressPercentage : 0;
   };
 
   return (
@@ -102,33 +109,49 @@ const Courses = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredCourses.map((course) => {
               const stats = getCourseStats(course.id);
+              const isUnlocked = isCourseUnlocked(course.id);
+              const isCompleted = isCourseCompleted(course.id);
+              const progressPercentage = getCourseProgressPercentage(course.id);
+
               return (
-                <Card key={course.id} className="group hover:shadow-xl transition-all duration-300 border-0 bg-white">
+                <Card key={course.id} className={`group hover:shadow-xl transition-all duration-300 border-0 ${isUnlocked ? 'bg-white' : 'bg-gray-50 opacity-75'}`}>
                   <CardHeader className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <div className={`p-3 rounded-lg ${course.color}`}>
-                        {(() => {
-                          const IconComponent = iconMap[course.icon] || BookOpen;
-                          return <IconComponent className="h-6 w-6 text-white" />;
-                        })()}
+                      <div className={`p-3 rounded-lg ${course.color} ${!isUnlocked ? 'opacity-50' : ''}`}>
+                        {!isUnlocked ? (
+                          <Lock className="h-6 w-6 text-white" />
+                        ) : (
+                          (() => {
+                            const IconComponent = iconMap[course.icon] || BookOpen;
+                            return <IconComponent className="h-6 w-6 text-white" />;
+                          })()
+                        )}
                       </div>
-                      <Badge
-                        variant="secondary"
-                        className={`
-                          ${course.level === 'Beginner' ? 'bg-green-100 text-green-700' :
-                            course.level === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-red-100 text-red-700'}
-                        `}
-                      >
-                        {course.level}
-                      </Badge>
+                      <div className="flex space-x-2">
+                        {isCompleted && (
+                          <Badge className="bg-emerald-100 text-emerald-700">
+                            Completed
+                          </Badge>
+                        )}
+                        <Badge
+                          variant="secondary"
+                          className={`
+                            ${course.level === 'Beginner' ? 'bg-green-100 text-green-700' :
+                              course.level === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-red-100 text-red-700'}
+                          `}
+                        >
+                          {course.level}
+                        </Badge>
+                      </div>
                     </div>
                     <div>
-                      <CardTitle className="text-xl group-hover:text-emerald-600 transition-colors">
+                      <CardTitle className={`text-xl transition-colors ${isUnlocked ? 'group-hover:text-emerald-600' : 'text-gray-500'}`}>
                         {course.title}
+                        {!isUnlocked && <Lock className="inline-block ml-2 h-4 w-4" />}
                       </CardTitle>
-                      <CardDescription className="text-slate-600 mt-2">
-                        {course.description}
+                      <CardDescription className={`mt-2 ${isUnlocked ? 'text-slate-600' : 'text-gray-400'}`}>
+                        {isUnlocked ? course.description : 'Complete previous courses to unlock'}
                       </CardDescription>
                     </div>
                   </CardHeader>
@@ -156,17 +179,24 @@ const Courses = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-600">Your Progress</span>
-                        <span className="text-slate-900 font-medium">0%</span>
+                        <span className="text-slate-900 font-medium">{progressPercentage.toFixed(0)}%</span>
                       </div>
-                      <Progress value={0} className="h-2" />
+                      <Progress value={progressPercentage} className="h-2" />
                     </div>
 
-                    <Link to={`/course/${course.id}`} className="block">
-                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white group-hover:bg-emerald-700">
-                        Start Course
-                        <ArrowRight className="ml-2 h-4 w-4" />
+                    {isUnlocked ? (
+                      <Link to={`/course/${course.id}`} className="block">
+                        <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white group-hover:bg-emerald-700">
+                          {isCompleted ? 'Review Course' : progressPercentage > 0 ? 'Continue Course' : 'Start Course'}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button disabled className="w-full bg-gray-300 text-gray-500 cursor-not-allowed">
+                        <Lock className="mr-2 h-4 w-4" />
+                        Course Locked
                       </Button>
-                    </Link>
+                    )}
                   </CardContent>
                 </Card>
               );

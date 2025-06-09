@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSocialVerification } from "@/contexts/SocialVerificationContext";
 import { useProfile } from "@/hooks/useProfile";
+import { useCourseProgression } from "@/hooks/useCourseProgression";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import BottomNavigation from "./BottomNavigation";
 import SocialVerification from "../SocialVerification";
@@ -18,6 +19,7 @@ const MobileHome = () => {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const { isVerified, setVerified } = useSocialVerification();
+  const { isCourseUnlocked, userProgress } = useCourseProgression();
   const [showSocialVerification, setShowSocialVerification] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
 
@@ -152,8 +154,8 @@ const MobileHome = () => {
         </div>
 
         <div className="space-y-4">
-          {featuredCourses.map((course, index) => {
-            const isUnlocked = course.id === "foundation"; // Only foundation is unlocked
+          {featuredCourses.map((course) => {
+            const isUnlocked = isCourseUnlocked(course.id);
             return (
               <Card
                 key={course.id}

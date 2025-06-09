@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useCourseProgression } from "@/hooks/useCourseProgression";
 import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +9,18 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { courses } from "@/data/courses";
 import TradingDemo from "@/components/TradingDemo";
+import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
 
 const MobileCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const [completedChapters, setCompletedChapters] = useState<string[]>([]);
+  const { updateChapterProgress, getCourseProgress } = useCourseProgression();
   const [selectedModule, setSelectedModule] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
+
+  // Get completed chapters from progression system
+  const courseProgress = getCourseProgress(courseId || '');
+  const completedChapters = courseProgress?.completedChapters || [];
 
   const course = courseId ? courses[courseId] : undefined;
 
@@ -52,8 +58,9 @@ const MobileCourse = () => {
 
   const markChapterComplete = () => {
     const chapterId = getChapterId(selectedModule, selectedChapter);
-    if (!completedChapters.includes(chapterId)) {
-      setCompletedChapters([...completedChapters, chapterId]);
+    if (!completedChapters.includes(chapterId) && courseId) {
+      const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
+      updateChapterProgress(courseId, chapterId, totalChapters);
     }
   };
 
@@ -203,8 +210,8 @@ const MobileCourse = () => {
                       }}
                       disabled={!isChapterUnlocked(moduleIndex, chapterIndex)}
                       className={`w-full text-left p-3 border-l-4 transition-all ${selectedModule === moduleIndex && selectedChapter === chapterIndex
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-transparent hover:bg-slate-50'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-transparent hover:bg-slate-50'
                         } ${!isChapterUnlocked(moduleIndex, chapterIndex)
                           ? 'opacity-50 cursor-not-allowed'
                           : 'cursor-pointer'
@@ -272,7 +279,11 @@ const MobileCourse = () => {
                           Practice trading with virtual funds - no real money at risk!
                         </p>
                       </div>
-                      <TradingDemo courseType={(currentChapter as any).demoProps?.courseType || "degen"} />
+                      {(currentChapter as any).demoProps?.courseType === "degen" ? (
+                        <CrossChainTradingDemo />
+                      ) : (
+                        <TradingDemo courseType={(currentChapter as any).demoProps?.courseType || "basic"} />
+                      )}
                     </div>
                   )}
 
