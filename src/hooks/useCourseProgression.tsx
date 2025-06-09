@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -22,30 +23,55 @@ export interface UserProgressData {
 const COURSE_PROGRESSION = {
   foundation: {
     id: 'foundation',
+    title: 'Foundation',
+    level: 'Foundation',
+    category: 'fundamentals',
+    difficulty: 1,
+    estimatedTime: '2-3 weeks',
     unlocks: ['defi'],
     xpReward: 500,
     prerequisites: []
   },
   defi: {
     id: 'defi',
+    title: 'DeFi Fundamentals',
+    level: 'Beginner',
+    category: 'defi',
+    difficulty: 2,
+    estimatedTime: '3-4 weeks',
     unlocks: ['degen'],
     xpReward: 750,
     prerequisites: ['foundation']
   },
   degen: {
     id: 'degen',
+    title: 'Degen Trading Mastery',
+    level: 'Intermediate',
+    category: 'trading',
+    difficulty: 3,
+    estimatedTime: '4-6 weeks',
     unlocks: ['advanced-trading'],
     xpReward: 1000,
     prerequisites: ['defi']
   },
   'advanced-trading': {
     id: 'advanced-trading',
+    title: 'Advanced Trading Strategies',
+    level: 'Advanced',
+    category: 'trading',
+    difficulty: 4,
+    estimatedTime: '5-7 weeks',
     unlocks: ['development'],
     xpReward: 1200,
     prerequisites: ['degen']
   },
   development: {
     id: 'development',
+    title: 'Blockchain Development',
+    level: 'Expert',
+    category: 'development',
+    difficulty: 5,
+    estimatedTime: '6-8 weeks',
     unlocks: [],
     xpReward: 1500,
     prerequisites: ['advanced-trading']
@@ -170,6 +196,11 @@ export const useCourseProgression = () => {
     ) || null;
   };
 
+  // Check if user has completed both degen and advanced-trading to unlock demos
+  const isDemoUnlocked = (): boolean => {
+    return isCourseCompleted('degen') && isCourseCompleted('advanced-trading');
+  };
+
   return {
     userProgress,
     isCourseUnlocked,
@@ -178,6 +209,7 @@ export const useCourseProgression = () => {
     updateChapterProgress,
     resetProgress,
     getNextUnlockedCourse,
+    isDemoUnlocked,
     courseProgression: COURSE_PROGRESSION
   };
 };

@@ -1,395 +1,214 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Calculator, 
-  TrendingUp, 
-  BarChart3, 
-  Gamepad2, 
-  Lock, 
-  Zap,
-  DollarSign,
-  Percent,
-  Clock,
-  AlertTriangle
-} from "lucide-react";
-import { InteractiveTool, interactiveTools } from "@/data/interactiveTools";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUp, BarChart3, Zap, DollarSign, Lock, CheckCircle } from "lucide-react";
+import { useCourseProgression } from "@/hooks/useCourseProgression";
 
-interface InteractiveToolsHubProps {
-  userXP: number;
-  completedCourses: string[];
-  onToolSelect: (toolId: string) => void;
-}
+const InteractiveToolsHub = () => {
+  const { isDemoUnlocked } = useCourseProgression();
+  const demoUnlocked = isDemoUnlocked();
 
-interface ToolCalculatorProps {
-  tool: InteractiveTool;
-}
+  const tools = [
+    {
+      id: 'realistic-trading',
+      title: 'Realistic Trading Demo',
+      description: 'Practice trading with real market data and professional tools',
+      icon: TrendingUp,
+      color: 'bg-emerald-600',
+      difficulty: 'Intermediate',
+      estimatedTime: '30-45 min',
+      unlocked: demoUnlocked,
+      requiredCourses: ['Degen Trading', 'Advanced Trading']
+    },
+    {
+      id: 'cross-chain',
+      title: 'Cross-Chain Trading',
+      description: 'Learn to trade across different blockchain networks',
+      icon: BarChart3,
+      color: 'bg-blue-600',
+      difficulty: 'Advanced',
+      estimatedTime: '20-30 min',
+      unlocked: demoUnlocked,
+      requiredCourses: ['Degen Trading', 'Advanced Trading']
+    },
+    {
+      id: 'defi-strategies',
+      title: 'DeFi Strategy Simulator',
+      description: 'Experiment with yield farming and liquidity strategies',
+      icon: Zap,
+      color: 'bg-purple-600',
+      difficulty: 'Beginner',
+      estimatedTime: '15-20 min',
+      unlocked: true,
+      requiredCourses: ['DeFi Fundamentals']
+    },
+    {
+      id: 'portfolio-optimizer',
+      title: 'Portfolio Optimizer',
+      description: 'Optimize your crypto portfolio allocation',
+      icon: DollarSign,
+      color: 'bg-orange-600',
+      difficulty: 'Intermediate',
+      estimatedTime: '25-35 min',
+      unlocked: true,
+      requiredCourses: ['Foundation']
+    }
+  ];
 
-const YieldCalculator: React.FC = () => {
-  const [principal, setPrincipal] = useState(1000);
-  const [apy, setApy] = useState([10]);
-  const [duration, setDuration] = useState('1year');
-  const [compounding, setCompounding] = useState('daily');
-  const [fees, setFees] = useState(0);
-  
-  const calculateYield = () => {
-    const periods = {
-      'daily': 365,
-      'weekly': 52,
-      'monthly': 12
-    }[compounding] || 365;
+  const handleToolClick = (toolId: string, unlocked: boolean) => {
+    if (!unlocked) return;
     
-    const years = {
-      '1month': 1/12,
-      '3months': 0.25,
-      '6months': 0.5,
-      '1year': 1,
-      '2years': 2
-    }[duration] || 1;
-    
-    const rate = (apy[0] - fees) / 100;
-    const finalAmount = principal * Math.pow(1 + rate / periods, periods * years);
-    const totalReturn = finalAmount - principal;
-    const returnPercentage = (totalReturn / principal) * 100;
-    const monthlyIncome = totalReturn / (years * 12);
-    
-    return {
-      finalAmount: finalAmount.toFixed(2),
-      totalReturn: totalReturn.toFixed(2),
-      returnPercentage: returnPercentage.toFixed(2),
-      monthlyIncome: monthlyIncome.toFixed(2)
-    };
+    switch (toolId) {
+      case 'realistic-trading':
+        window.location.href = '/demo?tool=realistic-trading';
+        break;
+      case 'cross-chain':
+        window.location.href = '/demo?tool=cross-chain';
+        break;
+      case 'defi-strategies':
+        window.location.href = '/demo?tool=defi-strategies';
+        break;
+      case 'portfolio-optimizer':
+        window.location.href = '/demo?tool=portfolio-optimizer';
+        break;
+    }
   };
-  
-  const results = calculateYield();
-  
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty.toLowerCase()) {
+      case 'beginner': return 'bg-green-100 text-green-700';
+      case 'intermediate': return 'bg-yellow-100 text-yellow-700';
+      case 'advanced': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="principal">Initial Investment ($)</Label>
-            <Input
-              id="principal"
-              type="number"
-              value={principal}
-              onChange={(e) => setPrincipal(Number(e.target.value))}
-              className="mt-1"
-            />
-          </div>
-          
-          <div>
-            <Label>Annual Percentage Yield: {apy[0]}%</Label>
-            <Slider
-              value={apy}
-              onValueChange={setApy}
-              max={100}
-              step={0.1}
-              className="mt-2"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="duration">Investment Duration</Label>
-            <Select value={duration} onValueChange={setDuration}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1month">1 Month</SelectItem>
-                <SelectItem value="3months">3 Months</SelectItem>
-                <SelectItem value="6months">6 Months</SelectItem>
-                <SelectItem value="1year">1 Year</SelectItem>
-                <SelectItem value="2years">2 Years</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label htmlFor="compounding">Compounding Frequency</Label>
-            <Select value={compounding} onValueChange={setCompounding}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label htmlFor="fees">Platform Fees (%)</Label>
-            <Input
-              id="fees"
-              type="number"
-              value={fees}
-              onChange={(e) => setFees(Number(e.target.value))}
-              step="0.1"
-              className="mt-1"
-            />
-          </div>
+    <div className="min-h-screen bg-slate-50 py-16 px-4 md:px-6">
+      <div className="container mx-auto max-w-6xl">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            Interactive Trading Tools
+          </h1>
+          <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+            Practice your skills with real-world trading simulations and interactive tools. 
+            Complete courses to unlock advanced demos.
+          </p>
         </div>
-        
-        <div className="space-y-4">
-          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <DollarSign className="w-5 h-5 text-emerald-600" />
-                <span className="font-medium text-emerald-800">Final Amount</span>
-              </div>
-              <div className="text-2xl font-bold text-emerald-700">
-                ${results.finalAmount}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                <span className="font-medium text-blue-800">Total Return</span>
-              </div>
-              <div className="text-2xl font-bold text-blue-700">
-                ${results.totalReturn}
-              </div>
-              <div className="text-sm text-blue-600">
-                {results.returnPercentage}% return
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <Clock className="w-5 h-5 text-purple-600" />
-                <span className="font-medium text-purple-800">Monthly Income</span>
-              </div>
-              <div className="text-2xl font-bold text-purple-700">
-                ${results.monthlyIncome}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-start space-x-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
-              <div className="text-sm text-yellow-800">
-                <div className="font-medium mb-1">Important Notes:</div>
-                <ul className="space-y-1 text-xs">
-                  <li>• Calculations assume constant APY (actual yields vary)</li>
-                  <li>• Does not account for impermanent loss in LP positions</li>
-                  <li>• Consider smart contract and platform risks</li>
-                  <li>• Past performance doesn't guarantee future results</li>
-                </ul>
+
+        {/* Unlock Status Banner */}
+        {!demoUnlocked && (
+          <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <Lock className="h-6 w-6 text-amber-600" />
+              <div>
+                <h3 className="text-lg font-semibold text-amber-800">Advanced Demos Locked</h3>
+                <p className="text-amber-700">
+                  Complete the "Degen Trading" and "Advanced Trading" courses to unlock professional trading demos.
+                </p>
               </div>
             </div>
           </div>
+        )}
+
+        {/* Tools Grid */}
+        <div className="grid md:grid-cols-2 gap-8">
+          {tools.map((tool) => {
+            const IconComponent = tool.icon;
+            return (
+              <Card 
+                key={tool.id} 
+                className={`group transition-all duration-300 border-0 shadow-lg ${
+                  tool.unlocked 
+                    ? 'hover:shadow-xl cursor-pointer' 
+                    : 'opacity-60 cursor-not-allowed'
+                }`}
+                onClick={() => handleToolClick(tool.id, tool.unlocked)}
+              >
+                <CardHeader className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className={`p-3 rounded-lg ${tool.color} ${!tool.unlocked ? 'opacity-50' : ''}`}>
+                      {tool.unlocked ? (
+                        <IconComponent className="h-8 w-8 text-white" />
+                      ) : (
+                        <Lock className="h-8 w-8 text-white" />
+                      )}
+                    </div>
+                    <div className="flex space-x-2">
+                      {tool.unlocked && (
+                        <Badge className="bg-emerald-100 text-emerald-700">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Unlocked
+                        </Badge>
+                      )}
+                      <Badge 
+                        variant="secondary" 
+                        className={getDifficultyColor(tool.difficulty)}
+                      >
+                        {tool.difficulty}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <CardTitle className={`text-xl transition-colors ${
+                      tool.unlocked ? 'group-hover:text-emerald-600' : 'text-gray-500'
+                    }`}>
+                      {tool.title}
+                      {!tool.unlocked && <Lock className="inline-block ml-2 h-4 w-4" />}
+                    </CardTitle>
+                    <CardDescription className={`mt-2 ${
+                      tool.unlocked ? 'text-slate-600' : 'text-gray-400'
+                    }`}>
+                      {tool.unlocked ? tool.description : `Complete: ${tool.requiredCourses.join(', ')}`}
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between text-sm text-slate-600">
+                    <span>Estimated Time: {tool.estimatedTime}</span>
+                    <span>Required: {tool.requiredCourses.join(', ')}</span>
+                  </div>
+
+                  <Button 
+                    className={`w-full ${
+                      tool.unlocked 
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                    disabled={!tool.unlocked}
+                  >
+                    {tool.unlocked ? (
+                      <>
+                        <TrendingUp className="mr-2 h-4 w-4" />
+                        Launch Tool
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="mr-2 h-4 w-4" />
+                        Locked
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Progress Indicator */}
+        <div className="mt-12 text-center">
+          <div className="inline-flex items-center space-x-2 bg-white px-6 py-3 rounded-full shadow-md">
+            <CheckCircle className="h-5 w-5 text-emerald-600" />
+            <span className="text-slate-700">
+              {tools.filter(t => t.unlocked).length} of {tools.length} tools unlocked
+            </span>
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-const ToolCard: React.FC<{ tool: InteractiveTool; isLocked: boolean; onClick: () => void }> = ({ 
-  tool, 
-  isLocked, 
-  onClick 
-}) => {
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'calculator': return Calculator;
-      case 'simulator': return Gamepad2;
-      case 'analyzer': return BarChart3;
-      case 'tracker': return TrendingUp;
-      default: return Calculator;
-    }
-  };
-  
-  const Icon = getCategoryIcon(tool.category);
-  
-  return (
-    <Card 
-      className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
-        isLocked ? 'opacity-50' : 'hover:scale-105'
-      }`}
-      onClick={!isLocked ? onClick : undefined}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className={`p-2 rounded-lg ${
-            isLocked ? 'bg-gray-200' : 'bg-blue-100'
-          }`}>
-            {isLocked ? (
-              <Lock className="w-6 h-6 text-gray-500" />
-            ) : (
-              <Icon className="w-6 h-6 text-blue-600" />
-            )}
-          </div>
-          <Badge 
-            variant={tool.difficulty === 'beginner' ? 'default' : 
-                    tool.difficulty === 'intermediate' ? 'secondary' : 'destructive'}
-          >
-            {tool.difficulty}
-          </Badge>
-        </div>
-        <CardTitle className="text-lg">{tool.name}</CardTitle>
-        <CardDescription>{tool.description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div className="flex flex-wrap gap-1">
-            {tool.features.slice(0, 3).map((feature, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {feature}
-              </Badge>
-            ))}
-            {tool.features.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{tool.features.length - 3} more
-              </Badge>
-            )}
-          </div>
-          
-          {isLocked && tool.unlockRequirement && (
-            <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-              <div className="flex items-center space-x-1">
-                <Lock className="w-4 h-4" />
-                <span>Unlock requirement:</span>
-              </div>
-              <div className="mt-1">
-                {tool.unlockRequirement.course && `Complete ${tool.unlockRequirement.course} course`}
-                {tool.unlockRequirement.xp && `Reach ${tool.unlockRequirement.xp} XP`}
-                {tool.unlockRequirement.achievement && `Earn ${tool.unlockRequirement.achievement} achievement`}
-              </div>
-            </div>
-          )}
-          
-          <Button 
-            className="w-full" 
-            disabled={isLocked}
-            variant={isLocked ? "outline" : "default"}
-          >
-            {isLocked ? 'Locked' : 'Use Tool'}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const InteractiveToolsHub: React.FC<InteractiveToolsHubProps> = ({
-  userXP,
-  completedCourses,
-  onToolSelect
-}) => {
-  const [selectedTool, setSelectedTool] = useState<InteractiveTool | null>(null);
-  const [filter, setFilter] = useState<string>('all');
-  
-  const isToolUnlocked = (tool: InteractiveTool): boolean => {
-    if (!tool.unlockRequirement) return true;
-    
-    if (tool.unlockRequirement.course) {
-      return completedCourses.includes(tool.unlockRequirement.course);
-    }
-    
-    if (tool.unlockRequirement.xp) {
-      return userXP >= tool.unlockRequirement.xp;
-    }
-    
-    return true;
-  };
-  
-  const filteredTools = interactiveTools.filter(tool => {
-    if (filter === 'all') return true;
-    if (filter === 'unlocked') return isToolUnlocked(tool);
-    if (filter === 'locked') return !isToolUnlocked(tool);
-    return tool.category === filter;
-  });
-  
-  const categories = ['all', 'unlocked', 'locked', 'calculator', 'simulator', 'analyzer', 'tracker'];
-  
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Interactive Tools</h2>
-          <p className="text-gray-600">Practice and analyze with hands-on tools</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Zap className="w-5 h-5 text-yellow-500" />
-          <span className="font-medium">{userXP} XP</span>
-        </div>
-      </div>
-      
-      {/* Filter Tabs */}
-      <Tabs value={filter} onValueChange={setFilter}>
-        <TabsList className="grid grid-cols-4 lg:grid-cols-8 w-full">
-          {categories.map(category => (
-            <TabsTrigger key={category} value={category} className="capitalize">
-              {category}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-      
-      {selectedTool ? (
-        <div className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setSelectedTool(null)}
-            >
-              ← Back to Tools
-            </Button>
-            <h3 className="text-xl font-bold">{selectedTool.name}</h3>
-          </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>{selectedTool.name}</CardTitle>
-              <CardDescription>{selectedTool.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selectedTool.id === 'yield_calculator' && <YieldCalculator />}
-              {selectedTool.id !== 'yield_calculator' && (
-                <div className="text-center py-8 text-gray-500">
-                  Tool implementation coming soon...
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTools.map(tool => (
-            <ToolCard
-              key={tool.id}
-              tool={tool}
-              isLocked={!isToolUnlocked(tool)}
-              onClick={() => {
-                setSelectedTool(tool);
-                onToolSelect(tool.id);
-              }}
-            />
-          ))}
-        </div>
-      )}
-      
-      {filteredTools.length === 0 && (
-        <div className="text-center py-12">
-          <Calculator className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No tools found</h3>
-          <p className="text-gray-600">Try adjusting your filter or complete more courses to unlock tools.</p>
-        </div>
-      )}
     </div>
   );
 };
