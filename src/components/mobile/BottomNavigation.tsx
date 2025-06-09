@@ -1,5 +1,5 @@
 
-import { Home, User, Search, Zap, Trophy } from "lucide-react";
+import { Home, User, Search, Zap, Trophy, BookOpen, Settings } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
 const BottomNavigation = () => {
@@ -19,16 +19,28 @@ const BottomNavigation = () => {
       isActive: location.pathname === "/mobile/explore"
     },
     {
-      icon: Trophy,
-      label: "Rewards",
-      path: "/mobile/gamification",
-      isActive: location.pathname === "/mobile/gamification"
+      icon: BookOpen,
+      label: "Courses",
+      path: "/mobile/courses",
+      isActive: location.pathname === "/mobile/courses"
     },
     {
       icon: Zap,
       label: "Demo",
       path: "/demo",
       isActive: location.pathname === "/demo"
+    },
+    {
+      icon: Trophy,
+      label: "Rewards",
+      path: "/mobile/gamification",
+      isActive: location.pathname === "/mobile/gamification"
+    },
+    {
+      icon: Settings,
+      label: "Settings",
+      path: "/mobile/settings",
+      isActive: location.pathname === "/mobile/settings"
     },
     {
       icon: User,
@@ -40,7 +52,7 @@ const BottomNavigation = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 md:hidden">
-      <div className="grid grid-cols-5 h-16">
+      <div className="grid grid-cols-7 h-16">
         {navItems.map((item) => (
           <Link
             key={item.path}
@@ -50,7 +62,7 @@ const BottomNavigation = () => {
               : 'text-slate-500 hover:text-slate-700'
               }`}
           >
-            <item.icon className={`h-5 w-5 ${item.isActive ? 'text-blue-600' : ''}`} />
+            <item.icon className={`h-4 w-4 ${item.isActive ? 'text-blue-600' : ''}`} />
             <span className={`text-xs font-medium ${item.isActive ? 'text-blue-600' : ''}`}>
               {item.label}
             </span>
