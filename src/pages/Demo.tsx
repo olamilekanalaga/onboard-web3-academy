@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ const Demo = () => {
       case 'crosschain':
         return <CrossChainTradingDemo />;
       case 'basic':
-        return <TradingDemo courseType="basic" />;
+        return <TradingDemo courseType="degen" />;
       default:
         return null;
     }

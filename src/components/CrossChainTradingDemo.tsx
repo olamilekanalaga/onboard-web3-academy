@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -33,10 +32,8 @@ import {
   SiEthereum,
   SiPolygon,
   SiBinance,
-  SiSolana,
-  SiOptimism
+  SiSolana
 } from "react-icons/si";
-import { FaBitcoin } from "react-icons/fa";
 
 interface Blockchain {
   id: string;
@@ -138,7 +135,7 @@ const CrossChainTradingDemo: React.FC = () => {
       name: 'Avalanche Fuji',
       symbol: 'AVAX',
       color: 'bg-red-500',
-      icon: Layers, // Using Lucide Layers icon instead of SiOptimism for Avalanche
+      icon: Layers,
       rpcUrl: 'https://api.avax-test.network/ext/bc/C/rpc',
       explorerUrl: 'https://testnet.snowtrace.io',
       nativeToken: 'AVAX',
@@ -150,7 +147,7 @@ const CrossChainTradingDemo: React.FC = () => {
       name: 'Arbitrum Goerli',
       symbol: 'ARB',
       color: 'bg-blue-400',
-      icon: Network, // Using Lucide Network icon instead of SiArbitrum
+      icon: Network,
       rpcUrl: 'https://goerli-rollup.arbitrum.io/rpc',
       explorerUrl: 'https://goerli.arbiscan.io',
       nativeToken: 'ETH',
@@ -210,7 +207,7 @@ const CrossChainTradingDemo: React.FC = () => {
       marketCap: 450000000,
       volatility: 75,
       blockchain: 'polygon',
-      contractAddress: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
+      contractAddress: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A0Dd',
       isDevnet: true,
       liquidity: 890000
     },
@@ -483,7 +480,7 @@ const CrossChainTradingDemo: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className={`w-12 h-12 ${getCurrentBlockchain()?.color} rounded-full flex items-center justify-center text-white text-xl`}>
-                      {getCurrentBlockchain()?.icon && React.createElement(getCurrentBlockchain()!.icon, { className: "w-6 h-6" })}
+                      {getCurrentBlockchain()?.icon && <getCurrentBlockchain()?.icon className="w-6 h-6" />}
                     </div>
                     <div>
                       <h3 className="font-bold">{getCurrentBlockchain()?.name}</h3>
@@ -739,7 +736,7 @@ const CrossChainTradingDemo: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className={`w-12 h-12 ${blockchain.color} rounded-full flex items-center justify-center text-white text-xl`}>
-                          {React.createElement(blockchain.icon, { className: "w-6 h-6" })}
+                          {blockchain.icon && <blockchain.icon className="w-6 h-6" />}
                         </div>
                         <div>
                           <h3 className="font-bold">{blockchain.name}</h3>
