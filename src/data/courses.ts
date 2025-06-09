@@ -1,3 +1,4 @@
+
 // Enhanced interfaces for the comprehensive crypto education platform
 
 export interface Quiz {
@@ -109,17 +110,39 @@ export const courses: Record<string, Course> = {
     id: 'advanced-trading',
     title: 'Advanced Trading Strategies',
     description: 'Master professional trading techniques, risk management, and market analysis',
+    longDescription: 'Deep dive into professional-grade trading strategies, advanced technical analysis, risk management frameworks, and market psychology. Learn from real-world case studies and develop skills used by institutional traders.',
     level: 'Advanced',
     duration: '5-7 weeks',
+    color: 'from-red-400 to-red-600',
+    gradient: 'bg-gradient-to-br from-red-400 to-red-600',
+    icon: null,
+    prerequisites: ['degen'],
+    learningOutcomes: [
+      'Master advanced technical analysis patterns',
+      'Implement professional risk management strategies',
+      'Understand market psychology and sentiment analysis',
+      'Execute complex trading strategies with confidence'
+    ],
+    totalXP: 1200,
+    difficulty: 4,
+    category: 'trading' as const,
+    skills: ['Advanced TA', 'Risk Management', 'Market Psychology', 'Portfolio Management'],
+    certification: {
+      available: true,
+      requirements: ['Complete all modules', 'Pass trading simulation', 'Pass final assessment'],
+      credentialName: 'Advanced Trading Strategies Certificate'
+    },
     xpReward: 1200,
     modules: [
       {
-        id: 'module-1',
+        id: 1,
         title: 'Advanced Technical Analysis',
+        description: 'Master complex chart patterns and technical indicators',
         estimatedTime: '2 weeks',
+        xpReward: 400,
         chapters: [
           {
-            id: 'chapter-1',
+            id: 1,
             title: 'Professional Chart Patterns',
             duration: '45 min',
             content: 'Advanced chart pattern recognition and trading strategies...',
@@ -127,7 +150,10 @@ export const courses: Record<string, Course> = {
               'Complex chart patterns indicate major market moves',
               'Volume confirmation is crucial for pattern validity',
               'Professional traders use multiple timeframe analysis'
-            ]
+            ],
+            xpReward: 100,
+            difficulty: 'hard' as const,
+            tags: ['technical-analysis', 'chart-patterns', 'advanced']
           }
         ]
       }
@@ -138,17 +164,39 @@ export const courses: Record<string, Course> = {
     id: 'development',
     title: 'Blockchain Development',
     description: 'Learn to build decentralized applications and smart contracts',
+    longDescription: 'Comprehensive blockchain development course covering smart contract programming, DApp development, security best practices, and deployment strategies. Build real-world projects and master the tools used by professional blockchain developers.',
     level: 'Expert',
     duration: '6-8 weeks',
+    color: 'from-green-400 to-green-600',
+    gradient: 'bg-gradient-to-br from-green-400 to-green-600',
+    icon: null,
+    prerequisites: ['defi-fundamentals'],
+    learningOutcomes: [
+      'Write secure smart contracts in Solidity',
+      'Build full-stack decentralized applications',
+      'Implement security best practices',
+      'Deploy and maintain blockchain applications'
+    ],
+    totalXP: 1500,
+    difficulty: 5,
+    category: 'development' as const,
+    skills: ['Solidity', 'Web3.js', 'Smart Contracts', 'DApp Development'],
+    certification: {
+      available: true,
+      requirements: ['Complete all modules', 'Build capstone project', 'Pass security audit simulation'],
+      credentialName: 'Blockchain Developer Certificate'
+    },
     xpReward: 1500,
     modules: [
       {
-        id: 'module-1',
+        id: 1,
         title: 'Smart Contract Development',
+        description: 'Learn Solidity and smart contract programming',
         estimatedTime: '3 weeks',
+        xpReward: 500,
         chapters: [
           {
-            id: 'chapter-1',
+            id: 1,
             title: 'Solidity Fundamentals',
             duration: '60 min',
             content: 'Learn the basics of Solidity programming language...',
@@ -156,7 +204,10 @@ export const courses: Record<string, Course> = {
               'Solidity is the primary language for Ethereum smart contracts',
               'Understanding gas optimization is crucial for cost-effective contracts',
               'Security best practices prevent costly vulnerabilities'
-            ]
+            ],
+            xpReward: 125,
+            difficulty: 'hard' as const,
+            tags: ['solidity', 'smart-contracts', 'programming']
           }
         ]
       }
