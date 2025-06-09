@@ -30,7 +30,8 @@ const COURSE_PROGRESSION = {
     estimatedTime: '2-3 weeks',
     unlocks: ['defi'],
     xpReward: 500,
-    prerequisites: []
+    prerequisites: [],
+    totalChapters: 8
   },
   defi: {
     id: 'defi',
@@ -41,7 +42,8 @@ const COURSE_PROGRESSION = {
     estimatedTime: '3-4 weeks',
     unlocks: ['degen'],
     xpReward: 750,
-    prerequisites: ['foundation']
+    prerequisites: ['foundation'],
+    totalChapters: 10
   },
   degen: {
     id: 'degen',
@@ -52,7 +54,8 @@ const COURSE_PROGRESSION = {
     estimatedTime: '4-6 weeks',
     unlocks: ['advanced-trading'],
     xpReward: 1000,
-    prerequisites: ['defi']
+    prerequisites: ['defi'],
+    totalChapters: 18
   },
   'advanced-trading': {
     id: 'advanced-trading',
@@ -63,7 +66,8 @@ const COURSE_PROGRESSION = {
     estimatedTime: '5-7 weeks',
     unlocks: ['development'],
     xpReward: 1200,
-    prerequisites: ['degen']
+    prerequisites: ['degen'],
+    totalChapters: 12
   },
   development: {
     id: 'development',
@@ -74,7 +78,8 @@ const COURSE_PROGRESSION = {
     estimatedTime: '6-8 weeks',
     unlocks: [],
     xpReward: 1500,
-    prerequisites: ['advanced-trading']
+    prerequisites: ['advanced-trading'],
+    totalChapters: 15
   }
 };
 
@@ -82,7 +87,7 @@ export const useCourseProgression = () => {
   const { user } = useAuth();
   const [userProgress, setUserProgress] = useState<UserProgressData>({
     completedCourses: [],
-    unlockedCourses: ['foundation'], // Foundation is always unlocked
+    unlockedCourses: ['foundation'], // Only Foundation is unlocked initially
     totalXP: 0,
     currentLevel: 1,
     courseProgress: {}
@@ -123,19 +128,35 @@ export const useCourseProgression = () => {
     return userProgress.courseProgress[courseId] || null;
   };
 
-  const updateChapterProgress = (courseId: string, chapterId: string, totalChapters: number) => {
+  const getCourseCompletionStatus = (courseId: string): { completed: boolean; canRetake: boolean; completedAt?: Date } => {
+    const isCompleted = isCourseCompleted(courseId);
+    const progress = getCourseProgress(courseId);
+    
+    return {
+      completed: isCompleted,
+      canRetake: isCompleted,
+      completedAt: progress?.completedAt
+    };
+  };
+
+  const updateChapterProgress = (courseId: string, chapterId: string, totalChapters?: number) => {
+    const courseConfig = COURSE_PROGRESSION[courseId as keyof typeof COURSE_PROGRESSION];
+    if (!courseConfig) return;
+
+    const chaptersCount = totalChapters || courseConfig.totalChapters;
+    
     const currentProgress = userProgress.courseProgress[courseId] || {
       courseId,
       completed: false,
       completedChapters: [],
-      totalChapters,
+      totalChapters: chaptersCount,
       progressPercentage: 0,
       xpEarned: 0
     };
 
     if (!currentProgress.completedChapters.includes(chapterId)) {
       const newCompletedChapters = [...currentProgress.completedChapters, chapterId];
-      const progressPercentage = (newCompletedChapters.length / totalChapters) * 100;
+      const progressPercentage = (newCompletedChapters.length / chaptersCount) * 100;
       const isCompleted = progressPercentage === 100;
 
       const updatedProgress = {
@@ -143,7 +164,8 @@ export const useCourseProgression = () => {
         completedChapters: newCompletedChapters,
         progressPercentage,
         completed: isCompleted,
-        completedAt: isCompleted ? new Date() : currentProgress.completedAt
+        completedAt: isCompleted ? new Date() : currentProgress.completedAt,
+        totalChapters: chaptersCount
       };
 
       const newUserProgress = {
@@ -156,22 +178,19 @@ export const useCourseProgression = () => {
 
       // If course is completed, unlock next courses and award XP
       if (isCompleted && !userProgress.completedCourses.includes(courseId)) {
-        const courseConfig = COURSE_PROGRESSION[courseId as keyof typeof COURSE_PROGRESSION];
-        if (courseConfig) {
-          newUserProgress.completedCourses = [...userProgress.completedCourses, courseId];
-          newUserProgress.totalXP = userProgress.totalXP + courseConfig.xpReward;
-          newUserProgress.currentLevel = Math.floor(newUserProgress.totalXP / 500) + 1;
-          
-          // Unlock next courses
-          courseConfig.unlocks.forEach(nextCourseId => {
-            if (!newUserProgress.unlockedCourses.includes(nextCourseId)) {
-              newUserProgress.unlockedCourses = [...newUserProgress.unlockedCourses, nextCourseId];
-            }
-          });
+        newUserProgress.completedCourses = [...userProgress.completedCourses, courseId];
+        newUserProgress.totalXP = userProgress.totalXP + courseConfig.xpReward;
+        newUserProgress.currentLevel = Math.floor(newUserProgress.totalXP / 500) + 1;
+        
+        // Unlock next courses
+        courseConfig.unlocks.forEach(nextCourseId => {
+          if (!newUserProgress.unlockedCourses.includes(nextCourseId)) {
+            newUserProgress.unlockedCourses = [...newUserProgress.unlockedCourses, nextCourseId];
+          }
+        });
 
-          // Update XP earned for this course
-          updatedProgress.xpEarned = courseConfig.xpReward;
-        }
+        // Update XP earned for this course
+        updatedProgress.xpEarned = courseConfig.xpReward;
       }
 
       saveProgress(newUserProgress);
@@ -181,7 +200,7 @@ export const useCourseProgression = () => {
   const resetProgress = () => {
     const initialProgress: UserProgressData = {
       completedCourses: [],
-      unlockedCourses: ['foundation'],
+      unlockedCourses: ['foundation'], // Only Foundation unlocked initially
       totalXP: 0,
       currentLevel: 1,
       courseProgress: {}
@@ -201,15 +220,60 @@ export const useCourseProgression = () => {
     return isCourseCompleted('degen') && isCourseCompleted('advanced-trading');
   };
 
+  // For testing purposes - complete a course manually
+  const completeCourse = (courseId: string) => {
+    const courseConfig = COURSE_PROGRESSION[courseId as keyof typeof COURSE_PROGRESSION];
+    if (!courseConfig) return;
+
+    // Mark all chapters as completed
+    const allChapters = Array.from({ length: courseConfig.totalChapters }, (_, i) => `chapter-${i + 1}`);
+    
+    const updatedProgress: CourseProgress = {
+      courseId,
+      completed: true,
+      completedChapters: allChapters,
+      totalChapters: courseConfig.totalChapters,
+      progressPercentage: 100,
+      completedAt: new Date(),
+      xpEarned: courseConfig.xpReward
+    };
+
+    const newUserProgress = {
+      ...userProgress,
+      courseProgress: {
+        ...userProgress.courseProgress,
+        [courseId]: updatedProgress
+      }
+    };
+
+    // Add to completed courses if not already there
+    if (!userProgress.completedCourses.includes(courseId)) {
+      newUserProgress.completedCourses = [...userProgress.completedCourses, courseId];
+      newUserProgress.totalXP = userProgress.totalXP + courseConfig.xpReward;
+      newUserProgress.currentLevel = Math.floor(newUserProgress.totalXP / 500) + 1;
+      
+      // Unlock next courses
+      courseConfig.unlocks.forEach(nextCourseId => {
+        if (!newUserProgress.unlockedCourses.includes(nextCourseId)) {
+          newUserProgress.unlockedCourses = [...newUserProgress.unlockedCourses, nextCourseId];
+        }
+      });
+    }
+
+    saveProgress(newUserProgress);
+  };
+
   return {
     userProgress,
     isCourseUnlocked,
     isCourseCompleted,
     getCourseProgress,
+    getCourseCompletionStatus,
     updateChapterProgress,
     resetProgress,
     getNextUnlockedCourse,
     isDemoUnlocked,
+    completeCourse, // For testing
     courseProgression: COURSE_PROGRESSION
   };
 };
