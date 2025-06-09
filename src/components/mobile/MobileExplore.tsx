@@ -10,22 +10,30 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import BottomNavigation from "./BottomNavigation";
 import SocialVerification from "../SocialVerification";
-import { courses } from "@/data/courses";
 
 const MobileExplore = () => {
   const navigate = useNavigate();
   const { isVerified, setVerified } = useSocialVerification();
-  const { isCourseUnlocked } = useCourseProgression();
+  const { isCourseUnlocked, courseProgression } = useCourseProgression();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showSocialVerification, setShowSocialVerification] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
 
-  // Get real course data - only show the modern courses we want to feature
-  const featuredCourseIds = ["foundation", "defi", "degen", "advanced-trading", "development"];
-  const courseList = Object.values(courses).filter(course => featuredCourseIds.includes(course.id));
+  // Convert course progression data to display format
+  const courseList = Object.values(courseProgression).map(course => ({
+    id: course.id,
+    title: course.title || course.id,
+    description: `Learn ${course.title} with ${course.xpReward} XP reward`,
+    level: course.level || 'Beginner',
+    category: course.category || 'fundamentals',
+    duration: course.estimatedTime || '2-4 weeks',
+    totalXP: course.xpReward,
+    difficulty: course.difficulty || 1,
+    skills: [`${course.title} Fundamentals`, 'Practical Skills', 'Real Applications']
+  }));
 
-  // Create categories from actual course data with better icons
+  // Create categories from progression data
   const categories = [
     { name: "All", key: "all", icon: "📖", count: courseList.length },
     { name: "Foundation", key: "fundamentals", icon: "🏗️", count: courseList.filter(c => c.category === "fundamentals").length },
@@ -34,11 +42,6 @@ const MobileExplore = () => {
     { name: "Development", key: "development", icon: "⚡", count: courseList.filter(c => c.category === "development").length },
     { name: "Security", key: "security", icon: "🛡️", count: courseList.filter(c => c.category === "security").length }
   ];
-
-  // Use real course progression system
-  const isUnlocked = (courseId: string) => {
-    return isCourseUnlocked(courseId);
-  };
 
   // Filter and sort courses based on search and category
   const filteredCourses = courseList
@@ -156,7 +159,7 @@ const MobileExplore = () => {
 
         <div className="space-y-4">
           {filteredCourses.map((course, index) => {
-            const unlocked = isUnlocked(course.id);
+            const unlocked = isCourseUnlocked(course.id);
             return (
               <Card key={course.id} className={`border-0 shadow-sm ${!unlocked ? 'opacity-60' : ''}`}>
                 <CardContent className="p-4">

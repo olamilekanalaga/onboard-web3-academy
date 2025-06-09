@@ -7,14 +7,13 @@ import { Progress } from "@/components/ui/progress";
 import { BookOpen, Clock, Users, Star, ArrowRight, Filter, Search, Coins, Target, TrendingUp, Code, BarChart3, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
-import { courses } from "@/data/courses";
 import { useState } from "react";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
 
 const Courses = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("all");
-  const { userProgress, isCourseUnlocked, isCourseCompleted, getCourseProgress } = useCourseProgression();
+  const { userProgress, isCourseUnlocked, isCourseCompleted, getCourseProgress, courseProgression } = useCourseProgression();
 
   const levels = ["all", "Foundation", "Beginner", "Intermediate", "Advanced", "Expert"];
 
@@ -28,9 +27,18 @@ const Courses = () => {
     BookOpen, // fallback
   };
 
-  // Only show the modern courses we want to feature
-  const featuredCourseIds = ["foundation", "defi", "degen", "advanced-trading", "development"];
-  const allCourses = Object.values(courses).filter(course => featuredCourseIds.includes(course.id));
+  // Convert course progression data to display format
+  const allCourses = Object.values(courseProgression).map(course => ({
+    id: course.id,
+    title: course.title || course.id,
+    description: `Learn ${course.title} and earn ${course.xpReward} XP. Master essential skills for Web3 success.`,
+    level: course.level || 'Beginner',
+    difficulty: course.difficulty || 1,
+    color: 'bg-emerald-600', // Default color
+    icon: 'Target', // Default icon
+    totalXP: course.xpReward,
+    modules: [{ chapters: Array(5).fill(null) }] // Mock module structure for stats
+  }));
 
   const filteredCourses = allCourses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -40,8 +48,8 @@ const Courses = () => {
   }).sort((a, b) => a.difficulty - b.difficulty); // Sort by difficulty
 
   const getCourseStats = (courseId: string) => {
-    const course = courses[courseId];
-    const totalChapters = course.modules.reduce((acc, module) => acc + module.chapters.length, 0);
+    // Mock stats since we don't have the detailed module data
+    const totalChapters = 5; // Default chapters per course
     const estimatedHours = Math.ceil(totalChapters * 0.5); // 30 min per chapter
     return { totalChapters, estimatedHours };
   };
@@ -122,7 +130,7 @@ const Courses = () => {
                           <Lock className="h-6 w-6 text-white" />
                         ) : (
                           (() => {
-                            const IconComponent = iconMap[course.icon] || BookOpen;
+                            const IconComponent = iconMap[course.icon] || Target;
                             return <IconComponent className="h-6 w-6 text-white" />;
                           })()
                         )}
@@ -136,7 +144,8 @@ const Courses = () => {
                         <Badge
                           variant="secondary"
                           className={`
-                            ${course.level === 'Beginner' ? 'bg-green-100 text-green-700' :
+                            ${course.level === 'Foundation' ? 'bg-emerald-100 text-emerald-700' :
+                              course.level === 'Beginner' ? 'bg-green-100 text-green-700' :
                               course.level === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
                                 'bg-red-100 text-red-700'}
                           `}
