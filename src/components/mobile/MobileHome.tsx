@@ -7,6 +7,8 @@ import { BookOpen, Clock, Award, TrendingUp, Play, ChevronRight, Target, Zap } f
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSocialVerification } from "@/contexts/SocialVerificationContext";
+import { useProfile } from "@/hooks/useProfile";
+import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import BottomNavigation from "./BottomNavigation";
 import SocialVerification from "../SocialVerification";
 import { courses } from "@/data/courses";
@@ -14,6 +16,7 @@ import { courses } from "@/data/courses";
 const MobileHome = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: profile } = useProfile();
   const { isVerified, setVerified } = useSocialVerification();
   const [showSocialVerification, setShowSocialVerification] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
@@ -78,19 +81,19 @@ const MobileHome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="bg-gradient-to-br from-emerald-600 to-blue-700 px-6 pt-12 pb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">
-              Welcome back, {user?.email?.split('@')[0] || 'Learner'}!
+              Welcome back, {getDisplayName(profile, user)}!
             </h1>
             <p className="text-emerald-100">Start your Web3 learning journey</p>
           </div>
           <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
             <span className="text-white font-bold text-lg">
-              {user?.email?.charAt(0).toUpperCase() || 'U'}
+              {getUserInitials(profile, user)}
             </span>
           </div>
         </div>

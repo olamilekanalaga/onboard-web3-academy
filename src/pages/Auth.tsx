@@ -23,6 +23,7 @@ const signInSchema = z.object({
 const signUpSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  username: z.string().min(3, "Username must be at least 3 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   countryId: z.string().min(1, "Please select your country"),
   phone: z.string().optional(),
@@ -53,7 +54,7 @@ const Auth = () => {
 
   const signUpForm = useForm({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { email: "", password: "", fullName: "", countryId: "", phone: "" }
+    defaultValues: { email: "", password: "", username: "", fullName: "", countryId: "", phone: "" }
   });
 
   const handleSignIn = async (values: z.infer<typeof signInSchema>) => {
@@ -77,6 +78,7 @@ const Auth = () => {
     const selectedCountry = countries?.find(c => c.id.toString() === values.countryId);
 
     const { error } = await signUp(values.email, values.password, {
+      username: values.username,
       full_name: values.fullName,
       country_id: parseInt(values.countryId),
       timezone: selectedCountry?.timezone,
@@ -305,6 +307,23 @@ const Auth = () => {
                                 <Input
                                   {...field}
                                   placeholder="Enter your full name"
+                                  className="bg-white/10 border-white/20 text-white placeholder-slate-400 focus:border-purple-400"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signUpForm.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-white">Username</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="Choose a username"
                                   className="bg-white/10 border-white/20 text-white placeholder-slate-400 focus:border-purple-400"
                                 />
                               </FormControl>

@@ -1,16 +1,20 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Search, User, BookOpen, Menu, ChevronDown, Trophy, Zap, LogOut } from "lucide-react";
+import { Bell, Search, User, BookOpen, Menu, ChevronDown, Trophy, Zap, LogOut, Settings } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import { useToast } from "@/components/ui/use-toast";
+import ThemeToggle from "./ThemeToggle";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [exploreDropdownOpen, setExploreDropdownOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { data: profile } = useProfile();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -130,10 +134,11 @@ const Header = () => {
                 <Button variant="ghost" size="sm" className="p-2">
                   <Bell className="h-4 w-4" />
                 </Button>
+                <ThemeToggle />
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-medium">
-                      {user.email?.charAt(0).toUpperCase()}
+                      {getUserInitials(profile, user)}
                     </span>
                   </div>
                   <Button variant="ghost" onClick={handleSignOut} className="text-slate-700 hover:text-red-600">
@@ -148,6 +153,7 @@ const Header = () => {
                 <Button variant="ghost" size="sm" className="p-2">
                   <Search className="h-4 w-4" />
                 </Button>
+                <ThemeToggle />
                 <Link to="/auth">
                   <Button variant="ghost" className="text-slate-700 hover:text-emerald-600">
                     Log In
@@ -210,6 +216,14 @@ const Header = () => {
               >
                 Tools
               </Link>
+              <Link
+                to={user ? "/settings" : "/auth"}
+                className="flex items-center space-x-2 text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </Link>
             </nav>
             <div className="flex flex-col space-y-3 px-2 pt-2 border-t border-slate-100">
               <Button variant="ghost" className="justify-start p-2">
@@ -221,10 +235,10 @@ const Header = () => {
                   <div className="flex items-center space-x-2 px-2 py-1">
                     <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs font-medium">
-                        {user.email?.charAt(0).toUpperCase()}
+                        {getUserInitials(profile, user)}
                       </span>
                     </div>
-                    <span className="text-sm text-slate-700">{user.email}</span>
+                    <span className="text-sm text-slate-700">{getDisplayName(profile, user)}</span>
                   </div>
                   <Button
                     variant="ghost"

@@ -38,6 +38,7 @@ ON CONFLICT (code) DO NOTHING;
 -- User profiles table
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  username TEXT UNIQUE,
   full_name TEXT,
   avatar_url TEXT,
   email TEXT,

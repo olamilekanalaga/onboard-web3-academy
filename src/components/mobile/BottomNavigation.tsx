@@ -1,5 +1,5 @@
 
-import { Home, BookOpen, User, Search, Award } from "lucide-react";
+import { Home, BookOpen, User, Search, Award, Settings } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
 const BottomNavigation = () => {
@@ -31,25 +31,24 @@ const BottomNavigation = () => {
       isActive: location.pathname === "/mobile/progress"
     },
     {
-      icon: User,
-      label: "Profile",
-      path: "/mobile/profile",
-      isActive: location.pathname === "/mobile/profile"
+      icon: Settings,
+      label: "Settings",
+      path: "/mobile/settings",
+      isActive: location.pathname === "/mobile/settings"
     }
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 md:hidden">
+    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 md:hidden">
       <div className="grid grid-cols-5 h-16">
         {navItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
-            className={`flex flex-col items-center justify-center space-y-1 transition-colors ${
-              item.isActive 
-                ? 'text-blue-600' 
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
+            className={`flex flex-col items-center justify-center space-y-1 transition-colors ${item.isActive
+              ? 'text-blue-600'
+              : 'text-slate-500 hover:text-slate-700'
+              }`}
           >
             <item.icon className={`h-5 w-5 ${item.isActive ? 'text-blue-600' : ''}`} />
             <span className={`text-xs font-medium ${item.isActive ? 'text-blue-600' : ''}`}>
