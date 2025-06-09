@@ -480,7 +480,7 @@ const CrossChainTradingDemo: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className={`w-12 h-12 ${getCurrentBlockchain()?.color} rounded-full flex items-center justify-center text-white text-xl`}>
-                      {getCurrentBlockchain()?.icon && <getCurrentBlockchain()?.icon className="w-6 h-6" />}
+                      {getCurrentBlockchain()?.icon && React.createElement(getCurrentBlockchain()!.icon, { className: "w-6 h-6" })}
                     </div>
                     <div>
                       <h3 className="font-bold">{getCurrentBlockchain()?.name}</h3>
@@ -653,11 +653,12 @@ const CrossChainTradingDemo: React.FC = () => {
               <div className="space-y-3">
                 {devnetBalances.map((balance) => {
                   const blockchain = blockchains.find(b => b.id === balance.blockchain);
+                  const IconComponent = blockchain?.icon;
                   return (
                     <div key={balance.blockchain} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div className={`w-10 h-10 ${blockchain?.color} rounded-full flex items-center justify-center text-white`}>
-                          {blockchain?.icon}
+                          {IconComponent && <IconComponent className="w-5 h-5" />}
                         </div>
                         <div>
                           <div className="font-medium">{blockchain?.name}</div>
@@ -731,40 +732,43 @@ const CrossChainTradingDemo: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {blockchains.map((blockchain) => (
-                  <div key={blockchain.id} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-12 h-12 ${blockchain.color} rounded-full flex items-center justify-center text-white text-xl`}>
-                          {blockchain.icon && <blockchain.icon className="w-6 h-6" />}
+                {blockchains.map((blockchain) => {
+                  const IconComponent = blockchain.icon;
+                  return (
+                    <div key={blockchain.id} className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-12 h-12 ${blockchain.color} rounded-full flex items-center justify-center text-white text-xl`}>
+                            <IconComponent className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold">{blockchain.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Get {blockchain.nativeToken} testnet tokens
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-bold">{blockchain.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Get {blockchain.nativeToken} testnet tokens
-                          </p>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(blockchain.explorerUrl, '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Explorer
+                          </Button>
+                          <Button
+                            onClick={() => requestDevnetTokens(blockchain.id)}
+                            className={blockchain.color}
+                          >
+                            <Coins className="h-4 w-4 mr-2" />
+                            Get Tokens
+                          </Button>
                         </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(blockchain.explorerUrl, '_blank')}
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Explorer
-                        </Button>
-                        <Button
-                          onClick={() => requestDevnetTokens(blockchain.id)}
-                          className={blockchain.color}
-                        >
-                          <Coins className="h-4 w-4 mr-2" />
-                          Get Tokens
-                        </Button>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
