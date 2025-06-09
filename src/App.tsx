@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -70,6 +69,11 @@ const App = () => {
                       <Route path="/mobile/course/:courseId" element={
                         <MobileAuthGuard>
                           <MobileCourse />
+                        </MobileAuthGuard>
+                      } />
+                      <Route path="/demo" element={
+                        <MobileAuthGuard>
+                          <Demo />
                         </MobileAuthGuard>
                       } />
                       <Route path="/mobile/progress" element={
