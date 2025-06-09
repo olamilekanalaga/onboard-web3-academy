@@ -1,26 +1,20 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  User, 
-  Bell, 
-  Shield, 
-  Palette, 
-  Globe, 
-  Download,
+import {
+  Bell,
+  Shield,
+  Palette,
   Trash2,
-  Save,
   AlertTriangle,
   Settings as SettingsIcon
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/components/ui/use-toast";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -28,17 +22,8 @@ import Header from "@/components/Header";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
-  const { data: profile } = useProfile();
   const { theme } = useTheme();
   const { toast } = useToast();
-  const updateProfile = useUpdateProfile();
-
-  const [profileData, setProfileData] = useState({
-    username: profile?.username || '',
-    full_name: profile?.full_name || '',
-    email: profile?.email || user?.email || '',
-    phone: profile?.phone || '',
-  });
 
   const [notifications, setNotifications] = useState({
     email_notifications: true,
@@ -55,25 +40,7 @@ const Settings = () => {
     data_analytics: true,
   });
 
-  const handleProfileSave = async () => {
-    try {
-      await updateProfile.mutateAsync({
-        username: profileData.username,
-        full_name: profileData.full_name,
-        phone: profileData.phone,
-      });
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+
 
   const handleDeleteAccount = async () => {
     // This would typically show a confirmation dialog
@@ -89,7 +56,7 @@ const Settings = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <div className="container mx-auto max-w-4xl px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -102,12 +69,8 @@ const Settings = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="profile" className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span>Profile</span>
-            </TabsTrigger>
+        <Tabs defaultValue="notifications" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="notifications" className="flex items-center space-x-2">
               <Bell className="h-4 w-4" />
               <span>Notifications</span>
@@ -122,65 +85,7 @@ const Settings = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>
-                  Update your personal information and account details
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={profileData.username}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
-                      placeholder="Enter username"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="full_name">Full Name</Label>
-                    <Input
-                      id="full_name"
-                      value={profileData.full_name}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, full_name: e.target.value }))}
-                      placeholder="Enter full name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profileData.email}
-                      disabled
-                      className="bg-muted"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Email cannot be changed. Contact support if needed.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      value={profileData.phone}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                </div>
-                <Button onClick={handleProfileSave} disabled={updateProfile.isPending}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
 
           {/* Notifications Tab */}
           <TabsContent value="notifications" className="space-y-6">
@@ -202,7 +107,7 @@ const Settings = () => {
                     </div>
                     <Switch
                       checked={notifications.email_notifications}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setNotifications(prev => ({ ...prev, email_notifications: checked }))
                       }
                     />
@@ -217,7 +122,7 @@ const Settings = () => {
                     </div>
                     <Switch
                       checked={notifications.course_reminders}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setNotifications(prev => ({ ...prev, course_reminders: checked }))
                       }
                     />
@@ -232,7 +137,7 @@ const Settings = () => {
                     </div>
                     <Switch
                       checked={notifications.achievement_alerts}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setNotifications(prev => ({ ...prev, achievement_alerts: checked }))
                       }
                     />
@@ -247,7 +152,7 @@ const Settings = () => {
                     </div>
                     <Switch
                       checked={notifications.marketing_emails}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setNotifications(prev => ({ ...prev, marketing_emails: checked }))
                       }
                     />
@@ -309,7 +214,7 @@ const Settings = () => {
                     </div>
                     <Switch
                       checked={privacy.show_progress}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setPrivacy(prev => ({ ...prev, show_progress: checked }))
                       }
                     />
@@ -324,7 +229,7 @@ const Settings = () => {
                     </div>
                     <Switch
                       checked={privacy.show_achievements}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setPrivacy(prev => ({ ...prev, show_achievements: checked }))
                       }
                     />
@@ -339,15 +244,15 @@ const Settings = () => {
                     </div>
                     <Switch
                       checked={privacy.data_analytics}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setPrivacy(prev => ({ ...prev, data_analytics: checked }))
                       }
                     />
                   </div>
                 </div>
-                
+
                 <Separator />
-                
+
                 {/* Danger Zone */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-2">
@@ -363,8 +268,8 @@ const Settings = () => {
                             Permanently delete your account and all associated data. This action cannot be undone.
                           </p>
                         </div>
-                        <Button 
-                          variant="destructive" 
+                        <Button
+                          variant="destructive"
                           onClick={handleDeleteAccount}
                           className="w-full sm:w-auto"
                         >

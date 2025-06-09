@@ -35,6 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMobileUser } from "@/contexts/MobileUserContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useCertificates } from "@/hooks/useCertificates";
 import { useUserStats } from "@/hooks/useUserStats";
@@ -168,7 +169,7 @@ const MobileProfile = () => {
                     />
                   ) : (
                     <span className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                      {profile?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                      {getUserInitials(profile, user)}
                     </span>
                   )}
                 </div>
@@ -187,7 +188,7 @@ const MobileProfile = () => {
           {/* User Info */}
           <div className="mb-6">
             <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-              {profile?.full_name || 'Web3 Learner'}
+              {getDisplayName(profile, user)}
             </h1>
             <p className="text-blue-200 mb-3">{user?.email}</p>
             <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0 px-4 py-2 text-sm font-semibold">

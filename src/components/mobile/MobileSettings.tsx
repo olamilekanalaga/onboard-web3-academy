@@ -25,7 +25,7 @@ import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import ThemeToggle from "../ThemeToggle";
 import BottomNavigation from "./BottomNavigation";
 
-type SettingsView = 'main' | 'profile' | 'notifications' | 'appearance' | 'privacy';
+type SettingsView = 'main' | 'notifications' | 'appearance' | 'privacy';
 
 const MobileSettings = () => {
   const { user, signOut } = useAuth();
@@ -87,13 +87,6 @@ const MobileSettings = () => {
   };
 
   const settingsMenuItems = [
-    {
-      id: 'profile',
-      title: 'Profile',
-      description: 'Manage your personal information',
-      icon: User,
-      view: 'profile' as SettingsView,
-    },
     {
       id: 'notifications',
       title: 'Notifications',
@@ -182,61 +175,7 @@ const MobileSettings = () => {
     </div>
   );
 
-  const renderProfileView = () => (
-    <div className="space-y-6">
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              value={profileData.username}
-              onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
-              placeholder="Enter username"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Full Name</Label>
-            <Input
-              id="full_name"
-              value={profileData.full_name}
-              onChange={(e) => setProfileData(prev => ({ ...prev, full_name: e.target.value }))}
-              placeholder="Enter full name"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={profileData.email}
-              disabled
-              className="bg-slate-50"
-            />
-            <p className="text-xs text-slate-500">
-              Email cannot be changed. Contact support if needed.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              value={profileData.phone}
-              onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-              placeholder="Enter phone number"
-            />
-          </div>
-          <Button onClick={handleProfileSave} disabled={updateProfile.isPending} className="w-full">
-            <Save className="h-4 w-4 mr-2" />
-            {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
+
 
   const renderNotificationsView = () => (
     <div className="space-y-6">
@@ -407,8 +346,6 @@ const MobileSettings = () => {
 
   const renderCurrentView = () => {
     switch (currentView) {
-      case 'profile':
-        return renderProfileView();
       case 'notifications':
         return renderNotificationsView();
       case 'appearance':
