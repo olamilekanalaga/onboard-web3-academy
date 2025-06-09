@@ -410,484 +410,252 @@ const CrossChainTradingDemo: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 p-4 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          🌐 Cross-Chain Trading Simulator
-        </h2>
-        <p className="text-muted-foreground">
-          Trade across multiple blockchains with real devnet tokens
-        </p>
-        <div className="flex justify-center space-x-4">
-          <Badge variant="outline" className="text-xs">
-            <Shield className="h-3 w-3 mr-1" />
-            Testnet Only
-          </Badge>
-          <Badge variant="outline" className="text-xs">
-            <Globe className="h-3 w-3 mr-1" />
-            6 Blockchains
-          </Badge>
-          <Badge variant="outline" className="text-xs">
-            <Activity className="h-3 w-3 mr-1" />
-            Real-time Prices
-          </Badge>
+      <div className="border-b bg-card">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">Cross-Chain DEX</h1>
+              <p className="text-sm text-muted-foreground">Trade across 6 blockchains</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Badge variant="outline">
+                <Shield className="h-3 w-3 mr-1" />
+                Testnet
+              </Badge>
+              <Badge variant="outline">
+                <Wallet className="h-3 w-3 mr-1" />
+                ${getTotalPortfolioValue().toFixed(2)}
+              </Badge>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Trading Interface */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="trading">Trading</TabsTrigger>
-          <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-          <TabsTrigger value="faucets">Devnet Faucets</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
+      <div className="max-w-7xl mx-auto p-4">
+        {/* Blockchain Selector */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Select Network</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {blockchains.map((blockchain) => {
+              const IconComponent = blockchain.icon;
+              const balance = getBlockchainBalance(blockchain.id);
+              return (
+                <Button
+                  key={blockchain.id}
+                  variant={selectedBlockchain === blockchain.id ? "default" : "outline"}
+                  className={`p-4 h-auto flex flex-col space-y-2 ${
+                    selectedBlockchain === blockchain.id ? blockchain.color + ' text-white' : ''
+                  }`}
+                  onClick={() => setSelectedBlockchain(blockchain.id)}
+                >
+                  <IconComponent className="w-6 h-6" />
+                  <div className="text-center">
+                    <div className="text-xs font-medium">{blockchain.symbol}</div>
+                    <div className="text-xs opacity-80">${balance?.usdValue.toFixed(0) || '0'}</div>
+                  </div>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
 
-        <TabsContent value="trading" className="space-y-6">
-          {/* Blockchain Selector */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Network className="h-5 w-5" />
-                <span>Select Blockchain</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {blockchains.map((blockchain) => {
-                  const IconComponent = blockchain.icon;
-                  return (
-                    <Button
-                      key={blockchain.id}
-                      variant={selectedBlockchain === blockchain.id ? "default" : "outline"}
-                      className={`h-20 flex flex-col space-y-2 ${selectedBlockchain === blockchain.id ? blockchain.color + ' text-white' : ''
-                        }`}
-                      onClick={() => setSelectedBlockchain(blockchain.id)}
-                    >
-                      <IconComponent className="text-2xl w-6 h-6" />
-                      <span className="text-xs">{blockchain.name}</span>
-                    </Button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Current Blockchain Info */}
-          {getCurrentBlockchain() && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-12 h-12 ${getCurrentBlockchain()?.color} rounded-full flex items-center justify-center text-white text-xl`}>
-                      {getCurrentBlockchain()?.icon && React.createElement(getCurrentBlockchain()!.icon, { className: "w-6 h-6" })}
+        {/* Main Trading Interface */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Token List */}
+          <div className="lg:col-span-2">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">
+                Available Tokens on {getCurrentBlockchain()?.name}
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {getFilteredTokens().map((token) => (
+                <div
+                  key={token.symbol}
+                  className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
+                    selectedToken === token.symbol ? 'border-primary bg-primary/5' : 'border-border'
+                  }`}
+                  onClick={() => setSelectedToken(token.symbol)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">{token.symbol[0]}</span>
+                      </div>
+                      <div>
+                        <div className="font-semibold">{token.symbol}</div>
+                        <div className="text-sm text-muted-foreground">{token.name}</div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold">{getCurrentBlockchain()?.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Gas: {getCurrentBlockchain()?.gasPrice} {getCurrentBlockchain()?.nativeToken}
-                      </p>
+                    
+                    <div className="text-right">
+                      <div className="font-bold text-lg">
+                        ${token.price < 1 ? token.price.toFixed(8) : token.price.toFixed(4)}
+                      </div>
+                      <div className={`flex items-center text-sm ${
+                        token.change24h >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {token.change24h >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                        {token.change24h.toFixed(2)}%
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold text-lg">
-                      {getBlockchainBalance(selectedBlockchain)?.balance.toFixed(2)} {getCurrentBlockchain()?.nativeToken}
+                  
+                  <div className="mt-3 grid grid-cols-3 gap-4 text-xs text-muted-foreground">
+                    <div>
+                      <div>Volume</div>
+                      <div className="font-medium">${(token.volume / 1000000).toFixed(1)}M</div>
+                    </div>
+                    <div>
+                      <div>Market Cap</div>
+                      <div className="font-medium">${(token.marketCap / 1000000).toFixed(0)}M</div>
+                    </div>
+                    <div>
+                      <div>Liquidity</div>
+                      <div className="font-medium">${(token.liquidity / 1000).toFixed(0)}K</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Trading Panel */}
+          <div className="space-y-6">
+            {/* Current Selection */}
+            {selectedToken && (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{selectedToken}</div>
+                    <div className="text-lg">
+                      ${getFilteredTokens().find(t => t.symbol === selectedToken)?.price.toFixed(8)}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      ${getBlockchainBalance(selectedBlockchain)?.usdValue.toFixed(2)}
+                      on {getCurrentBlockchain()?.name}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                </CardContent>
+              </Card>
+            )}
 
-          {/* Available Tokens */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Coins className="h-5 w-5" />
-                <span>Available Tokens on {getCurrentBlockchain()?.name}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {getFilteredTokens().map((token) => (
-                  <div
-                    key={token.symbol}
-                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${selectedToken === token.symbol ? 'border-blue-500 bg-blue-50' : 'border-border hover:bg-muted'
-                      }`}
-                    onClick={() => setSelectedToken(token.symbol)}
+            {/* Trade Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Place Order</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={tradeType === 'long' ? 'default' : 'outline'}
+                    onClick={() => setTradeType('long')}
+                    className={tradeType === 'long' ? 'bg-green-600 hover:bg-green-700' : ''}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-lg font-bold">{token.symbol}</div>
-                        <div className="text-sm text-muted-foreground">{token.name}</div>
-                        <Badge variant="outline" className="text-xs">
-                          Liquidity: ${(token.liquidity / 1000).toFixed(0)}K
-                        </Badge>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold">${token.price.toFixed(8)}</div>
-                        <div className={`text-sm flex items-center ${token.change24h >= 0 ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                          {token.change24h >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-                          {token.change24h.toFixed(2)}%
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Trading Interface */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Execute Trade</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Button
-                  variant={tradeType === 'long' ? 'default' : 'outline'}
-                  onClick={() => setTradeType('long')}
-                  className="w-full"
-                >
-                  Long (Buy)
-                </Button>
-                <Button
-                  variant={tradeType === 'short' ? 'default' : 'outline'}
-                  onClick={() => setTradeType('short')}
-                  className="w-full"
-                >
-                  Short (Sell)
-                </Button>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Amount (tokens)</label>
-                <Input
-                  type="number"
-                  value={tradeAmount}
-                  onChange={(e) => setTradeAmount(e.target.value)}
-                  placeholder="Enter amount to trade"
-                  disabled={!selectedToken}
-                />
-              </div>
-
-              {selectedToken && tradeAmount && (
-                <div className="p-3 bg-muted rounded-lg">
-                  <div className="text-sm space-y-1">
-                    <div>Selected: {selectedToken} on {getCurrentBlockchain()?.name}</div>
-                    <div>Amount: {tradeAmount} tokens</div>
-                    <div>
-                      Total: ${(parseFloat(tradeAmount) * (getFilteredTokens().find(t => t.symbol === selectedToken)?.price || 0)).toFixed(2)}
-                    </div>
-                    <div>Position: {tradeType === 'long' ? 'Long (Bullish)' : 'Short (Bearish)'}</div>
-                  </div>
+                    Buy
+                  </Button>
+                  <Button
+                    variant={tradeType === 'short' ? 'default' : 'outline'}
+                    onClick={() => setTradeType('short')}
+                    className={tradeType === 'short' ? 'bg-red-600 hover:bg-red-700' : ''}
+                  >
+                    Sell
+                  </Button>
                 </div>
-              )}
 
-              <Button
-                onClick={executeTrade}
-                disabled={!selectedToken || !tradeAmount || isTrading}
-                className="w-full"
-              >
-                {isTrading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  `Open ${tradeType === 'long' ? 'Long' : 'Short'} Position`
+                <div>
+                  <label className="text-sm font-medium">Amount (tokens)</label>
+                  <Input
+                    type="number"
+                    value={tradeAmount}
+                    onChange={(e) => setTradeAmount(e.target.value)}
+                    placeholder="0.00"
+                    disabled={!selectedToken}
+                  />
+                </div>
+
+                {selectedToken && tradeAmount && (
+                  <div className="p-3 bg-muted rounded-lg space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Total Cost:</span>
+                      <span className="font-bold">
+                        ${(parseFloat(tradeAmount) * (getFilteredTokens().find(t => t.symbol === selectedToken)?.price || 0)).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Gas Fee:</span>
+                      <span>${getCurrentBlockchain()?.gasPrice}</span>
+                    </div>
+                  </div>
                 )}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        {/* Portfolio Tab */}
-        <TabsContent value="portfolio" className="space-y-6">
-          {/* Portfolio Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Wallet className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium">Total Portfolio</span>
-                </div>
-                <div className="text-2xl font-bold text-foreground">${getTotalPortfolioValue().toFixed(2)}</div>
+                <Button
+                  onClick={executeTrade}
+                  disabled={!selectedToken || !tradeAmount || isTrading}
+                  className="w-full"
+                >
+                  {isTrading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    `${tradeType === 'long' ? 'Buy' : 'Sell'} ${selectedToken || 'Token'}`
+                  )}
+                </Button>
               </CardContent>
             </Card>
 
+            {/* Portfolio Summary */}
             <Card>
-              <CardContent className="p-4 text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Activity className="h-5 w-5 text-emerald-600" />
-                  <span className="text-sm font-medium">Total P&L</span>
+              <CardHeader>
+                <CardTitle>Portfolio</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">${getTotalPortfolioValue().toFixed(2)}</div>
+                  <div className={`text-sm ${getTotalPnL() >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {getTotalPnL() >= 0 ? '+' : ''}${getTotalPnL().toFixed(2)} P&L
+                  </div>
                 </div>
-                <div className={`text-2xl font-bold ${getTotalPnL() >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  ${getTotalPnL().toFixed(2)}
-                </div>
+                
+                {positions.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium">Active Positions</div>
+                    {positions.slice(0, 3).map((position) => (
+                      <div key={position.id} className="flex justify-between text-sm">
+                        <span>{position.symbol}</span>
+                        <span className={position.pnl >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          {position.pnl >= 0 ? '+' : ''}${position.pnl.toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
+            {/* Faucet */}
             <Card>
-              <CardContent className="p-4 text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Globe className="h-5 w-5 text-purple-600" />
-                  <span className="text-sm font-medium">Active Positions</span>
-                </div>
-                <div className="text-2xl font-bold text-foreground">{positions.length}</div>
+              <CardHeader>
+                <CardTitle className="text-sm">Need Test Tokens?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => requestDevnetTokens(selectedBlockchain)}
+                  className="w-full"
+                >
+                  <Coins className="h-4 w-4 mr-2" />
+                  Get {getCurrentBlockchain()?.nativeToken}
+                </Button>
               </CardContent>
             </Card>
           </div>
-
-          {/* Blockchain Balances */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Blockchain Balances</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {devnetBalances.map((balance) => {
-                  const blockchain = blockchains.find(b => b.id === balance.blockchain);
-                  const IconComponent = blockchain?.icon;
-                  return (
-                    <div key={balance.blockchain} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-10 h-10 ${blockchain?.color} rounded-full flex items-center justify-center text-white`}>
-                          {IconComponent && <IconComponent className="w-5 h-5" />}
-                        </div>
-                        <div>
-                          <div className="font-medium">{blockchain?.name}</div>
-                          <div className="text-sm text-muted-foreground">{balance.symbol}</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold">{balance.balance.toFixed(2)} {balance.symbol}</div>
-                        <div className="text-sm text-muted-foreground">${balance.usdValue.toFixed(2)}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Active Positions */}
-          {positions.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Positions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {positions.map((position) => {
-                    const blockchain = blockchains.find(b => b.id === position.blockchain);
-                    const IconComponent = blockchain?.icon;
-                    return (
-                      <div key={position.id} className="p-3 border rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 ${blockchain?.color} rounded-full flex items-center justify-center text-white text-sm`}>
-                              {IconComponent && <IconComponent className="w-4 h-4" />}
-                            </div>
-                            <div>
-                              <div className="font-bold">{position.symbol}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {position.amount.toFixed(2)} tokens • {position.type.toUpperCase()}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className={`font-bold ${position.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              ${position.pnl.toFixed(2)}
-                            </div>
-                            <div className={`text-sm ${position.pnlPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {position.pnlPercentage.toFixed(2)}%
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* Faucets Tab */}
-        <TabsContent value="faucets" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5" />
-                <span>Devnet Token Faucets</span>
-              </CardTitle>
-              <CardDescription>
-                Get free testnet tokens to practice trading. These are not real tokens and have no monetary value.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {blockchains.map((blockchain) => {
-                  const IconComponent = blockchain.icon;
-                  return (
-                    <div key={blockchain.id} className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-12 h-12 ${blockchain.color} rounded-full flex items-center justify-center text-white text-xl`}>
-                            <IconComponent className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <h3 className="font-bold">{blockchain.name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Get {blockchain.nativeToken} testnet tokens
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(blockchain.explorerUrl, '_blank')}
-                          >
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Explorer
-                          </Button>
-                          <Button
-                            onClick={() => requestDevnetTokens(blockchain.id)}
-                            className={blockchain.color}
-                          >
-                            <Coins className="h-4 w-4 mr-2" />
-                            Get Tokens
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          {/* Performance Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium">Total Trades</span>
-                </div>
-                <div className="text-2xl font-bold">{positions.length}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-medium">Win Rate</span>
-                </div>
-                <div className="text-2xl font-bold text-green-600">
-                  {positions.length > 0 ? ((positions.filter(p => p.pnl > 0).length / positions.length) * 100).toFixed(1) : 0}%
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Zap className="h-5 w-5 text-purple-600" />
-                  <span className="text-sm font-medium">Total P&L</span>
-                </div>
-                <div className={`text-2xl font-bold ${getTotalPnL() >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  ${getTotalPnL().toFixed(2)}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Activity className="h-5 w-5 text-orange-600" />
-                  <span className="text-sm font-medium">Active Positions</span>
-                </div>
-                <div className="text-2xl font-bold">{positions.length}</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Trading Performance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span>Total Trades:</span>
-                    <span className="font-bold">{positions.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Profitable Trades:</span>
-                    <span className="font-bold text-green-600">
-                      {positions.filter(p => p.pnl > 0).length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Losing Trades:</span>
-                    <span className="font-bold text-red-600">
-                      {positions.filter(p => p.pnl < 0).length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Win Rate:</span>
-                    <span className="font-bold">
-                      {positions.length > 0 ?
-                        ((positions.filter(p => p.pnl > 0).length / positions.length) * 100).toFixed(1) + '%'
-                        : '0%'
-                      }
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Blockchain Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {blockchains.map((blockchain) => {
-                    const chainPositions = positions.filter(p => p.blockchain === blockchain.id);
-                    const percentage = positions.length > 0 ? (chainPositions.length / positions.length) * 100 : 0;
-                    return (
-                      <div key={blockchain.id} className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>{blockchain.name}</span>
-                          <span>{chainPositions.length} positions</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full ${blockchain.color}`}
-                            style={{ width: `${percentage}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 };
