@@ -1,5 +1,4 @@
 
-
 // Enhanced interfaces for the comprehensive crypto education platform
 
 export interface Quiz {
@@ -119,6 +118,7 @@ export const courses: Record<string, Course> = {
       'Master DeFi security best practices',
       'Navigate popular DeFi platforms confidently'
     ],
+    totalXP: 750,
     difficulty: 2,
     category: 'defi' as const,
     skills: ['DeFi Protocols', 'Yield Farming', 'Liquidity Provision', 'DeFi Security']
@@ -129,6 +129,7 @@ export const courses: Record<string, Course> = {
     color: 'from-purple-400 to-purple-600',
     gradient: 'bg-gradient-to-br from-purple-400 to-purple-600',
     icon: null,
+    level: 'Intermediate' as const,
     duration: '4-6 weeks',
     learningOutcomes: [
       'Master memecoin and altcoin analysis',
@@ -136,6 +137,7 @@ export const courses: Record<string, Course> = {
       'Implement sophisticated risk management',
       'Develop psychological trading edge'
     ],
+    totalXP: 1000,
     skills: ['Memecoin Analysis', 'High-Risk Trading', 'DeFi Strategies', 'Risk Management'],
     modules: [
       {
@@ -175,6 +177,7 @@ export const courses: Record<string, Course> = {
       'Master video and written content',
       'Monetize your content effectively'
     ],
+    totalXP: 900,
     difficulty: 2,
     category: 'fundamentals' as const,
     skills: ['Content Creation', 'Video Production', 'Audience Building', 'Storytelling']
