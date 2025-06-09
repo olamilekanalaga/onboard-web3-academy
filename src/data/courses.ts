@@ -109,7 +109,19 @@ export const courses: Record<string, Course> = {
   },
   'defi-fundamentals': {
     ...defiFundamentalsCourse,
-    icon: null
+    icon: null,
+    longDescription: 'Comprehensive introduction to Decentralized Finance (DeFi) protocols, yield farming, liquidity provision, and advanced DeFi strategies.',
+    color: 'from-green-400 to-green-600',
+    gradient: 'bg-gradient-to-br from-green-400 to-green-600',
+    learningOutcomes: [
+      'Understand DeFi protocols and how they work',
+      'Learn about yield farming and liquidity mining',
+      'Master DeFi security best practices',
+      'Navigate popular DeFi platforms confidently'
+    ],
+    difficulty: 2,
+    category: 'defi' as const,
+    skills: ['DeFi Protocols', 'Yield Farming', 'Liquidity Provision', 'DeFi Security']
   },
   degen: {
     ...degenCourseMetadata,
@@ -117,6 +129,14 @@ export const courses: Record<string, Course> = {
     color: 'from-purple-400 to-purple-600',
     gradient: 'bg-gradient-to-br from-purple-400 to-purple-600',
     icon: null,
+    duration: '4-6 weeks',
+    learningOutcomes: [
+      'Master memecoin and altcoin analysis',
+      'Understand advanced DeFi strategies',
+      'Implement sophisticated risk management',
+      'Develop psychological trading edge'
+    ],
+    skills: ['Memecoin Analysis', 'High-Risk Trading', 'DeFi Strategies', 'Risk Management'],
     modules: [
       {
         id: 1,
@@ -145,7 +165,19 @@ export const courses: Record<string, Course> = {
   },
   'content-creation': {
     ...contentCreationCourse,
-    icon: null
+    icon: null,
+    longDescription: 'Learn to create engaging crypto and blockchain content across multiple platforms. Master storytelling, video production, and audience building in the crypto space.',
+    color: 'from-pink-400 to-pink-600',
+    gradient: 'bg-gradient-to-br from-pink-400 to-pink-600',
+    learningOutcomes: [
+      'Create compelling crypto content',
+      'Build and engage audiences',
+      'Master video and written content',
+      'Monetize your content effectively'
+    ],
+    difficulty: 2,
+    category: 'fundamentals' as const,
+    skills: ['Content Creation', 'Video Production', 'Audience Building', 'Storytelling']
   },
   'advanced-trading': {
     id: 'advanced-trading',
@@ -201,7 +233,8 @@ export const courses: Record<string, Course> = {
   },
   'nft-creation': {
     ...nftCreationCourse,
-    icon: null
+    icon: null,
+    category: 'development' as const
   },
   development: {
     id: 'development',
@@ -256,4 +289,3 @@ export const courses: Record<string, Course> = {
     ]
   }
 };
-
