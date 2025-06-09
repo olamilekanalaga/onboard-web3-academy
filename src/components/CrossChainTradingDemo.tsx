@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,8 @@ import {
   Zap,
   BarChart3,
   PieChart,
-  LineChart
+  LineChart,
+  Layers
 } from "lucide-react";
 // Import blockchain icons from react-icons
 import {
@@ -32,7 +34,6 @@ import {
   SiPolygon,
   SiBinance,
   SiSolana,
-  SiArbitrum,
   SiOptimism
 } from "react-icons/si";
 import { FaBitcoin } from "react-icons/fa";
@@ -137,7 +138,7 @@ const CrossChainTradingDemo: React.FC = () => {
       name: 'Avalanche Fuji',
       symbol: 'AVAX',
       color: 'bg-red-500',
-      icon: SiOptimism, // Using Optimism icon as placeholder for Avalanche
+      icon: Layers, // Using Lucide Layers icon instead of SiOptimism for Avalanche
       rpcUrl: 'https://api.avax-test.network/ext/bc/C/rpc',
       explorerUrl: 'https://testnet.snowtrace.io',
       nativeToken: 'AVAX',
@@ -149,7 +150,7 @@ const CrossChainTradingDemo: React.FC = () => {
       name: 'Arbitrum Goerli',
       symbol: 'ARB',
       color: 'bg-blue-400',
-      icon: SiArbitrum,
+      icon: Network, // Using Lucide Network icon instead of SiArbitrum
       rpcUrl: 'https://goerli-rollup.arbitrum.io/rpc',
       explorerUrl: 'https://goerli.arbiscan.io',
       nativeToken: 'ETH',

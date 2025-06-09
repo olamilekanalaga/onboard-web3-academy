@@ -9,6 +9,101 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          permissions: Json | null
+          role: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          attended: boolean | null
+          booking_notes: string | null
+          created_at: string | null
+          feedback_comment: string | null
+          feedback_rating: number | null
+          id: string
+          payment_amount: number | null
+          payment_currency: string | null
+          payment_id: string | null
+          payment_status: string | null
+          reminder_sent: boolean | null
+          session_id: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          user_timezone: string | null
+        }
+        Insert: {
+          attended?: boolean | null
+          booking_notes?: string | null
+          created_at?: string | null
+          feedback_comment?: string | null
+          feedback_rating?: number | null
+          id?: string
+          payment_amount?: number | null
+          payment_currency?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
+          reminder_sent?: boolean | null
+          session_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_timezone?: string | null
+        }
+        Update: {
+          attended?: boolean | null
+          booking_notes?: string | null
+          created_at?: string | null
+          feedback_comment?: string | null
+          feedback_rating?: number | null
+          id?: string
+          payment_amount?: number | null
+          payment_currency?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
+          reminder_sent?: boolean | null
+          session_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_timezone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       certificates: {
         Row: {
           certificate_url: string | null
@@ -40,6 +135,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      countries: {
+        Row: {
+          code: string
+          created_at: string | null
+          flag_emoji: string | null
+          id: number
+          name: string
+          timezone: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          flag_emoji?: string | null
+          id?: number
+          name: string
+          timezone?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          flag_emoji?: string | null
+          id?: number
+          name?: string
+          timezone?: string | null
+        }
+        Relationships: []
       }
       courses: {
         Row: {
@@ -124,27 +246,172 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          country_id: number | null
           created_at: string | null
           full_name: string | null
           id: string
+          phone: string | null
+          timezone: string | null
           updated_at: string | null
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
+          country_id?: number | null
           created_at?: string | null
           full_name?: string | null
           id: string
+          phone?: string | null
+          timezone?: string | null
           updated_at?: string | null
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
+          country_id?: number | null
           created_at?: string | null
           full_name?: string | null
           id?: string
+          phone?: string | null
+          timezone?: string | null
           updated_at?: string | null
           username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_types: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration_minutes: number
+          id: number
+          is_active: boolean | null
+          name: string
+          price_usd: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration_minutes: number
+          id?: number
+          is_active?: boolean | null
+          name: string
+          price_usd?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: number
+          is_active?: boolean | null
+          name?: string
+          price_usd?: number | null
+        }
+        Relationships: []
+      }
+      sessions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          end_time: string
+          id: string
+          is_available: boolean | null
+          max_participants: number | null
+          meeting_link: string | null
+          meeting_password: string | null
+          notes: string | null
+          session_type_id: number | null
+          start_time: string
+          timezone: string
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_time: string
+          id?: string
+          is_available?: boolean | null
+          max_participants?: number | null
+          meeting_link?: string | null
+          meeting_password?: string | null
+          notes?: string | null
+          session_type_id?: number | null
+          start_time: string
+          timezone: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          max_participants?: number | null
+          meeting_link?: string | null
+          meeting_password?: string | null
+          notes?: string | null
+          session_type_id?: number | null
+          start_time?: string
+          timezone?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_session_type_id_fkey"
+            columns: ["session_type_id"]
+            isOneToOne: false
+            referencedRelation: "session_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_analytics: {
+        Row: {
+          city: string | null
+          country_code: string | null
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -201,7 +468,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_booking_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_bookings: number
+          pending_bookings: number
+          confirmed_bookings: number
+          completed_bookings: number
+          cancelled_bookings: number
+          total_revenue: number
+          avg_rating: number
+        }[]
+      }
+      get_user_country_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          country_name: string
+          country_code: string
+          flag_emoji: string
+          user_count: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
