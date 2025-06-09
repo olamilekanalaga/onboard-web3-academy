@@ -1,4 +1,3 @@
-
 // Enhanced interfaces for the comprehensive crypto education platform
 
 export interface Quiz {
@@ -94,12 +93,10 @@ export interface Course {
 }
 
 // Import modern courses
-import { modernCourses } from './modernCourses';
+import { foundationCourse, beginnerCourse } from './modernCourses';
 
 // Comprehensive crypto education platform courses
 export const courses: Record<string, Course> = {
-  // Include modern courses first
-  ...modernCourses,
   // FOUNDATION LEVEL (Week 1-2)
   foundation: {
     id: "foundation",
@@ -740,7 +737,7 @@ Reality: A high price doesn't mean a cryptocurrency is better. Market cap and ut
                 "Bitcoin is newer than Ethereum",
                 "Bitcoin focuses on payments, Ethereum enables smart contracts",
                 "Bitcoin is more expensive than Ethereum",
-                "Bitcoin uses Proof of Stake, Ethereum uses Proof of Work"
+                "Bitcoin uses Proof of Work, Ethereum uses Proof of Stake"
               ],
               correctAnswer: 1,
               explanation: "Bitcoin was designed primarily as a digital currency and store of value, while Ethereum was built as a platform for smart contracts and decentralized applications. This fundamental difference in purpose drives their different features and capabilities.",
