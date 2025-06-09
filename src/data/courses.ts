@@ -1,4 +1,5 @@
 
+
 // Enhanced interfaces for the comprehensive crypto education platform
 
 export interface Quiz {
@@ -96,22 +97,62 @@ export interface Course {
 // Import modern courses
 import { foundationCourse } from './foundationCourse';
 import { defiFundamentalsCourse } from './defiFundamentalsCourse';
-import { degenCourse } from './degenCourse';
+import { degenCourseMetadata } from './degenCourse';
 import { contentCreationCourse } from './contentCreationCourse';
 import { nftCreationCourse } from './nftCreationCourse';
 
 // Comprehensive crypto education platform courses
 export const courses: Record<string, Course> = {
-  foundation: foundationCourse,
-  'defi-fundamentals': defiFundamentalsCourse,
-  degen: degenCourse,
-  'content-creation': contentCreationCourse,
+  foundation: {
+    ...foundationCourse,
+    icon: null
+  },
+  'defi-fundamentals': {
+    ...defiFundamentalsCourse,
+    icon: null
+  },
+  degen: {
+    ...degenCourseMetadata,
+    longDescription: 'Master the art of high-risk, high-reward cryptocurrency trading with advanced strategies, risk management, and psychological techniques. Learn memecoin analysis, DeFi strategies, and advanced technical analysis.',
+    color: 'from-purple-400 to-purple-600',
+    gradient: 'bg-gradient-to-br from-purple-400 to-purple-600',
+    icon: null,
+    modules: [
+      {
+        id: 1,
+        title: 'The Degen Mindset & Psychology',
+        description: 'Understanding the psychology behind high-risk trading and developing the right mindset',
+        estimatedTime: '1 week',
+        xpReward: 200,
+        chapters: [
+          {
+            id: 1,
+            title: 'What Does "Degen" Really Mean?',
+            duration: '15 min',
+            content: 'Understand the true meaning of being a "degen" trader and the culture behind it.',
+            keyTakeaways: [
+              'Origin of "degen" in crypto culture',
+              'High-risk, high-reward mentality',
+              'FOMO and YOLO psychology'
+            ],
+            xpReward: 50,
+            difficulty: 'easy' as const,
+            tags: ['psychology', 'culture', 'mindset']
+          }
+        ]
+      }
+    ]
+  },
+  'content-creation': {
+    ...contentCreationCourse,
+    icon: null
+  },
   'advanced-trading': {
     id: 'advanced-trading',
     title: 'Advanced Trading Strategies',
     description: 'Master professional trading techniques, risk management, and market analysis',
     longDescription: 'Deep dive into professional-grade trading strategies, advanced technical analysis, risk management frameworks, and market psychology. Learn from real-world case studies and develop skills used by institutional traders.',
-    level: 'Advanced',
+    level: 'Advanced' as const,
     duration: '5-7 weeks',
     color: 'from-red-400 to-red-600',
     gradient: 'bg-gradient-to-br from-red-400 to-red-600',
@@ -132,7 +173,6 @@ export const courses: Record<string, Course> = {
       requirements: ['Complete all modules', 'Pass trading simulation', 'Pass final assessment'],
       credentialName: 'Advanced Trading Strategies Certificate'
     },
-    xpReward: 1200,
     modules: [
       {
         id: 1,
@@ -159,13 +199,16 @@ export const courses: Record<string, Course> = {
       }
     ]
   },
-  'nft-creation': nftCreationCourse,
+  'nft-creation': {
+    ...nftCreationCourse,
+    icon: null
+  },
   development: {
     id: 'development',
     title: 'Blockchain Development',
     description: 'Learn to build decentralized applications and smart contracts',
     longDescription: 'Comprehensive blockchain development course covering smart contract programming, DApp development, security best practices, and deployment strategies. Build real-world projects and master the tools used by professional blockchain developers.',
-    level: 'Expert',
+    level: 'Expert' as const,
     duration: '6-8 weeks',
     color: 'from-green-400 to-green-600',
     gradient: 'bg-gradient-to-br from-green-400 to-green-600',
@@ -186,7 +229,6 @@ export const courses: Record<string, Course> = {
       requirements: ['Complete all modules', 'Build capstone project', 'Pass security audit simulation'],
       credentialName: 'Blockchain Developer Certificate'
     },
-    xpReward: 1500,
     modules: [
       {
         id: 1,
@@ -214,3 +256,4 @@ export const courses: Record<string, Course> = {
     ]
   }
 };
+
