@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -28,22 +27,22 @@ const COURSE_PROGRESSION = {
     category: 'fundamentals',
     difficulty: 1,
     estimatedTime: '2-3 weeks',
-    unlocks: ['defi'],
+    unlocks: ['defi-fundamentals'],
     xpReward: 500,
     prerequisites: [],
     totalChapters: 8
   },
-  defi: {
-    id: 'defi',
+  'defi-fundamentals': {
+    id: 'defi-fundamentals',
     title: 'DeFi Fundamentals',
     level: 'Beginner',
     category: 'defi',
     difficulty: 2,
     estimatedTime: '3-4 weeks',
-    unlocks: ['degen'],
+    unlocks: ['degen', 'content-creation'],
     xpReward: 750,
     prerequisites: ['foundation'],
-    totalChapters: 10
+    totalChapters: 12
   },
   degen: {
     id: 'degen',
@@ -54,8 +53,20 @@ const COURSE_PROGRESSION = {
     estimatedTime: '4-6 weeks',
     unlocks: ['advanced-trading'],
     xpReward: 1000,
-    prerequisites: ['defi'],
+    prerequisites: ['defi-fundamentals'],
     totalChapters: 18
+  },
+  'content-creation': {
+    id: 'content-creation',
+    title: 'Web3 Content Creation Mastery',
+    level: 'Intermediate',
+    category: 'content',
+    difficulty: 3,
+    estimatedTime: '3-4 weeks',
+    unlocks: ['nft-creation'],
+    xpReward: 900,
+    prerequisites: ['defi-fundamentals'],
+    totalChapters: 14
   },
   'advanced-trading': {
     id: 'advanced-trading',
@@ -69,6 +80,18 @@ const COURSE_PROGRESSION = {
     prerequisites: ['degen'],
     totalChapters: 12
   },
+  'nft-creation': {
+    id: 'nft-creation',
+    title: 'NFT Creation & Marketing',
+    level: 'Advanced',
+    category: 'creation',
+    difficulty: 4,
+    estimatedTime: '4-5 weeks',
+    unlocks: ['development'],
+    xpReward: 1100,
+    prerequisites: ['content-creation'],
+    totalChapters: 10
+  },
   development: {
     id: 'development',
     title: 'Blockchain Development',
@@ -78,7 +101,7 @@ const COURSE_PROGRESSION = {
     estimatedTime: '6-8 weeks',
     unlocks: [],
     xpReward: 1500,
-    prerequisites: ['advanced-trading'],
+    prerequisites: ['advanced-trading', 'nft-creation'],
     totalChapters: 15
   }
 };
