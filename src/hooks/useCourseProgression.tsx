@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -108,11 +109,13 @@ const COURSE_PROGRESSION = {
 
 export const useCourseProgression = () => {
   const { user } = useAuth();
+  
+  // Initialize with all courses unlocked and some completed for demo purposes
   const [userProgress, setUserProgress] = useState<UserProgressData>({
-    completedCourses: [],
-    unlockedCourses: ['foundation'], // Only Foundation is unlocked initially
-    totalXP: 0,
-    currentLevel: 1,
+    completedCourses: ['foundation', 'defi-fundamentals'], // Mark some as completed for demo
+    unlockedCourses: ['foundation', 'defi-fundamentals', 'degen', 'content-creation', 'advanced-trading', 'nft-creation', 'development'], // All unlocked
+    totalXP: 2500, // Some XP to show progression
+    currentLevel: 6, // Higher level for demo
     courseProgress: {}
   });
 
@@ -123,6 +126,8 @@ export const useCourseProgression = () => {
       if (savedProgress) {
         try {
           const parsed = JSON.parse(savedProgress);
+          // Ensure all courses are still unlocked even from saved data
+          parsed.unlockedCourses = ['foundation', 'defi-fundamentals', 'degen', 'content-creation', 'advanced-trading', 'nft-creation', 'development'];
           setUserProgress(parsed);
         } catch (error) {
           console.error('Error loading course progress:', error);
@@ -140,7 +145,8 @@ export const useCourseProgression = () => {
   };
 
   const isCourseUnlocked = (courseId: string): boolean => {
-    return userProgress.unlockedCourses.includes(courseId);
+    // All courses are unlocked for demo purposes
+    return true;
   };
 
   const isCourseCompleted = (courseId: string): boolean => {
@@ -199,19 +205,12 @@ export const useCourseProgression = () => {
         }
       };
 
-      // If course is completed, unlock next courses and award XP
+      // If course is completed, award XP
       if (isCompleted && !userProgress.completedCourses.includes(courseId)) {
         newUserProgress.completedCourses = [...userProgress.completedCourses, courseId];
         newUserProgress.totalXP = userProgress.totalXP + courseConfig.xpReward;
         newUserProgress.currentLevel = Math.floor(newUserProgress.totalXP / 500) + 1;
         
-        // Unlock next courses
-        courseConfig.unlocks.forEach(nextCourseId => {
-          if (!newUserProgress.unlockedCourses.includes(nextCourseId)) {
-            newUserProgress.unlockedCourses = [...newUserProgress.unlockedCourses, nextCourseId];
-          }
-        });
-
         // Update XP earned for this course
         updatedProgress.xpEarned = courseConfig.xpReward;
       }
@@ -222,10 +221,10 @@ export const useCourseProgression = () => {
 
   const resetProgress = () => {
     const initialProgress: UserProgressData = {
-      completedCourses: [],
-      unlockedCourses: ['foundation'], // Only Foundation unlocked initially
-      totalXP: 0,
-      currentLevel: 1,
+      completedCourses: ['foundation', 'defi-fundamentals'], // Keep some completed for demo
+      unlockedCourses: ['foundation', 'defi-fundamentals', 'degen', 'content-creation', 'advanced-trading', 'nft-creation', 'development'], // All unlocked
+      totalXP: 2500,
+      currentLevel: 6,
       courseProgress: {}
     };
     saveProgress(initialProgress);
@@ -238,9 +237,9 @@ export const useCourseProgression = () => {
     ) || null;
   };
 
-  // Check if user has completed both degen and advanced-trading to unlock demos
+  // All demos are unlocked for testing
   const isDemoUnlocked = (): boolean => {
-    return isCourseCompleted('degen') && isCourseCompleted('advanced-trading');
+    return true;
   };
 
   // For testing purposes - complete a course manually
@@ -274,13 +273,6 @@ export const useCourseProgression = () => {
       newUserProgress.completedCourses = [...userProgress.completedCourses, courseId];
       newUserProgress.totalXP = userProgress.totalXP + courseConfig.xpReward;
       newUserProgress.currentLevel = Math.floor(newUserProgress.totalXP / 500) + 1;
-      
-      // Unlock next courses
-      courseConfig.unlocks.forEach(nextCourseId => {
-        if (!newUserProgress.unlockedCourses.includes(nextCourseId)) {
-          newUserProgress.unlockedCourses = [...newUserProgress.unlockedCourses, nextCourseId];
-        }
-      });
     }
 
     saveProgress(newUserProgress);
@@ -296,7 +288,7 @@ export const useCourseProgression = () => {
     resetProgress,
     getNextUnlockedCourse,
     isDemoUnlocked,
-    completeCourse, // For testing
+    completeCourse,
     courseProgression: COURSE_PROGRESSION
   };
 };
