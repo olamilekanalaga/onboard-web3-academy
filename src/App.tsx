@@ -29,6 +29,7 @@ import MobileSettings from "./components/mobile/MobileSettings";
 import MobileHome from "./components/mobile/MobileHome";
 import MobileAuth from "./components/mobile/MobileAuth";
 import MobileGamification from "./components/mobile/MobileGamification";
+import MobileDemo from "./components/mobile/MobileDemo";
 
 const queryClient = new QueryClient();
 
@@ -73,7 +74,7 @@ const App = () => {
                       } />
                       <Route path="/demo" element={
                         <MobileAuthGuard>
-                          <Demo />
+                          <MobileDemo />
                         </MobileAuthGuard>
                       } />
                       <Route path="/mobile/progress" element={
