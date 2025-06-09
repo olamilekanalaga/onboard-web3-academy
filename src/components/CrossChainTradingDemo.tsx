@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -686,12 +687,13 @@ const CrossChainTradingDemo: React.FC = () => {
                 <div className="space-y-3">
                   {positions.map((position) => {
                     const blockchain = blockchains.find(b => b.id === position.blockchain);
+                    const IconComponent = blockchain?.icon;
                     return (
                       <div key={position.id} className="p-3 border rounded-lg">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             <div className={`w-8 h-8 ${blockchain?.color} rounded-full flex items-center justify-center text-white text-sm`}>
-                              {blockchain?.icon}
+                              {IconComponent && <IconComponent className="w-4 h-4" />}
                             </div>
                             <div>
                               <div className="font-bold">{position.symbol}</div>
