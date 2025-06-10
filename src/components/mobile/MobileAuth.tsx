@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Sparkles, Shield, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import FollowFlow from "@/components/FollowFlow";
@@ -32,7 +33,7 @@ const resetSchema = z.object({
 type AuthMode = 'signin' | 'signup' | 'reset';
 
 const MobileAuth = () => {
-  const [mode, setMode] = useState<AuthMode>('signin');
+  const [activeTab, setActiveTab] = useState<AuthMode>('signin');
   const [showPassword, setShowPassword] = useState(false);
   const { signIn, signUp, resetPassword, loading, showFollowFlow, setShowFollowFlow } = useAuth();
   const { toast } = useToast();
@@ -69,7 +70,6 @@ const MobileAuth = () => {
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      // Navigate to mobile home after successful sign in
       navigate('/mobile/home', { replace: true });
     }
   };
@@ -90,7 +90,6 @@ const MobileAuth = () => {
         title: "Account Created!",
         description: "Welcome to Web3 Academy! Let's get you connected.",
       });
-      // Show follow flow instead of just showing success
       setShowFollowFlow(true);
     }
   };
@@ -111,9 +110,9 @@ const MobileAuth = () => {
     } else {
       toast({
         title: "Success",
-        description: "Password reset email sent",
+        description: "Password reset email sent! Check your inbox.",
       });
-      setMode('signin');
+      setActiveTab('signin');
     }
   };
 
@@ -123,211 +122,307 @@ const MobileAuth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-0 shadow-2xl backdrop-blur-sm bg-white/95">
-        <CardHeader className="text-center pb-4">
-          <CardTitle className="text-2xl font-bold text-slate-900">
-            {mode === 'signin' && 'Welcome Back'}
-            {mode === 'signup' && 'Create Account'}
-            {mode === 'reset' && 'Reset Password'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {mode === 'signin' && (
-            <Form {...signInForm}>
-              <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
-                <FormField
-                  control={signInForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signInForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Enter your password"
-                            {...field}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={loading}>
-                  Sign In
-                </Button>
-                <div className="text-center space-y-2">
-                  <Button
-                    type="button"
-                    variant="link"
-                    onClick={() => setMode('reset')}
-                    className="text-sm text-blue-600"
-                  >
-                    Forgot Password?
-                  </Button>
-                  <div className="text-sm text-slate-600">
-                    Don't have an account?{' '}
-                    <Button
-                      type="button"
-                      variant="link"
-                      onClick={() => setMode('signup')}
-                      className="text-blue-600 p-0 h-auto"
-                    >
-                      Sign Up
-                    </Button>
-                  </div>
-                </div>
-              </form>
-            </Form>
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-blue-900 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-purple-500/20 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-40 right-16 w-24 h-24 bg-blue-500/20 rounded-full blur-lg animate-bounce"></div>
+        <div className="absolute bottom-32 left-20 w-40 h-40 bg-emerald-500/20 rounded-full blur-2xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-28 h-28 bg-yellow-500/20 rounded-full blur-xl animate-bounce"></div>
 
-          {mode === 'signup' && (
-            <Form {...signUpForm}>
-              <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
-                <FormField
-                  control={signUpForm.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your full name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signUpForm.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Choose a username" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signUpForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signUpForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Create a password"
-                            {...field}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={loading}>
-                  Create Account
-                </Button>
-                <div className="text-center">
-                  <div className="text-sm text-slate-600">
-                    Already have an account?{' '}
-                    <Button
-                      type="button"
-                      variant="link"
-                      onClick={() => setMode('signin')}
-                      className="text-blue-600 p-0 h-auto"
+        {/* Floating particles */}
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-white/30 rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 2}s`
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
+          <Card className="bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl">
+            <CardHeader className="text-center pb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">🚀</span>
+              </div>
+              <CardTitle className="text-2xl font-bold text-white">
+                Welcome to Onboard
+              </CardTitle>
+              <p className="text-blue-200">Your Web3 learning journey starts here</p>
+            </CardHeader>
+            <CardContent>
+              {activeTab !== 'reset' ? (
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AuthMode)} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm border border-white/20">
+                    <TabsTrigger
+                      value="signin"
+                      className="text-white data-[state=active]:bg-white data-[state=active]:text-slate-900"
                     >
                       Sign In
-                    </Button>
-                  </div>
-                </div>
-              </form>
-            </Form>
-          )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="signup"
+                      className="text-white data-[state=active]:bg-white data-[state=active]:text-slate-900"
+                    >
+                      Sign Up
+                    </TabsTrigger>
+                  </TabsList>
 
-          {mode === 'reset' && (
-            <Form {...resetForm}>
-              <form onSubmit={resetForm.handleSubmit(handleReset)} className="space-y-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setMode('signin')}
-                  className="mb-4 p-0 h-auto"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Sign In
-                </Button>
-                <FormField
-                  control={resetForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={loading}>
-                  Send Reset Email
-                </Button>
-              </form>
-            </Form>
-          )}
-        </CardContent>
-      </Card>
+                  <TabsContent value="signin" className="mt-6">
+                    <Form {...signInForm}>
+                      <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
+                        <FormField
+                          control={signInForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-white">Email</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="email"
+                                  placeholder="Enter your email"
+                                  className="bg-white/10 border-white/20 text-white placeholder-slate-400 focus:border-purple-400"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signInForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-white">Password</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input
+                                    {...field}
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Enter your password"
+                                    className="bg-white/10 border-white/20 text-white placeholder-slate-400 focus:border-purple-400 pr-12"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white"
+                                  >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                  </button>
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="submit"
+                          className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3"
+                          disabled={loading}
+                        >
+                          {loading ? (
+                            <>
+                              <Sparkles className="mr-2 h-4 w-4 animate-spin" />
+                              Signing In...
+                            </>
+                          ) : (
+                            <>
+                              <Shield className="mr-2 h-4 w-4" />
+                              Sign In
+                            </>
+                          )}
+                        </Button>
+                        <div className="text-center">
+                          <Button
+                            type="button"
+                            variant="link"
+                            onClick={() => setActiveTab('reset')}
+                            className="text-purple-400 hover:text-purple-300"
+                          >
+                            Forgot Password?
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </TabsContent>
+
+                  <TabsContent value="signup" className="mt-6">
+                    <Form {...signUpForm}>
+                      <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
+                        <FormField
+                          control={signUpForm.control}
+                          name="fullName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-white">Full Name</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="Enter your full name"
+                                  className="bg-white/10 border-white/20 text-white placeholder-slate-400 focus:border-purple-400"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signUpForm.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-white">Username</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="Choose a username"
+                                  className="bg-white/10 border-white/20 text-white placeholder-slate-400 focus:border-purple-400"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signUpForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-white">Email</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="email"
+                                  placeholder="Enter your email"
+                                  className="bg-white/10 border-white/20 text-white placeholder-slate-400 focus:border-purple-400"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signUpForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-white">Password</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input
+                                    {...field}
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Create a password"
+                                    className="bg-white/10 border-white/20 text-white placeholder-slate-400 focus:border-purple-400 pr-12"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white"
+                                  >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                  </button>
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="submit"
+                          className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white font-semibold py-3"
+                          disabled={loading}
+                        >
+                          {loading ? (
+                            <>
+                              <Sparkles className="mr-2 h-4 w-4 animate-spin" />
+                              Creating Account...
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="mr-2 h-4 w-4" />
+                              Create Account
+                            </>
+                          )}
+                        </Button>
+                      </form>
+                    </Form>
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <div className="mt-6">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setActiveTab('signin')}
+                    className="mb-4 text-white hover:bg-white/10"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Sign In
+                  </Button>
+                  <Form {...resetForm}>
+                    <form onSubmit={resetForm.handleSubmit(handleReset)} className="space-y-4">
+                      <FormField
+                        control={resetForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-white">Email</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                type="email"
+                                placeholder="Enter your email"
+                                className="bg-white/10 border-white/20 text-white placeholder-slate-400 focus:border-purple-400"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="submit"
+                        className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <Sparkles className="mr-2 h-4 w-4 animate-spin" />
+                            Sending Reset Email...
+                          </>
+                        ) : (
+                          'Send Reset Email'
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
+                </div>
+              )}
+
+              <div className="mt-6 text-center text-sm text-slate-400">
+                <p>
+                  By continuing, you agree to our{" "}
+                  <button className="text-purple-400 hover:text-purple-300 underline">
+                    Terms of Service
+                  </button>{" "}
+                  and{" "}
+                  <button className="text-purple-400 hover:text-purple-300 underline">
+                    Privacy Policy
+                  </button>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

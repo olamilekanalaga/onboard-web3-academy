@@ -104,7 +104,8 @@ import { nftCreationCourse } from './nftCreationCourse';
 export const courses: Record<string, Course> = {
   foundation: {
     ...foundationCourse,
-    icon: null
+    icon: null,
+    totalXP: foundationCourse.totalXP || 500
   },
   'defi-fundamentals': {
     ...defiFundamentalsCourse,
@@ -122,8 +123,9 @@ export const courses: Record<string, Course> = {
     difficulty: 2,
     category: 'defi' as const,
     skills: ['DeFi Protocols', 'Yield Farming', 'Liquidity Provision', 'DeFi Security'],
-    modules: defiFundamentalsCourse.modules.map(module => ({
+    modules: defiFundamentalsCourse.modules.map((module, index) => ({
       ...module,
+      id: index + 1,
       description: module.description || 'Learn essential DeFi concepts',
       xpReward: module.xpReward || 100
     }))
@@ -188,8 +190,9 @@ export const courses: Record<string, Course> = {
     difficulty: 2,
     category: 'fundamentals' as const,
     skills: ['Content Creation', 'Video Production', 'Audience Building', 'Storytelling'],
-    modules: contentCreationCourse.modules.map(module => ({
+    modules: contentCreationCourse.modules.map((module, index) => ({
       ...module,
+      id: index + 1,
       description: module.description || 'Learn content creation fundamentals',
       xpReward: module.xpReward || 150
     }))
@@ -249,7 +252,8 @@ export const courses: Record<string, Course> = {
   'nft-creation': {
     ...nftCreationCourse,
     icon: null,
-    category: 'development' as const
+    category: 'development' as const,
+    totalXP: nftCreationCourse.totalXP || 800
   },
   development: {
     id: 'development',

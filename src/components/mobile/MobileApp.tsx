@@ -1,26 +1,20 @@
 
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useMobileUser } from "@/contexts/MobileUserContext";
 import { useEffect } from "react";
 import MobileAuth from "./MobileAuth";
 import MobileHome from "./MobileHome";
-import MobileSplash from "./MobileSplash";
-import MobileOnboarding from "./MobileOnboarding";
-import MobileSignup from "./MobileSignup";
 
 const MobileApp = () => {
   const { user, loading } = useAuth();
-  const { userState, completeOnboarding, setCurrentStep } = useMobileUser();
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Handle navigation for authenticated users
   useEffect(() => {
     if (loading) return;
 
-    // If user is authenticated and has completed onboarding
-    if (user && userState.hasCompletedOnboarding) {
+    // If user is authenticated, navigate to home
+    if (user) {
       // Check if there's an intended destination
       const intendedDestination = sessionStorage.getItem('mobile_intended_destination');
       if (intendedDestination && intendedDestination !== '/') {
@@ -30,7 +24,7 @@ const MobileApp = () => {
         navigate('/mobile/home', { replace: true });
       }
     }
-  }, [user, loading, userState.hasCompletedOnboarding, navigate]);
+  }, [user, loading, navigate]);
 
   // Show loading while checking auth
   if (loading) {
@@ -49,42 +43,7 @@ const MobileApp = () => {
     return <MobileAuth />;
   }
 
-  // If user is authenticated but hasn't completed onboarding, show onboarding flow
-  if (!userState.hasCompletedOnboarding) {
-    const handleSplashComplete = () => {
-      setCurrentStep('onboarding');
-    };
-
-    const handleOnboardingComplete = () => {
-      setCurrentStep('signup');
-    };
-
-    const handleSignupComplete = () => {
-      completeOnboarding();
-      
-      // Check if there's an intended destination
-      const intendedDestination = sessionStorage.getItem('mobile_intended_destination');
-      if (intendedDestination && intendedDestination !== '/') {
-        sessionStorage.removeItem('mobile_intended_destination');
-        navigate(intendedDestination, { replace: true });
-      } else {
-        navigate('/mobile/home', { replace: true });
-      }
-    };
-
-    switch (userState.currentStep) {
-      case 'splash':
-        return <MobileSplash onComplete={handleSplashComplete} />;
-      case 'onboarding':
-        return <MobileOnboarding onComplete={handleOnboardingComplete} />;
-      case 'signup':
-        return <MobileSignup onComplete={handleSignupComplete} />;
-      default:
-        return <MobileSplash onComplete={handleSplashComplete} />;
-    }
-  }
-
-  // User is authenticated and has completed onboarding, show mobile home
+  // User is authenticated, show mobile home
   return <MobileHome />;
 };
 
