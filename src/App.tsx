@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -51,7 +52,7 @@ const App = () => {
                       {/* Mobile auth route */}
                       <Route path="/auth" element={<MobileAuth />} />
 
-                      {/* Mobile routes - all protected by auth guard */}
+                      {/* Mobile routes - all protected by auth guard except for course routes */}
                       <Route path="/mobile/home" element={
                         <MobileAuthGuard>
                           <MobileHome />
@@ -72,6 +73,21 @@ const App = () => {
                           <MobileCourse />
                         </MobileAuthGuard>
                       } />
+                      <Route path="/course/:courseId" element={
+                        <MobileAuthGuard>
+                          <MobileCourse />
+                        </MobileAuthGuard>
+                      } />
+                      <Route path="/courses/:courseId" element={
+                        <MobileAuthGuard>
+                          <MobileCourse />
+                        </MobileAuthGuard>
+                      } />
+                      <Route path="/courses" element={
+                        <MobileAuthGuard>
+                          <MobileCourses />
+                        </MobileAuthGuard>
+                      } />
                       <Route path="/demo" element={
                         <MobileAuthGuard>
                           <MobileDemo />
@@ -87,12 +103,27 @@ const App = () => {
                           <MobileProfile />
                         </MobileAuthGuard>
                       } />
+                      <Route path="/profile" element={
+                        <MobileAuthGuard>
+                          <MobileProfile />
+                        </MobileAuthGuard>
+                      } />
                       <Route path="/mobile/settings" element={
                         <MobileAuthGuard>
                           <MobileSettings />
                         </MobileAuthGuard>
                       } />
+                      <Route path="/settings" element={
+                        <MobileAuthGuard>
+                          <MobileSettings />
+                        </MobileAuthGuard>
+                      } />
                       <Route path="/mobile/gamification" element={
+                        <MobileAuthGuard>
+                          <MobileGamification />
+                        </MobileAuthGuard>
+                      } />
+                      <Route path="/gamification" element={
                         <MobileAuthGuard>
                           <MobileGamification />
                         </MobileAuthGuard>

@@ -121,7 +121,12 @@ export const courses: Record<string, Course> = {
     totalXP: 750,
     difficulty: 2,
     category: 'defi' as const,
-    skills: ['DeFi Protocols', 'Yield Farming', 'Liquidity Provision', 'DeFi Security']
+    skills: ['DeFi Protocols', 'Yield Farming', 'Liquidity Provision', 'DeFi Security'],
+    modules: defiFundamentalsCourse.modules.map(module => ({
+      ...module,
+      description: module.description || 'Learn essential DeFi concepts',
+      xpReward: module.xpReward || 100
+    }))
   },
   degen: {
     ...degenCourseMetadata,
@@ -138,6 +143,8 @@ export const courses: Record<string, Course> = {
       'Develop psychological trading edge'
     ],
     totalXP: 1000,
+    difficulty: 3,
+    category: 'trading' as const,
     skills: ['Memecoin Analysis', 'High-Risk Trading', 'DeFi Strategies', 'Risk Management'],
     modules: [
       {
@@ -180,7 +187,12 @@ export const courses: Record<string, Course> = {
     totalXP: 900,
     difficulty: 2,
     category: 'fundamentals' as const,
-    skills: ['Content Creation', 'Video Production', 'Audience Building', 'Storytelling']
+    skills: ['Content Creation', 'Video Production', 'Audience Building', 'Storytelling'],
+    modules: contentCreationCourse.modules.map(module => ({
+      ...module,
+      description: module.description || 'Learn content creation fundamentals',
+      xpReward: module.xpReward || 150
+    }))
   },
   'advanced-trading': {
     id: 'advanced-trading',

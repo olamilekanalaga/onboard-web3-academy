@@ -28,12 +28,20 @@ const MobileAuthGuard: React.FC<MobileAuthGuardProps> = ({ children }) => {
       return;
     }
 
-    // If user is authenticated but hasn't completed onboarding and is trying to access protected routes
-    if (!userState.hasCompletedOnboarding && location.pathname !== '/') {
-      // Store the intended destination
-      sessionStorage.setItem('mobile_intended_destination', location.pathname);
-      // Redirect to onboarding flow
-      navigate('/', { replace: true });
+    // If user is authenticated but hasn't completed onboarding and is on the root path
+    if (!userState.hasCompletedOnboarding && location.pathname === '/') {
+      // Don't redirect, let the onboarding flow handle it
+      return;
+    }
+
+    // If user is authenticated and has completed onboarding, allow navigation
+    if (userState.hasCompletedOnboarding) {
+      // Check if there's an intended destination
+      const intendedDestination = sessionStorage.getItem('mobile_intended_destination');
+      if (intendedDestination && intendedDestination !== '/' && location.pathname === '/') {
+        sessionStorage.removeItem('mobile_intended_destination');
+        navigate(intendedDestination, { replace: true });
+      }
     }
   }, [user, loading, userState.hasCompletedOnboarding, location.pathname, navigate]);
 
@@ -73,8 +81,8 @@ const MobileAuthGuard: React.FC<MobileAuthGuardProps> = ({ children }) => {
     return null;
   }
 
-  // If user is authenticated but hasn't completed onboarding, show onboarding flow
-  if (!userState.hasCompletedOnboarding) {
+  // If user is authenticated but hasn't completed onboarding and is on root path, show onboarding flow
+  if (!userState.hasCompletedOnboarding && location.pathname === '/') {
     switch (userState.currentStep) {
       case 'splash':
         return <MobileSplash onComplete={handleSplashComplete} />;
@@ -87,7 +95,7 @@ const MobileAuthGuard: React.FC<MobileAuthGuardProps> = ({ children }) => {
     }
   }
 
-  // User is authenticated and has completed onboarding, show the protected content
+  // User is authenticated, show the protected content
   return <>{children}</>;
 };
 
