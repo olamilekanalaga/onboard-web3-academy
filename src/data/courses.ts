@@ -127,7 +127,14 @@ export const courses: Record<string, Course> = {
       ...module,
       id: index + 1,
       description: module.description || 'Learn essential DeFi concepts',
-      xpReward: module.xpReward || 100
+      xpReward: module.xpReward || 100,
+      chapters: module.chapters.map((chapter, chapterIndex) => ({
+        ...chapter,
+        id: chapterIndex + 1,
+        xpReward: chapter.xpReward || 50,
+        difficulty: chapter.difficulty || 'medium' as const,
+        tags: chapter.tags || ['defi', 'fundamentals']
+      }))
     }))
   },
   degen: {
@@ -194,7 +201,14 @@ export const courses: Record<string, Course> = {
       ...module,
       id: index + 1,
       description: module.description || 'Learn content creation fundamentals',
-      xpReward: module.xpReward || 150
+      xpReward: module.xpReward || 150,
+      chapters: module.chapters.map((chapter, chapterIndex) => ({
+        ...chapter,
+        id: chapterIndex + 1,
+        xpReward: chapter.xpReward || 50,
+        difficulty: chapter.difficulty || 'medium' as const,
+        tags: chapter.tags || ['content', 'creation']
+      }))
     }))
   },
   'advanced-trading': {

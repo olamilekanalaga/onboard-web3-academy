@@ -1,13 +1,17 @@
 
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import MobileAuth from "./MobileAuth";
 import MobileHome from "./MobileHome";
+import MobileSplash from "./MobileSplash";
+import MobileOnboarding from "./MobileOnboarding";
 
 const MobileApp = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [showSplash, setShowSplash] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Handle navigation for authenticated users
   useEffect(() => {
@@ -26,6 +30,17 @@ const MobileApp = () => {
     }
   }, [user, loading, navigate]);
 
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    if (!user) {
+      setShowOnboarding(true);
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+  };
+
   // Show loading while checking auth
   if (loading) {
     return (
@@ -36,6 +51,16 @@ const MobileApp = () => {
         </div>
       </div>
     );
+  }
+
+  // Show splash screen first
+  if (showSplash) {
+    return <MobileSplash onComplete={handleSplashComplete} />;
+  }
+
+  // Show onboarding for non-authenticated users
+  if (!user && showOnboarding) {
+    return <MobileOnboarding onComplete={handleOnboardingComplete} />;
   }
 
   // If user is not authenticated, show mobile auth
