@@ -111,6 +111,7 @@ export const courses: Record<string, Course> = {
     ...defiFundamentalsCourse,
     icon: null,
     longDescription: 'Comprehensive introduction to Decentralized Finance (DeFi) protocols, yield farming, liquidity provision, and advanced DeFi strategies.',
+    level: 'Beginner' as const,
     color: 'from-green-400 to-green-600',
     gradient: 'bg-gradient-to-br from-green-400 to-green-600',
     learningOutcomes: [
@@ -127,13 +128,13 @@ export const courses: Record<string, Course> = {
       ...module,
       id: index + 1,
       description: module.description || 'Learn essential DeFi concepts',
-      xpReward: module.xpReward || 100,
+      xpReward: 100,
       chapters: module.chapters.map((chapter, chapterIndex) => ({
         ...chapter,
         id: chapterIndex + 1,
-        xpReward: chapter.xpReward || 50,
-        difficulty: chapter.difficulty || 'medium' as const,
-        tags: chapter.tags || ['defi', 'fundamentals']
+        xpReward: 50,
+        difficulty: 'medium' as const,
+        tags: ['defi', 'fundamentals']
       }))
     }))
   },
@@ -185,6 +186,7 @@ export const courses: Record<string, Course> = {
     ...contentCreationCourse,
     icon: null,
     longDescription: 'Learn to create engaging crypto and blockchain content across multiple platforms. Master storytelling, video production, and audience building in the crypto space.',
+    level: 'Beginner' as const,
     color: 'from-pink-400 to-pink-600',
     gradient: 'bg-gradient-to-br from-pink-400 to-pink-600',
     learningOutcomes: [
@@ -201,13 +203,13 @@ export const courses: Record<string, Course> = {
       ...module,
       id: index + 1,
       description: module.description || 'Learn content creation fundamentals',
-      xpReward: module.xpReward || 150,
+      xpReward: 150,
       chapters: module.chapters.map((chapter, chapterIndex) => ({
         ...chapter,
         id: chapterIndex + 1,
-        xpReward: chapter.xpReward || 50,
-        difficulty: chapter.difficulty || 'medium' as const,
-        tags: chapter.tags || ['content', 'creation']
+        xpReward: 50,
+        difficulty: 'medium' as const,
+        tags: ['content', 'creation']
       }))
     }))
   },
