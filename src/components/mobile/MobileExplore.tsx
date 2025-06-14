@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSocialVerification } from "@/contexts/SocialVerificationContext";
@@ -10,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import BottomNavigation from "./BottomNavigation";
 import SocialVerification from "../SocialVerification";
+import MobileHeader from "./MobileHeader";
 
 const MobileExplore = () => {
   const navigate = useNavigate();
@@ -103,7 +103,9 @@ const MobileExplore = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-slate-50">
+      <MobileHeader title="Explore" />
+      
       {/* Header */}
       <div className="bg-white px-6 pt-12 pb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-900 mb-4">Explore Courses</h1>
@@ -237,7 +239,7 @@ const MobileExplore = () => {
       </div>
 
       <BottomNavigation />
-
+      
       {/* Social Verification Modal */}
       {showSocialVerification && (
         <SocialVerification

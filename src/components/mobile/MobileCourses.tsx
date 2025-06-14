@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Play, Clock, CheckCircle, BookOpen, Target } from "lucide-react";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import MobileHeader from "./MobileHeader";
 import BottomNavigation from "./BottomNavigation";
 import { courses } from "@/data/courses";
 
@@ -68,7 +68,9 @@ const MobileCourses = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-slate-50">
+      <MobileHeader title="My Courses" />
+      
       {/* Header */}
       <div className="bg-white px-6 pt-12 pb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-900 mb-2">My Courses</h1>

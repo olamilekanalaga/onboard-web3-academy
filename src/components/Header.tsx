@@ -43,7 +43,7 @@ const Header = () => {
             <img 
               src="/academia web display.png" 
               alt="Academia" 
-              className="h-10 w-auto"
+              className="h-12 w-auto"
             />
           </Link>
 

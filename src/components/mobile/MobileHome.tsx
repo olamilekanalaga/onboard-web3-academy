@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +9,7 @@ import { useSocialVerification } from "@/contexts/SocialVerificationContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
+import MobileHeader from "./MobileHeader";
 import BottomNavigation from "./BottomNavigation";
 import SocialVerification from "../SocialVerification";
 import { courses } from "@/data/courses";
@@ -83,7 +83,9 @@ const MobileHome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-slate-50">
+      <MobileHeader />
+      
       {/* Header */}
       <div className="bg-gradient-to-br from-emerald-600 to-blue-700 px-6 pt-12 pb-8">
         <div className="flex items-center justify-between mb-6">
@@ -216,15 +218,6 @@ const MobileHome = () => {
       </div>
 
       <BottomNavigation />
-
-      {/* Social Verification Modal */}
-      {showSocialVerification && (
-        <SocialVerification
-          courseName={selectedCourse}
-          onComplete={handleSocialVerificationComplete}
-          onCancel={handleSocialVerificationCancel}
-        />
-      )}
     </div>
   );
 };

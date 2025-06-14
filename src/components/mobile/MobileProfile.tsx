@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   User,
@@ -40,6 +39,7 @@ import { useUserProgress } from "@/hooks/useUserProgress";
 import { useCertificates } from "@/hooks/useCertificates";
 import { useUserStats } from "@/hooks/useUserStats";
 import { useToast } from "@/components/ui/use-toast";
+import MobileHeader from "./MobileHeader";
 import BottomNavigation from "./BottomNavigation";
 
 const MobileProfile = () => {
@@ -129,7 +129,9 @@ const MobileProfile = () => {
   const LevelIcon = getLevelIcon(userStats?.level || 1);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-blue-900 relative overflow-hidden pb-20">
+    <div className="min-h-screen bg-slate-50">
+      <MobileHeader title="Profile" />
+      
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-32 h-32 bg-purple-500/20 rounded-full blur-xl animate-pulse"></div>
