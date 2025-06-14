@@ -67,10 +67,12 @@ const MobileSplash = ({ onComplete }: MobileSplashProps) => {
           {/* Logo Section */}
           <div className="mb-12">
             <div className="relative mb-8">
-              <div className="w-32 h-32 bg-gradient-to-br from-purple-400 to-blue-500 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                <div className="w-24 h-24 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <span className="text-5xl">🚀</span>
-                </div>
+              <div className="w-32 h-32 mx-auto mb-6 flex items-center justify-center transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                <img 
+                  src="/academia mobile.png" 
+                  alt="Academia Mobile" 
+                  className="w-full h-full object-contain"
+                />
               </div>
 
               {/* Orbiting elements */}
@@ -92,7 +94,7 @@ const MobileSplash = ({ onComplete }: MobileSplashProps) => {
 
             <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
               <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                Onboard
+                Academia
               </span>
             </h1>
             <p className="text-xl text-slate-300 mb-2">Your Web3 Learning Journey</p>

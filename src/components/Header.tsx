@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Search, User, BookOpen, Menu, ChevronDown, Trophy, Zap, LogOut, Settings } from "lucide-react";
@@ -41,12 +40,11 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="bg-emerald-600 p-2 rounded-lg">
-              <BookOpen className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">Onboard</h1>
-            </div>
+            <img 
+              src="/academia web display.png" 
+              alt="Academia" 
+              className="h-10 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation - Only show for authenticated users */}
