@@ -259,11 +259,7 @@ const Gamification = () => {
             </TabsContent>
 
             <TabsContent value="tools">
-              <InteractiveToolsHub
-                userXP={userProgress.totalXP}
-                completedCourses={userProgress.coursesCompleted}
-                onToolSelect={handleToolSelect}
-              />
+              <InteractiveToolsHub />
             </TabsContent>
 
             <TabsContent value="community">

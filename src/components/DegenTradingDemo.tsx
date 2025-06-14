@@ -75,6 +75,7 @@ const DegenTradingDemo: React.FC = () => {
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
   const [isTrading, setIsTrading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('trading');
+  const [balance, setBalance] = useState<number>(10000);
 
   // Blockchain configurations
   const blockchains: Blockchain[] = [
@@ -316,7 +317,9 @@ const DegenTradingDemo: React.FC = () => {
                 entryPrice: crypto.price,
                 currentPrice: crypto.price,
                 pnl: 0,
-                pnlPercentage: 0
+                pnlPercentage: 0,
+                blockchain: selectedBlockchain,
+                timestamp: Date.now()
               }];
             }
           });

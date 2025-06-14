@@ -40,8 +40,6 @@ const Settings = () => {
     data_analytics: true,
   });
 
-
-
   const handleDeleteAccount = async () => {
     // This would typically show a confirmation dialog
     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
@@ -84,8 +82,6 @@ const Settings = () => {
               <span>Privacy</span>
             </TabsTrigger>
           </TabsList>
-
-
 
           {/* Notifications Tab */}
           <TabsContent value="notifications" className="space-y-6">
@@ -173,21 +169,16 @@ const Settings = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Theme</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Choose your preferred theme
-                      </p>
-                    </div>
-                    <ThemeToggle showLabel />
-                  </div>
-                  <Separator />
                   <div className="space-y-2">
-                    <Label>Current Theme</Label>
-                    <Badge variant="secondary" className="capitalize">
-                      {theme}
-                    </Badge>
+                    <Label>Theme</Label>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary" className="capitalize">
+                        Light Mode
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        Currently using light theme
+                      </span>
+                    </div>
                   </div>
                 </div>
               </CardContent>

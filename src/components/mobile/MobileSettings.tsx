@@ -19,10 +19,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/components/ui/use-toast";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
-import ThemeToggle from "../ThemeToggle";
 import BottomNavigation from "./BottomNavigation";
 
 type SettingsView = 'main' | 'notifications' | 'appearance' | 'privacy';
@@ -30,7 +28,6 @@ type SettingsView = 'main' | 'notifications' | 'appearance' | 'privacy';
 const MobileSettings = () => {
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
-  const { theme } = useTheme();
   const { toast } = useToast();
   const updateProfile = useUpdateProfile();
 
@@ -175,8 +172,6 @@ const MobileSettings = () => {
     </div>
   );
 
-
-
   const renderNotificationsView = () => (
     <div className="space-y-6">
       <Card className="border-0 shadow-sm">
@@ -247,19 +242,16 @@ const MobileSettings = () => {
           <CardTitle>Appearance Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Theme</Label>
-              <p className="text-sm text-slate-600">Choose your preferred theme</p>
-            </div>
-            <ThemeToggle showLabel />
-          </div>
-          <Separator />
           <div className="space-y-2">
-            <Label>Current Theme</Label>
-            <Badge variant="secondary" className="capitalize">
-              {theme}
-            </Badge>
+            <Label>Theme</Label>
+            <div className="flex items-center space-x-2">
+              <Badge variant="secondary" className="capitalize">
+                Light Mode
+              </Badge>
+              <span className="text-sm text-slate-600">
+                Currently using light theme
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>

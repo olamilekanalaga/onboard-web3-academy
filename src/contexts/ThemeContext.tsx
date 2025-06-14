@@ -1,11 +1,12 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'light' | 'dark' | 'system';
+type Theme = 'light';
 
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  actualTheme: 'light' | 'dark'; // The actual theme being applied (resolved from system)
+  actualTheme: 'light'; // Always light now
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -23,65 +24,29 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Get theme from localStorage or default to system
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    return savedTheme || 'system';
-  });
+  const [theme] = useState<Theme>('light');
+  const [actualTheme] = useState<'light'>('light');
 
-  const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('light');
-
-  // Function to get system theme preference
-  const getSystemTheme = (): 'light' | 'dark' => {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  };
-
-  // Update actual theme based on theme setting
+  // Always apply light theme
   useEffect(() => {
-    const updateActualTheme = () => {
-      let newActualTheme: 'light' | 'dark';
-      
-      if (theme === 'system') {
-        newActualTheme = getSystemTheme();
-      } else {
-        newActualTheme = theme;
-      }
-      
-      setActualTheme(newActualTheme);
-      
-      // Apply theme to document
-      const root = document.documentElement;
-      root.classList.remove('light', 'dark');
-      root.classList.add(newActualTheme);
-      
-      // Update meta theme-color for mobile browsers
-      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-      if (metaThemeColor) {
-        metaThemeColor.setAttribute('content', newActualTheme === 'dark' ? '#1e293b' : '#ffffff');
-      }
-    };
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add('light');
+    
+    // Update meta theme-color for mobile browsers
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', '#ffffff');
+    }
+  }, []);
 
-    updateActualTheme();
-
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemThemeChange = () => {
-      if (theme === 'system') {
-        updateActualTheme();
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
-  }, [theme]);
-
-  // Save theme to localStorage
+  // Remove theme from localStorage to prevent confusion
   useEffect(() => {
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    localStorage.removeItem('theme');
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, actualTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme: () => {}, actualTheme }}>
       {children}
     </ThemeContext.Provider>
   );
