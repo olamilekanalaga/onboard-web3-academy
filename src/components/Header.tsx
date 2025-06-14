@@ -1,4 +1,5 @@
 
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Search, User, BookOpen, Menu, ChevronDown, Trophy, Zap, LogOut, Settings } from "lucide-react";
@@ -38,13 +39,13 @@ const Header = () => {
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="container mx-auto max-w-7xl px-4 md:px-6 bg-blue-200">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo - Medium size for better visibility */}
+        <div className="flex items-center justify-between h-18">
+          {/* Logo - Balanced size */}
           <Link to="/" className="flex items-center space-x-3">
             <img 
               src="/academia web display.png" 
               alt="Academia" 
-              className="h-12 w-auto object-contain" 
+              className="h-10 w-auto object-contain" 
             />
           </Link>
 
@@ -230,3 +231,4 @@ const Header = () => {
 };
 
 export default Header;
+
