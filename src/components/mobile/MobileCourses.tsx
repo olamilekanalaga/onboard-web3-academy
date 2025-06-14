@@ -1,215 +1,147 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Play, Clock, CheckCircle, BookOpen, Target } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import React, { useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { BookOpen, Clock, Users, Star, Play, ChevronRight, Filter } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { courses } from "@/data/courses";
 import MobileHeader from "./MobileHeader";
 import BottomNavigation from "./BottomNavigation";
-import { courses } from "@/data/courses";
 
 const MobileCourses = () => {
   const navigate = useNavigate();
-  const [completedChapters, setCompletedChapters] = useState<string[]>([]);
+  const [filter, setFilter] = useState("all");
+
+  const filteredCourses = Object.values(courses).filter(course => {
+    if (filter === "all") return true;
+    if (filter === "beginner") return course.level === "Beginner";
+    if (filter === "intermediate") return course.level === "Intermediate";
+    if (filter === "advanced") return course.level === "Advanced";
+    return true;
+  });
 
   const getIconForCourse = (courseId: string) => {
     switch (courseId) {
-      case "foundation": return "🎓";
-      case "defi": return "💰";
-      case "degen": return "🚀";
+      case "foundation": return "🏗️";
+      case "defi": return "🏦";
+      case "degen": return "⚡";
       case "advanced-trading": return "📈";
-      case "development": return "💻";
-      default: return "📚";
-    }
-  };
-
-  // Get real course data - only show the modern courses we want to feature
-  const featuredCourseIds = ["foundation", "defi", "degen", "advanced-trading", "development"];
-  const courseList = Object.values(courses).filter(course => featuredCourseIds.includes(course.id));
-
-  // Real enrolled courses - no progress until user actually starts
-  // Only show foundation course initially (others are locked)
-  const enrolledCourses = courseList
-    .filter(course => course.id === "foundation") // Only show unlocked courses
-    .map((course, index) => {
-      const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
-      const progress = 0; // No progress until user actually starts
-      const completedCount = 0;
-
-      return {
-        id: course.id,
-        title: course.title,
-        progress: progress,
-        totalLessons: totalChapters,
-        completedLessons: completedCount,
-        nextLesson: course.modules[0]?.chapters[0]?.title || "Getting Started",
-        duration: course.modules[0]?.chapters[0]?.duration || "15 min",
-        thumbnail: getIconForCourse(course.id),
-        level: course.level,
-        category: course.category,
-        lastAccessed: "Not started"
-      };
-    });
-
-  // Filter courses by progress status
-  const inProgressCourses = enrolledCourses.filter(course => course.progress > 0 && course.progress < 100);
-  const completedCourses = enrolledCourses.filter(course => course.progress >= 100);
-
-  const getDifficultyColor = (level: string) => {
-    switch (level.toLowerCase()) {
-      case "foundation": return "bg-emerald-100 text-emerald-700";
-      case "beginner": return "bg-green-100 text-green-700";
-      case "intermediate": return "bg-yellow-100 text-yellow-700";
-      case "advanced": return "bg-orange-100 text-orange-700";
-      case "expert": return "bg-red-100 text-red-700";
-      default: return "bg-gray-100 text-gray-700";
+      case "development": return "⚡";
+      default: return "📖";
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <MobileHeader title="My Courses" />
+      <MobileHeader title="All Courses" />
       
-      {/* Header */}
-      <div className="bg-white px-6 pt-12 pb-6 border-b border-slate-200">
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">My Courses</h1>
-        <p className="text-slate-600">Continue your learning journey</p>
-      </div>
-
-      {/* In Progress */}
-      <div className="px-6 py-6">
-        <h2 className="text-xl font-bold text-slate-900 mb-4">Continue Learning</h2>
-        <div className="space-y-4">
-          {inProgressCourses.map((course, index) => (
-            <Card key={course.id} className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-2xl">
-                    {course.thumbnail}
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-slate-900">{course.title}</h3>
-                      <Badge variant="secondary" className={`text-xs ${getDifficultyColor(course.level)}`}>
-                        {course.level}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-slate-600">
-                        {course.completedLessons}/{course.totalLessons} chapters
-                      </span>
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                        {course.progress}%
-                      </Badge>
-                    </div>
-
-                    <Progress value={course.progress} className="h-2 mb-3" />
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-slate-700 mb-1">Next: {course.nextLesson}</p>
-                        <div className="flex items-center text-xs text-slate-500">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {course.duration}
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        className="bg-blue-600 hover:bg-blue-700"
-                        onClick={() => navigate(`/mobile/course/${course.id}`)}
-                      >
-                        <Play className="h-4 w-4 mr-1" />
-                        Continue
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {inProgressCourses.length === 0 && (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-4">📚</div>
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No courses in progress</h3>
-            <p className="text-slate-600 mb-4">Start learning by exploring our courses</p>
+      {/* Filter Tabs */}
+      <div className="px-6 py-4 bg-white border-b border-slate-200">
+        <div className="flex space-x-2 overflow-x-auto">
+          {[
+            { key: "all", label: "All Courses" },
+            { key: "beginner", label: "Beginner" },
+            { key: "intermediate", label: "Intermediate" },
+            { key: "advanced", label: "Advanced" }
+          ].map((tab) => (
             <Button
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => navigate("/mobile/explore")}
+              key={tab.key}
+              variant={filter === tab.key ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter(tab.key)}
+              className={`whitespace-nowrap ${
+                filter === tab.key 
+                  ? "bg-emerald-600 text-white" 
+                  : "text-slate-600"
+              }`}
             >
-              Explore Courses
+              {tab.label}
             </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Completed Courses */}
-      <div className="px-6 py-6">
-        <h2 className="text-xl font-bold text-slate-900 mb-4">Completed</h2>
-        <div className="space-y-4">
-          {completedCourses.map((course, index) => (
-            <Card key={course.id} className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-xl">
-                    {course.thumbnail}
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <h3 className="font-semibold text-slate-900">{course.title}</h3>
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    </div>
-                    <p className="text-sm text-slate-600">Completed recently</p>
-                    <div className="flex items-center text-xs text-slate-500 mt-1">
-                      <Target className="h-3 w-3 mr-1" />
-                      {course.totalLessons} chapters completed
-                    </div>
-                  </div>
-
-                  <Button variant="outline" size="sm">
-                    Certificate
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           ))}
         </div>
-
-        {completedCourses.length === 0 && (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-4">🏆</div>
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No completed courses yet</h3>
-            <p className="text-slate-600">Complete your first course to earn a certificate</p>
-          </div>
-        )}
       </div>
 
-      {/* Quick Stats */}
-      <div className="px-6 py-6">
-        <Card className="border-0 shadow-sm bg-gradient-to-r from-purple-600 to-blue-600">
-          <CardContent className="p-6 text-white">
-            <h3 className="text-lg font-bold mb-4">Your Learning Stats</h3>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold">{enrolledCourses.length}</div>
-                <div className="text-xs text-purple-100">Total Courses</div>
+      {/* Course List */}
+      <div className="px-6 py-6 space-y-4">
+        {filteredCourses.map((course) => (
+          <Card
+            key={course.id}
+            className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate(`/mobile/course/${course.id}`)}
+          >
+            <CardContent className="p-0">
+              {/* Course Image */}
+              <div className="relative h-32 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-t-lg">
+                <div className="absolute inset-0 flex items-center justify-center text-4xl">
+                  {getIconForCourse(course.id)}
+                </div>
+                <div className="absolute top-3 right-3">
+                  <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                    {course.level}
+                  </Badge>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl font-bold">{completedCourses.length}</div>
-                <div className="text-xs text-purple-100">Completed</div>
+
+              {/* Course Info */}
+              <div className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-bold text-slate-900 text-lg">{course.title}</h3>
+                  <div className="flex items-center space-x-1 text-yellow-500">
+                    <Star className="h-4 w-4 fill-current" />
+                    <span className="text-xs text-slate-600">{course.rating}</span>
+                  </div>
+                </div>
+
+                <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                  {course.description}
+                </p>
+
+                <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-1">
+                      <Clock className="h-3 w-3" />
+                      <span>{course.duration}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Users className="h-3 w-3" />
+                      <span>{course.enrolled.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <span className="font-semibold text-emerald-600">{course.price}</span>
+                </div>
+
+                {/* Progress Bar */}
+                {course.progress > 0 && (
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                      <span>Progress</span>
+                      <span>{course.progress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-2">
+                      <div
+                        className="bg-emerald-600 h-2 rounded-full transition-all"
+                        style={{ width: `${course.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Button */}
+                <Button
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/mobile/course/${course.id}`);
+                  }}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  {course.progress > 0 ? "Continue" : "Start Course"}
+                </Button>
               </div>
-              <div>
-                <div className="text-2xl font-bold">{inProgressCourses.length}</div>
-                <div className="text-xs text-purple-100">In Progress</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <BottomNavigation />
