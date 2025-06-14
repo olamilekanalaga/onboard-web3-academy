@@ -8,6 +8,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import { useToast } from "@/components/ui/use-toast";
 import ThemeToggle from "./ThemeToggle";
+
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [exploreDropdownOpen, setExploreDropdownOpen] = useState(false);
@@ -42,10 +43,10 @@ const Header = () => {
   };
   return <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="container mx-auto max-w-7xl px-4 md:px-6 bg-blue-200">
-        <div className="flex items-center justify-between h-24">
-          {/* Logo - Made MUCH bigger and more prominent */}
+        <div className="flex items-center justify-between h-20">
+          {/* Logo - Standard web size */}
           <Link to="/" className="flex items-center space-x-3">
-            <img src="/academia web display.png" alt="Academia" className="h-20 w-auto object-contain" />
+            <img src="/academia web display.png" alt="Academia" className="h-16 w-auto object-contain" />
           </Link>
 
           {/* Desktop Navigation - Only show for authenticated users */}
