@@ -10,8 +10,8 @@ import MobileOnboarding from "./MobileOnboarding";
 const MobileApp = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [showSplash, setShowSplash] = useState(true);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showSplash, setShowSplash] = useState(false); // Skip splash for testing
+  const [showOnboarding, setShowOnboarding] = useState(false); // Skip onboarding for testing
 
   // Handle navigation for authenticated users
   useEffect(() => {
