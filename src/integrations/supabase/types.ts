@@ -248,6 +248,7 @@ export type Database = {
           avatar_url: string | null
           country_id: number | null
           created_at: string | null
+          email: string | null
           full_name: string | null
           id: string
           phone: string | null
@@ -259,6 +260,7 @@ export type Database = {
           avatar_url?: string | null
           country_id?: number | null
           created_at?: string | null
+          email?: string | null
           full_name?: string | null
           id: string
           phone?: string | null
@@ -270,6 +272,7 @@ export type Database = {
           avatar_url?: string | null
           country_id?: number | null
           created_at?: string | null
+          email?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
@@ -462,6 +465,102 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_settings: {
+        Row: {
+          course_reminders: boolean | null
+          created_at: string | null
+          data_analytics: boolean | null
+          email_notifications: boolean | null
+          id: string
+          language: string | null
+          marketing_emails: boolean | null
+          show_achievements: boolean | null
+          show_progress: boolean | null
+          theme: string | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          course_reminders?: boolean | null
+          created_at?: string | null
+          data_analytics?: boolean | null
+          email_notifications?: boolean | null
+          id?: string
+          language?: string | null
+          marketing_emails?: boolean | null
+          show_achievements?: boolean | null
+          show_progress?: boolean | null
+          theme?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          course_reminders?: boolean | null
+          created_at?: string | null
+          data_analytics?: boolean | null
+          email_notifications?: boolean | null
+          id?: string
+          language?: string | null
+          marketing_emails?: boolean | null
+          show_achievements?: boolean | null
+          show_progress?: boolean | null
+          theme?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_stats: {
+        Row: {
+          achievements: string[] | null
+          completed_courses: string[] | null
+          created_at: string | null
+          current_streak: number | null
+          id: string
+          last_activity_date: string | null
+          level: number | null
+          longest_streak: number | null
+          total_study_time: number | null
+          total_xp: number | null
+          unlocked_courses: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievements?: string[] | null
+          completed_courses?: string[] | null
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          level?: number | null
+          longest_streak?: number | null
+          total_study_time?: number | null
+          total_xp?: number | null
+          unlocked_courses?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievements?: string[] | null
+          completed_courses?: string[] | null
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          level?: number | null
+          longest_streak?: number | null
+          total_study_time?: number | null
+          total_xp?: number | null
+          unlocked_courses?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
