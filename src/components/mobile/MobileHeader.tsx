@@ -9,17 +9,23 @@ interface MobileHeaderProps {
   onBackClick?: () => void;
   showMenu?: boolean;
   onMenuClick?: () => void;
+  transparent?: boolean;
 }
 
-const MobileHeader = ({ 
-  title, 
-  showBackButton = false, 
-  onBackClick, 
-  showMenu = true, 
-  onMenuClick 
+const MobileHeader = ({
+  title,
+  showBackButton = false,
+  onBackClick,
+  showMenu = true,
+  onMenuClick,
+  transparent = false
 }: MobileHeaderProps) => {
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 px-4 py-3">
+    <header className={`sticky top-0 z-50 px-4 py-3 ${
+      transparent
+        ? 'bg-transparent'
+        : 'bg-white border-b border-slate-200'
+    }`}>
       <div className="flex items-center justify-between">
         {/* Left side - Back button or Logo */}
         <div className="flex items-center space-x-3">
