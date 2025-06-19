@@ -21,6 +21,8 @@ import {
 import BottomNavigation from "./BottomNavigation";
 import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
 import RealisticTradingDemo from "@/components/RealisticTradingDemo";
+import EnhancedTradingDemo from "@/components/EnhancedTradingDemo";
+import DeFiSimulator from "@/components/DeFiSimulator";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
 
 const MobileDemo = () => {
@@ -32,6 +34,38 @@ const MobileDemo = () => {
   const advancedTradingCompleted = isCourseCompleted('advanced-trading');
 
   const demos = [
+    {
+      id: 'enhanced',
+      title: 'Professional Trading Academy',
+      description: 'Master real-world trading strategies through immersive scenarios and guided tutorials',
+      icon: Target,
+      color: 'from-emerald-500 to-blue-600',
+      features: [
+        'Interactive trading scenarios',
+        'Bull/Bear market simulations',
+        'Risk management training',
+        'Achievement system & progress tracking',
+        'Professional market analysis tools'
+      ],
+      difficulty: 'Beginner to Advanced',
+      difficultyColor: 'bg-emerald-100 text-emerald-700'
+    },
+    {
+      id: 'defi',
+      title: 'DeFi Protocol Simulator',
+      description: 'Learn DeFi through hands-on experience with liquidity pools, yield farming, and lending',
+      icon: Activity,
+      color: 'from-purple-500 to-pink-600',
+      features: [
+        'Liquidity pool management',
+        'Yield farming strategies',
+        'Lending & borrowing protocols',
+        'Impermanent loss education',
+        'Multi-protocol experience'
+      ],
+      difficulty: 'Intermediate',
+      difficultyColor: 'bg-purple-100 text-purple-700'
+    },
     {
       id: 'realistic',
       title: 'Professional Trading Platform',
@@ -53,7 +87,7 @@ const MobileDemo = () => {
       title: 'Cross-Chain Trading Simulator',
       description: 'Trade across multiple blockchains with real devnet tokens',
       icon: Zap,
-      color: 'from-purple-500 to-blue-600',
+      color: 'from-orange-500 to-red-600',
       features: [
         'Cross-chain trading across 6 blockchains',
         'Real devnet tokens and faucets',
@@ -62,12 +96,16 @@ const MobileDemo = () => {
         'Gas fee simulation'
       ],
       difficulty: 'Advanced',
-      difficultyColor: 'bg-purple-100 text-purple-700'
+      difficultyColor: 'bg-orange-100 text-orange-700'
     }
   ];
 
   const renderDemo = () => {
     switch (selectedDemo) {
+      case 'enhanced':
+        return <EnhancedTradingDemo />;
+      case 'defi':
+        return <DeFiSimulator />;
       case 'realistic':
         return <RealisticTradingDemo />;
       case 'crosschain':
@@ -106,9 +144,9 @@ const MobileDemo = () => {
     <div className="min-h-screen bg-background pb-20">
       {/* Mobile Header */}
       <div className="sticky top-0 bg-background border-b border-border z-40 p-4">
-        <h1 className="text-2xl font-bold text-foreground">Trading Simulators</h1>
+        <h1 className="text-2xl font-bold text-foreground">Web3 Practice Labs</h1>
         <p className="text-sm text-muted-foreground">
-          Practice trading with professional-grade simulators
+          Master Web3 skills through immersive, hands-on simulations
         </p>
       </div>
 

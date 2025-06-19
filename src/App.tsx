@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useMobileDetection } from "./hooks/useMobileDetection";
 import { MobileUserProvider } from "./contexts/MobileUserContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -64,11 +64,7 @@ const App = () => {
                           <MobileExplore />
                         </MobileAuthGuard>
                       } />
-                      <Route path="/mobile/courses" element={
-                        <MobileAuthGuard>
-                          <MobileCourses />
-                        </MobileAuthGuard>
-                      } />
+                      <Route path="/mobile/courses" element={<Navigate to="/mobile/explore" replace />} />
                       <Route path="/mobile/course/:courseId" element={
                         <MobileAuthGuard>
                           <MobileCourse />
@@ -129,8 +125,12 @@ const App = () => {
                       {/* Root route - onboarding flow */}
                       <Route path="/" element={<MobileApp />} />
 
-                      {/* Catch-all route - redirect to onboarding */}
-                      <Route path="*" element={<MobileApp />} />
+                      {/* Catch-all route - handle unknown mobile routes */}
+                      <Route path="*" element={
+                        <MobileAuthGuard>
+                          <Navigate to="/mobile/home" replace />
+                        </MobileAuthGuard>
+                      } />
                     </Routes>
                   </MobileUserProvider>
                 ) : (

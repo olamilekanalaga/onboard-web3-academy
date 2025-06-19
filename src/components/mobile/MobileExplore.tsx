@@ -122,18 +122,18 @@ const MobileExplore = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <MobileHeader title="Explore" />
-      
+      <MobileHeader title="Courses" />
+
       {/* Header */}
       <div className="bg-white px-6 pt-12 pb-6 border-b border-slate-200">
-        <h1 className="text-2xl font-bold text-slate-900 mb-4">Explore Courses</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-4">All Courses</h1>
 
         {/* Enhanced Search Bar */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
           <Input
             type="text"
-            placeholder="Search courses, descriptions, or levels..."
+            placeholder="Search courses, topics, or difficulty levels..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-12 pr-4 py-3 bg-slate-100 rounded-lg border-0 focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all"

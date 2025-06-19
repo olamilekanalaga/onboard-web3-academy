@@ -17,7 +17,10 @@ export const useMobileDetection = () => {
       const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
       // Combine user agent, screen size, and touch capability for better detection
-      return mobileRegex.test(userAgent.toLowerCase()) || (isSmallScreen && isTouchDevice);
+      // Also check if we're accessing a mobile route (for development/testing)
+      const isMobileRoute = window.location.pathname.startsWith('/mobile/');
+
+      return mobileRegex.test(userAgent.toLowerCase()) || (isSmallScreen && isTouchDevice) || isMobileRoute;
     };
 
     // Initial check

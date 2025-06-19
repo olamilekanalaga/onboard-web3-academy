@@ -210,7 +210,7 @@ const MobileHome = () => {
                 className="bg-white text-blue-600 hover:bg-blue-50"
                 onClick={() => navigate('/mobile/explore')}
               >
-                Explore All Courses
+                View All Courses
               </Button>
             </CardContent>
           </Card>
