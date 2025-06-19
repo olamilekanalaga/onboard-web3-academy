@@ -51,7 +51,7 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 md:hidden pb-safe">
+    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 md:hidden">
       <div className="grid grid-cols-7 h-16">
         {navItems.map((item) => (
           <Link
