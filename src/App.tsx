@@ -36,7 +36,8 @@ import PWAInstallPrompt from "./components/PWAInstallPrompt";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const isMobile = useMobileDetection();
+  const isMobile = true; // Temporarily force mobile mode for testing
+  // const isMobile = useMobileDetection();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -54,21 +55,13 @@ const App = () => {
                       <Route path="/auth" element={<MobileAuth />} />
 
                       {/* Mobile routes - all protected by auth guard except for course routes */}
-                      <Route path="/mobile/home" element={
-                        <MobileAuthGuard>
-                          <MobileHome />
-                        </MobileAuthGuard>
-                      } />
+                      <Route path="/mobile/home" element={<MobileHome />} />
                       <Route path="/mobile/explore" element={
                         <MobileAuthGuard>
                           <MobileExplore />
                         </MobileAuthGuard>
                       } />
-                      <Route path="/mobile/courses" element={
-                        <MobileAuthGuard>
-                          <MobileCourses />
-                        </MobileAuthGuard>
-                      } />
+                      <Route path="/mobile/courses" element={<MobileCourses />} />
                       <Route path="/mobile/course/:courseId" element={
                         <MobileAuthGuard>
                           <MobileCourse />
