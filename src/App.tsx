@@ -84,11 +84,7 @@ const App = () => {
                           <MobileCourse />
                         </MobileAuthGuard>
                       } />
-                      <Route path="/courses" element={
-                        <MobileAuthGuard>
-                          <MobileCourses />
-                        </MobileAuthGuard>
-                      } />
+                      <Route path="/courses" element={<Navigate to="/mobile/explore" replace />} />
                       <Route path="/demo" element={
                         <MobileAuthGuard>
                           <MobileDemo />

@@ -127,21 +127,21 @@ const MobileProfile = () => {
   const LevelIcon = getLevelIcon(userStats?.level || 1);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-blue-700 to-purple-800">
       <MobileHeader title="Profile" />
-      
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-purple-500/20 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute top-40 right-16 w-24 h-24 bg-blue-500/20 rounded-full blur-lg animate-bounce"></div>
-        <div className="absolute bottom-32 left-20 w-40 h-40 bg-emerald-500/20 rounded-full blur-2xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-28 h-28 bg-yellow-500/20 rounded-full blur-xl animate-bounce"></div>
+        <div className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-40 right-16 w-24 h-24 bg-white/5 rounded-full blur-lg animate-bounce"></div>
+        <div className="absolute bottom-32 left-20 w-40 h-40 bg-white/10 rounded-full blur-2xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-28 h-28 bg-white/5 rounded-full blur-xl animate-bounce"></div>
 
         {/* Floating particles */}
-        {[...Array(15)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-1 h-1 bg-white/30 rounded-full animate-pulse"
+            className="absolute w-1 h-1 bg-white/40 rounded-full animate-pulse"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -197,7 +197,7 @@ const MobileProfile = () => {
           </div>
 
           {/* XP Progress */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 max-w-sm mx-auto">
+          <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30 max-w-sm mx-auto shadow-lg">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-blue-200">Level Progress</span>
               <span className="text-sm font-medium text-white">{userStats?.xp || 0} XP</span>
@@ -214,9 +214,9 @@ const MobileProfile = () => {
       </div>
 
       {/* Main Content Tabs */}
-      <div className="relative z-10 px-6">
+      <div className="relative z-10 px-6 content-safe-bottom">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-1">
+          <TabsList className="grid w-full grid-cols-4 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl p-1 shadow-lg">
             <TabsTrigger
               value="overview"
               className="text-white data-[state=active]:bg-white data-[state=active]:text-slate-900 rounded-lg"
@@ -247,7 +247,7 @@ const MobileProfile = () => {
           <TabsContent value="overview" className="mt-6 space-y-6">
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-2 gap-4">
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
+              <Card className="bg-white/20 backdrop-blur-md border-white/30 text-white shadow-lg">
                 <CardContent className="p-4 text-center">
                   <div className="w-12 h-12 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-3">
                     <BookOpen className="w-6 h-6 text-white" />
@@ -257,33 +257,33 @@ const MobileProfile = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
+              <Card className="bg-white/20 backdrop-blur-md border-white/30 text-white shadow-lg">
                 <CardContent className="p-4 text-center">
                   <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-red-500 rounded-xl flex items-center justify-center mx-auto mb-3">
                     <Flame className="w-6 h-6 text-white" />
                   </div>
                   <div className="text-2xl font-bold mb-1">{userStats?.currentStreak || 0}</div>
-                  <div className="text-sm text-blue-200">Day Streak</div>
+                  <div className="text-sm text-white/80">Day Streak</div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
+              <Card className="bg-white/20 backdrop-blur-md border-white/30 text-white shadow-lg">
                 <CardContent className="p-4 text-center">
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-500 rounded-xl flex items-center justify-center mx-auto mb-3">
                     <Clock className="w-6 h-6 text-white" />
                   </div>
                   <div className="text-2xl font-bold mb-1">{userStats?.totalHours || 0}h</div>
-                  <div className="text-sm text-blue-200">Hours Learned</div>
+                  <div className="text-sm text-white/80">Hours Learned</div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
+              <Card className="bg-white/20 backdrop-blur-md border-white/30 text-white shadow-lg">
                 <CardContent className="p-4 text-center">
                   <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center mx-auto mb-3">
                     <Award className="w-6 h-6 text-white" />
                   </div>
                   <div className="text-2xl font-bold mb-1">{userStats?.certificates || 0}</div>
-                  <div className="text-sm text-blue-200">Certificates</div>
+                  <div className="text-sm text-white/80">Certificates</div>
                 </CardContent>
               </Card>
             </div>

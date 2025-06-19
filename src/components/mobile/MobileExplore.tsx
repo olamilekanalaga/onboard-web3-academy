@@ -177,7 +177,7 @@ const MobileExplore = () => {
       </div>
 
       {/* Courses */}
-      <div className="px-6 py-6">
+      <div className="px-6 py-6 content-safe-bottom">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-slate-900">
             {selectedCategory === "all" ? "All Courses" : `${categories.find(c => c.key === selectedCategory)?.name} Courses`}
