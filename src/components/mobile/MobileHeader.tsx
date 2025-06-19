@@ -43,7 +43,9 @@ const MobileHeader = ({
             />
           )}
           {title && (
-            <h1 className="text-lg font-semibold text-slate-900 truncate">{title}</h1>
+            <h1 className={`text-lg font-semibold truncate ${
+              transparent ? 'text-white' : 'text-slate-900'
+            }`}>{title}</h1>
           )}
         </div>
 
@@ -51,12 +53,12 @@ const MobileHeader = ({
         <div className="flex items-center space-x-2">
           <Link to="/mobile/explore">
             <Button variant="ghost" size="sm" className="p-2" title="Search Courses">
-              <Search className="h-5 w-5 text-slate-600" />
+              <Search className={`h-5 w-5 ${transparent ? 'text-white' : 'text-slate-600'}`} />
             </Button>
           </Link>
           {showMenu && (
             <Button variant="ghost" size="sm" onClick={onMenuClick} className="p-2">
-              <Menu className="h-5 w-5 text-slate-600" />
+              <Menu className={`h-5 w-5 ${transparent ? 'text-white' : 'text-slate-600'}`} />
             </Button>
           )}
         </div>
