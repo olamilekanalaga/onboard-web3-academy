@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
 import BottomNavigation from "./BottomNavigation";
+import MobileHeader from "./MobileHeader";
 
 const MobileGamification = () => {
   const { userProgress } = useCourseProgression();
@@ -71,11 +72,7 @@ const MobileGamification = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
-        <h1 className="text-2xl font-bold mb-2">Gamification</h1>
-        <p className="text-blue-100">Track your progress and achievements</p>
-      </div>
+      <MobileHeader title="Rewards" />
 
       <div className="p-4 space-y-6">
         {/* Level and XP Overview */}

@@ -19,6 +19,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import BottomNavigation from "./BottomNavigation";
+import MobileHeader from "./MobileHeader";
 import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
 import RealisticTradingDemo from "@/components/RealisticTradingDemo";
 import EnhancedTradingDemo from "@/components/EnhancedTradingDemo";
@@ -142,13 +143,7 @@ const MobileDemo = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Mobile Header */}
-      <div className="sticky top-0 bg-background border-b border-border z-40 p-4">
-        <h1 className="text-2xl font-bold text-foreground">Web3 Practice Labs</h1>
-        <p className="text-sm text-muted-foreground">
-          Master Web3 skills through immersive, hands-on simulations
-        </p>
-      </div>
+      <MobileHeader title="Web3 Practice Labs" />
 
       <div className="p-4 space-y-6">
         {/* Lock Status Alert */}

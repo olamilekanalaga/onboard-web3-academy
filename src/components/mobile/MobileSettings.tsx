@@ -25,6 +25,7 @@ import { useUserSettings, useUpdateUserSettings } from "@/hooks/useUserSettings"
 import { useToast } from "@/components/ui/use-toast";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import BottomNavigation from "./BottomNavigation";
+import MobileHeader from "./MobileHeader";
 
 type SettingsView = 'main' | 'appearance' | 'preferences' | 'privacy';
 
@@ -440,30 +441,12 @@ const MobileSettings = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-emerald-600 to-blue-700 px-6 pt-12 pb-6">
-        <div className="flex items-center space-x-4">
-          {currentView !== 'main' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/20 p-2"
-              onClick={() => setCurrentView('main')}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          )}
-          <div>
-            <h1 className="text-2xl font-bold text-white">
-              {currentView === 'main' ? 'Settings' :
-                settingsMenuItems.find(item => item.view === currentView)?.title || 'Settings'}
-            </h1>
-            <p className="text-emerald-100">
-              {currentView === 'main' ? 'Manage your account' : 'Configure your preferences'}
-            </p>
-          </div>
-        </div>
-      </div>
+      <MobileHeader
+        title={currentView === 'main' ? 'Settings' :
+          settingsMenuItems.find(item => item.view === currentView)?.title || 'Settings'}
+        showBackButton={currentView !== 'main'}
+        onBackClick={() => setCurrentView('main')}
+      />
 
       {/* Content */}
       <div className="px-6 py-6">
