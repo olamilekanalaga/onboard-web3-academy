@@ -46,12 +46,12 @@ const BottomNavigation = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50 md:hidden bottom-nav-safe shadow-lg">
-      <div className="grid grid-cols-6 h-16">
+      <div className="grid grid-cols-6 h-16 items-start pt-2">
         {navItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
-            className={`flex flex-col items-center justify-center space-y-1 transition-colors ${item.isActive
+            className={`flex flex-col items-center justify-start space-y-1 py-1 transition-colors ${item.isActive
               ? 'text-blue-600'
               : 'text-slate-500 hover:text-slate-700'
               }`}
