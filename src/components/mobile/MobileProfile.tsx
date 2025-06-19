@@ -128,7 +128,7 @@ const MobileProfile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-blue-900 relative">
-      <MobileHeader title="Profile" />
+      <MobileHeader title="Profile" transparent={true} />
 
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
@@ -214,7 +214,7 @@ const MobileProfile = () => {
       </div>
 
       {/* Main Content Tabs */}
-      <div className="relative z-10 px-6">
+      <div className="relative z-10 px-6 pb-24">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-1">
             <TabsTrigger
