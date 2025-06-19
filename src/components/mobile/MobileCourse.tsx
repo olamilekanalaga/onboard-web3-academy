@@ -1,9 +1,9 @@
 
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useCourseProgression } from "@/hooks/useCourseProgression";
+import { useCourseProgressionSimple } from "@/hooks/useCourseProgressionSimple";
 import { useCourse } from "@/hooks/useCourses";
-import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star } from "lucide-react";
+import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,13 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const MobileCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { updateChapterProgress, getCourseProgress } = useCourseProgression();
+  const { updateLessonProgress, getCourseProgress } = useCourseProgressionSimple();
   const { data: course, isLoading, error } = useCourse(courseId || '');
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(0);
 
-  // Get completed chapters from progression system
+  // Get completed status from progression system
   const courseProgress = getCourseProgress(courseId || '');
-  const completedChapters = courseProgress?.completedChapters || [];
+  const isCompleted = courseProgress?.completed || false;
 
   if (isLoading) {
     return (
@@ -48,26 +48,13 @@ const MobileCourse = () => {
   const lessons = course.lessons || [];
   const currentLesson = lessons[selectedLessonIndex];
 
-  const getLessonId = (lessonIndex: number) => `${courseId}-lesson-${lessonIndex}`;
-
-  const isLessonCompleted = (lessonIndex: number) =>
-    completedChapters.includes(getLessonId(lessonIndex));
-
-  const isLessonUnlocked = (lessonIndex: number) => {
-    if (lessonIndex === 0) return true;
-    return isLessonCompleted(lessonIndex - 1);
-  };
-
   const markLessonComplete = () => {
-    const lessonId = getLessonId(selectedLessonIndex);
-    if (!completedChapters.includes(lessonId) && courseId) {
-      const totalLessons = lessons.length;
-      updateChapterProgress(courseId, lessonId, totalLessons);
+    if (currentLesson && courseId) {
+      updateLessonProgress(courseId, currentLesson.id);
     }
   };
 
-  const completedCount = completedChapters.length;
-  const progressPercentage = lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
+  const progressPercentage = courseProgress?.progressPercentage || 0;
 
   const getIconForCourse = (category: string) => {
     switch (category?.toLowerCase()) {
@@ -203,24 +190,17 @@ const MobileCourse = () => {
                 <button
                   key={lesson.id}
                   onClick={() => setSelectedLessonIndex(lessonIndex)}
-                  disabled={!isLessonUnlocked(lessonIndex)}
                   className={`w-full text-left p-3 border-l-4 transition-all ${
                     selectedLessonIndex === lessonIndex
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-transparent hover:bg-slate-50'
-                  } ${
-                    !isLessonUnlocked(lessonIndex)
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'cursor-pointer'
                   }`}
                 >
                   <div className="flex items-center space-x-2">
-                    {isLessonCompleted(lessonIndex) ? (
+                    {isCompleted ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
-                    ) : isLessonUnlocked(lessonIndex) ? (
-                      <PlayCircle className="h-4 w-4 text-slate-400" />
                     ) : (
-                      <Lock className="h-4 w-4 text-slate-300" />
+                      <PlayCircle className="h-4 w-4 text-slate-400" />
                     )}
                     <div className="flex-1">
                       <div className="font-medium text-slate-900 text-sm">{lesson.title}</div>
@@ -250,7 +230,7 @@ const MobileCourse = () => {
               <div className="flex items-center space-x-2 text-sm text-slate-600">
                 <Clock className="h-4 w-4" />
                 <span>{currentLesson.duration ? `${currentLesson.duration} min` : '10 min'}</span>
-                {isLessonCompleted(selectedLessonIndex) && (
+                {isCompleted && (
                   <Badge className="bg-green-100 text-green-700 ml-2">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Completed
@@ -318,7 +298,7 @@ const MobileCourse = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-3 pt-4 border-t mt-6">
-                {!isLessonCompleted(selectedLessonIndex) && (
+                {!isCompleted && (
                   <Button
                     onClick={markLessonComplete}
                     className="bg-green-600 hover:bg-green-700 text-white w-full"
