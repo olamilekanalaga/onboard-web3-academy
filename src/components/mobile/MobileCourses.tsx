@@ -13,11 +13,6 @@ const MobileCourses = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
 
-  // Debug: Log courses data
-  console.log('Courses data:', courses);
-  console.log('Courses keys:', Object.keys(courses));
-  console.log('Courses values:', Object.values(courses));
-
   const filteredCourses = Object.values(courses).filter(course => {
     if (filter === "all") return true;
     if (filter === "beginner") return course.level === "Beginner";
@@ -25,8 +20,6 @@ const MobileCourses = () => {
     if (filter === "advanced") return course.level === "Advanced";
     return true;
   });
-
-  console.log('Filtered courses:', filteredCourses);
 
   const getIconForCourse = (courseId: string) => {
     switch (courseId) {
@@ -71,14 +64,7 @@ const MobileCourses = () => {
 
       {/* Course List */}
       <div className="px-6 py-6 space-y-4">
-        {filteredCourses.length === 0 ? (
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-700 mb-2">No Courses Found</h3>
-            <p className="text-slate-500">No courses match your current filter.</p>
-          </div>
-        ) : (
-          filteredCourses.map((course) => (
+        {filteredCourses.map((course) => (
           <Card
             key={course.id}
             className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
@@ -155,8 +141,7 @@ const MobileCourses = () => {
               </div>
             </CardContent>
           </Card>
-          ))
-        )}
+        ))}
       </div>
 
       <BottomNavigation />

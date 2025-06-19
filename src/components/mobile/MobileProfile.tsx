@@ -127,9 +127,9 @@ const MobileProfile = () => {
   const LevelIcon = getLevelIcon(userStats?.level || 1);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-blue-900 relative">
-      <MobileHeader title="Profile" transparent={true} />
-
+    <div className="min-h-screen bg-slate-50">
+      <MobileHeader title="Profile" />
+      
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-32 h-32 bg-purple-500/20 rounded-full blur-xl animate-pulse"></div>
@@ -214,7 +214,7 @@ const MobileProfile = () => {
       </div>
 
       {/* Main Content Tabs */}
-      <div className="relative z-10 px-6 pb-24">
+      <div className="relative z-10 px-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-1">
             <TabsTrigger

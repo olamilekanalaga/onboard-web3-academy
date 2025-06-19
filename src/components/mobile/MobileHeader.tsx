@@ -9,23 +9,17 @@ interface MobileHeaderProps {
   onBackClick?: () => void;
   showMenu?: boolean;
   onMenuClick?: () => void;
-  transparent?: boolean;
 }
 
-const MobileHeader = ({
-  title,
-  showBackButton = false,
-  onBackClick,
-  showMenu = true,
-  onMenuClick,
-  transparent = false
+const MobileHeader = ({ 
+  title, 
+  showBackButton = false, 
+  onBackClick, 
+  showMenu = true, 
+  onMenuClick 
 }: MobileHeaderProps) => {
   return (
-    <header className={`sticky top-0 z-50 px-4 py-3 ${
-      transparent
-        ? 'bg-transparent'
-        : 'bg-white border-b border-slate-200'
-    }`}>
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 px-4 py-3">
       <div className="flex items-center justify-between">
         {/* Left side - Back button or Logo */}
         <div className="flex items-center space-x-3">
@@ -43,9 +37,7 @@ const MobileHeader = ({
             />
           )}
           {title && (
-            <h1 className={`text-lg font-semibold truncate ${
-              transparent ? 'text-white' : 'text-slate-900'
-            }`}>{title}</h1>
+            <h1 className="text-lg font-semibold text-slate-900 truncate">{title}</h1>
           )}
         </div>
 
@@ -53,12 +45,12 @@ const MobileHeader = ({
         <div className="flex items-center space-x-2">
           <Link to="/mobile/explore">
             <Button variant="ghost" size="sm" className="p-2" title="Search Courses">
-              <Search className={`h-5 w-5 ${transparent ? 'text-white' : 'text-slate-600'}`} />
+              <Search className="h-5 w-5 text-slate-600" />
             </Button>
           </Link>
           {showMenu && (
             <Button variant="ghost" size="sm" onClick={onMenuClick} className="p-2">
-              <Menu className={`h-5 w-5 ${transparent ? 'text-white' : 'text-slate-600'}`} />
+              <Menu className="h-5 w-5 text-slate-600" />
             </Button>
           )}
         </div>
