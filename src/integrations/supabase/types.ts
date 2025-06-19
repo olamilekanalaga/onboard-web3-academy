@@ -463,54 +463,6 @@ export type Database = {
           },
         ]
       }
-      user_settings: {
-        Row: {
-          course_reminders: boolean | null
-          created_at: string | null
-          data_analytics: boolean | null
-          email_notifications: boolean | null
-          id: string
-          language: string | null
-          marketing_emails: boolean | null
-          show_achievements: boolean | null
-          show_progress: boolean | null
-          theme: string | null
-          timezone: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          course_reminders?: boolean | null
-          created_at?: string | null
-          data_analytics?: boolean | null
-          email_notifications?: boolean | null
-          id?: string
-          language?: string | null
-          marketing_emails?: boolean | null
-          show_achievements?: boolean | null
-          show_progress?: boolean | null
-          theme?: string | null
-          timezone?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          course_reminders?: boolean | null
-          created_at?: string | null
-          data_analytics?: boolean | null
-          email_notifications?: boolean | null
-          id?: string
-          language?: string | null
-          marketing_emails?: boolean | null
-          show_achievements?: boolean | null
-          show_progress?: boolean | null
-          theme?: string | null
-          timezone?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never

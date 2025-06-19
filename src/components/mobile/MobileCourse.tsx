@@ -1,38 +1,30 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useCourseProgressionSimple } from "@/hooks/useCourseProgressionSimple";
-import { useCourse } from "@/hooks/useCourses";
-import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star, BookOpen } from "lucide-react";
+import { useCourseProgression } from "@/hooks/useCourseProgression";
+import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { courses } from "@/data/courses";
+import TradingDemo from "@/components/TradingDemo";
+import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
 
 const MobileCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { updateLessonProgress, getCourseProgress } = useCourseProgressionSimple();
-  const { data: course, isLoading, error } = useCourse(courseId || '');
-  const [selectedLessonIndex, setSelectedLessonIndex] = useState(0);
+  const { updateChapterProgress, getCourseProgress } = useCourseProgression();
+  const [selectedModule, setSelectedModule] = useState(0);
+  const [selectedChapter, setSelectedChapter] = useState(0);
 
-  // Get completed status from progression system
+  // Get completed chapters from progression system
   const courseProgress = getCourseProgress(courseId || '');
-  const isCompleted = courseProgress?.completed || false;
+  const completedChapters = courseProgress?.completedChapters || [];
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading course...</p>
-        </div>
-      </div>
-    );
-  }
+  const course = courseId ? courses[courseId] : undefined;
 
-  if (error || !course) {
+  if (!course) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
@@ -45,30 +37,51 @@ const MobileCourse = () => {
     );
   }
 
-  const lessons = course.lessons || [];
-  const currentLesson = lessons[selectedLessonIndex];
+  const currentModule = course.modules[selectedModule];
+  const currentChapter = currentModule?.chapters[selectedChapter];
 
-  const markLessonComplete = () => {
-    if (currentLesson && courseId) {
-      updateLessonProgress(courseId, currentLesson.id);
+  const getChapterId = (moduleId: number, chapterId: number) => `${courseId}-${moduleId}-${chapterId}`;
+
+  const isChapterCompleted = (moduleId: number, chapterId: number) =>
+    completedChapters.includes(getChapterId(moduleId, chapterId));
+
+  const isChapterUnlocked = (moduleId: number, chapterId: number) => {
+    if (moduleId === 0 && chapterId === 0) return true;
+    if (chapterId === 0) {
+      if (moduleId === 0) return true;
+      const prevModule = course.modules[moduleId - 1];
+      const lastChapterPrevModule = prevModule.chapters.length - 1;
+      return isChapterCompleted(moduleId - 1, lastChapterPrevModule);
+    }
+    return isChapterCompleted(moduleId, chapterId - 1);
+  };
+
+  const markChapterComplete = () => {
+    const chapterId = getChapterId(selectedModule, selectedChapter);
+    if (!completedChapters.includes(chapterId) && courseId) {
+      const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
+      updateChapterProgress(courseId, chapterId, totalChapters);
     }
   };
 
-  const progressPercentage = courseProgress?.progressPercentage || 0;
+  const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
+  const completedCount = completedChapters.length;
+  const progressPercentage = (completedCount / totalChapters) * 100;
 
-  const getIconForCourse = (category: string) => {
-    switch (category?.toLowerCase()) {
+  const getIconForCourse = (courseId: string) => {
+    switch (courseId) {
       case "foundation": return "🎓";
       case "defi": return "💰";
-      case "trading": return "📈";
+      case "degen": return "🚀";
+      case "advanced-trading": return "📈";
       case "development": return "💻";
-      case "nft": return "🎨";
       default: return "📚";
     }
   };
 
   const getDifficultyColor = (level: string) => {
-    switch (level?.toLowerCase()) {
+    switch (level.toLowerCase()) {
+      case "foundation": return "bg-emerald-100 text-emerald-700";
       case "beginner": return "bg-green-100 text-green-700";
       case "intermediate": return "bg-yellow-100 text-yellow-700";
       case "advanced": return "bg-orange-100 text-orange-700";
@@ -79,8 +92,6 @@ const MobileCourse = () => {
 
   // Format content for mobile
   const formatContent = (content: string) => {
-    if (!content) return [];
-    
     return content
       .split('\n\n')
       .map((paragraph, index) => {
@@ -154,16 +165,14 @@ const MobileCourse = () => {
           <div className="flex-1">
             <h1 className="text-lg font-bold text-slate-900 truncate">{course.title}</h1>
             <div className="flex items-center space-x-2 mt-1">
-              <Badge className={`text-xs ${getDifficultyColor(course.difficulty_level || 'beginner')}`}>
-                {course.difficulty_level || 'Beginner'}
+              <Badge className={`text-xs ${getDifficultyColor(course.level)}`}>
+                {course.level}
               </Badge>
-              <span className="text-xs text-slate-600">
-                {course.estimated_duration ? `${course.estimated_duration} min` : 'Self-paced'}
-              </span>
+              <span className="text-xs text-slate-600">{course.duration}</span>
             </div>
           </div>
           <div className="text-2xl">
-            {getIconForCourse(course.category || '')}
+            {getIconForCourse(course.id)}
           </div>
         </div>
 
@@ -179,58 +188,68 @@ const MobileCourse = () => {
 
       {/* Course Content */}
       <div className="p-4">
-        {/* Lesson Navigation */}
+        {/* Module Navigation */}
         <Card className="mb-4">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Course Lessons</CardTitle>
+            <CardTitle className="text-base">Course Content</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="max-h-48 overflow-y-auto">
-              {lessons.map((lesson, lessonIndex) => (
-                <button
-                  key={lesson.id}
-                  onClick={() => setSelectedLessonIndex(lessonIndex)}
-                  className={`w-full text-left p-3 border-l-4 transition-all ${
-                    selectedLessonIndex === lessonIndex
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-transparent hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    {isCompleted ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <PlayCircle className="h-4 w-4 text-slate-400" />
-                    )}
-                    <div className="flex-1">
-                      <div className="font-medium text-slate-900 text-sm">{lesson.title}</div>
-                      <div className="flex items-center space-x-1 text-xs text-slate-500">
-                        <Clock className="h-3 w-3" />
-                        <span>{lesson.duration ? `${lesson.duration} min` : '10 min'}</span>
-                      </div>
-                    </div>
+              {course.modules.map((module, moduleIndex) => (
+                <div key={module.id}>
+                  <div className="px-4 py-2 bg-slate-50 border-b">
+                    <h4 className="font-medium text-slate-900 text-sm">{module.title}</h4>
+                    <p className="text-xs text-slate-500">{module.estimatedTime}</p>
                   </div>
-                </button>
-              ))}
-              
-              {lessons.length === 0 && (
-                <div className="p-4 text-center text-slate-500">
-                  <p>No lessons available yet.</p>
+                  {module.chapters.map((chapter, chapterIndex) => (
+                    <button
+                      key={chapter.id}
+                      onClick={() => {
+                        setSelectedModule(moduleIndex);
+                        setSelectedChapter(chapterIndex);
+                      }}
+                      disabled={!isChapterUnlocked(moduleIndex, chapterIndex)}
+                      className={`w-full text-left p-3 border-l-4 transition-all ${selectedModule === moduleIndex && selectedChapter === chapterIndex
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-transparent hover:bg-slate-50'
+                        } ${!isChapterUnlocked(moduleIndex, chapterIndex)
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'cursor-pointer'
+                        }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        {isChapterCompleted(moduleIndex, chapterIndex) ? (
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        ) : isChapterUnlocked(moduleIndex, chapterIndex) ? (
+                          <PlayCircle className="h-4 w-4 text-slate-400" />
+                        ) : (
+                          <Lock className="h-4 w-4 text-slate-300" />
+                        )}
+                        <div className="flex-1">
+                          <div className="font-medium text-slate-900 text-sm">{chapter.title}</div>
+                          <div className="flex items-center space-x-1 text-xs text-slate-500">
+                            <Clock className="h-3 w-3" />
+                            <span>{chapter.duration}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              )}
+              ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Lesson Content */}
-        {currentLesson && (
+        {/* Chapter Content */}
+        {currentChapter && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{currentLesson.title}</CardTitle>
+              <CardTitle className="text-lg">{currentChapter.title}</CardTitle>
               <div className="flex items-center space-x-2 text-sm text-slate-600">
                 <Clock className="h-4 w-4" />
-                <span>{currentLesson.duration ? `${currentLesson.duration} min` : '10 min'}</span>
-                {isCompleted && (
+                <span>{currentChapter.duration}</span>
+                {isChapterCompleted(selectedModule, selectedChapter) && (
                   <Badge className="bg-green-100 text-green-700 ml-2">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Completed
@@ -248,25 +267,45 @@ const MobileCourse = () => {
 
                 <TabsContent value="content" className="space-y-4 mt-4">
                   <div className="prose max-w-none">
-                    {currentLesson.content ? (
-                      formatContent(currentLesson.content)
-                    ) : (
-                      <p className="text-slate-600">Lesson content will be available soon.</p>
-                    )}
+                    {formatContent(currentChapter.content)}
                   </div>
 
-                  {/* Video if available */}
-                  {currentLesson.video_url && (
+                  {/* Trading Demo Component */}
+                  {(currentChapter as any).demoComponent === "TradingDemo" && (
                     <div className="mt-6">
                       <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 mb-4">
-                        <h4 className="text-lg font-bold text-blue-900 mb-2">📹 Video Lesson</h4>
+                        <h4 className="text-lg font-bold text-blue-900 mb-2">🎮 Trading Demo</h4>
                         <p className="text-blue-800 text-sm">
-                          Watch the video to enhance your learning experience!
+                          Practice trading with virtual funds - no real money at risk!
                         </p>
                       </div>
-                      <div className="aspect-video bg-slate-100 rounded-lg flex items-center justify-center">
-                        <PlayCircle className="h-16 w-16 text-slate-400" />
-                        <span className="ml-2 text-slate-600">Video player will be integrated here</span>
+                      {(currentChapter as any).demoProps?.courseType === "degen" ? (
+                        <CrossChainTradingDemo />
+                      ) : (
+                        <TradingDemo courseType={(currentChapter as any).demoProps?.courseType || "basic"} />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Practical Task */}
+                  {currentChapter.practicalTask && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                      <div className="flex items-start space-x-2">
+                        <Target className="h-5 w-5 text-blue-600 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-blue-900 mb-2 text-sm">
+                            {currentChapter.practicalTask.title}
+                          </h4>
+                          <p className="text-blue-800 text-sm mb-3">
+                            {currentChapter.practicalTask.description}
+                          </p>
+                          <div className="text-xs text-blue-600">
+                            ⏱️ {currentChapter.practicalTask.estimatedTime}
+                            {currentChapter.practicalTask.points && (
+                              <span className="ml-3">🏆 {currentChapter.practicalTask.points} points</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -279,18 +318,12 @@ const MobileCourse = () => {
                       <h4 className="font-semibold text-green-900 text-sm">Key Takeaways</h4>
                     </div>
                     <ul className="space-y-2">
-                      <li className="flex items-start space-x-2 text-green-800">
-                        <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">Complete understanding of {currentLesson.title}</span>
-                      </li>
-                      <li className="flex items-start space-x-2 text-green-800">
-                        <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">Practical knowledge gained</span>
-                      </li>
-                      <li className="flex items-start space-x-2 text-green-800">
-                        <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">Ready to apply concepts</span>
-                      </li>
+                      {currentChapter.keyTakeaways.map((takeaway, index) => (
+                        <li key={index} className="flex items-start space-x-2 text-green-800">
+                          <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{takeaway}</span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 </TabsContent>
@@ -298,9 +331,9 @@ const MobileCourse = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-3 pt-4 border-t mt-6">
-                {!isCompleted && (
+                {!isChapterCompleted(selectedModule, selectedChapter) && (
                   <Button
-                    onClick={markLessonComplete}
+                    onClick={markChapterComplete}
                     className="bg-green-600 hover:bg-green-700 text-white w-full"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
@@ -311,26 +344,22 @@ const MobileCourse = () => {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    if (selectedLessonIndex < lessons.length - 1) {
-                      setSelectedLessonIndex(selectedLessonIndex + 1);
+                    if (selectedChapter < currentModule.chapters.length - 1) {
+                      setSelectedChapter(selectedChapter + 1);
+                    } else if (selectedModule < course.modules.length - 1) {
+                      setSelectedModule(selectedModule + 1);
+                      setSelectedChapter(0);
                     }
                   }}
-                  disabled={selectedLessonIndex >= lessons.length - 1}
+                  disabled={
+                    selectedModule === course.modules.length - 1 &&
+                    selectedChapter === currentModule.chapters.length - 1
+                  }
                   className="w-full"
                 >
-                  Next Lesson
+                  Next Chapter
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {lessons.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <BookOpen className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-slate-900 mb-2">Course Content Coming Soon</h3>
-              <p className="text-slate-600">This course is being prepared. Check back soon for lessons!</p>
             </CardContent>
           </Card>
         )}
