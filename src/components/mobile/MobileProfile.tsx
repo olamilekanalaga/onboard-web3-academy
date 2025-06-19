@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   User,
   Settings,
-  Bell,
   HelpCircle,
   LogOut,
   Edit,
@@ -54,7 +53,6 @@ const MobileProfile = () => {
 
   const menuItems = [
     { icon: Edit, label: "Edit Profile", action: "edit" },
-    { icon: Bell, label: "Notifications", action: "notifications", toggle: true, enabled: true },
     { icon: Settings, label: "Settings", action: "settings" },
     { icon: HelpCircle, label: "Help & Support", action: "help" },
     { icon: RotateCcw, label: "Reset Onboarding", action: "reset", danger: true },

@@ -1,154 +1,247 @@
-import { Course } from "@/types";
+// Import all individual course data
+import { foundationCourse } from './foundationCourse';
+import { defiFundamentalsCourse } from './defiFundamentalsCourse';
+import { degenCourseMetadata, degenCourse } from './degenCourse';
+import { nftCreationCourse } from './nftCreationCourse';
+import { contentCreationCourse } from './contentCreationCourse';
 
-export const courses: Course[] = [
-  {
-    id: "foundation",
-    title: "Crypto Foundation",
-    description: "Master the fundamentals of cryptocurrency and blockchain technology",
-    instructor: "Alex Chen",
-    duration: "2 weeks",
-    level: "Beginner",
-    enrolled: 1240,
-    rating: 4.8,
-    price: "Free",
-    image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=250&fit=crop",
-    tags: ["Blockchain", "Cryptocurrency", "Basics"],
-    chapters: [
-      {
-        title: "Introduction to Blockchain",
-        lessons: [
-          { title: "What is Blockchain?", duration: "20 min" },
-          { title: "History of Blockchain", duration: "15 min" },
-        ],
-      },
-      {
-        title: "Cryptocurrency Basics",
-        lessons: [
-          { title: "What is Cryptocurrency?", duration: "25 min" },
-          { title: "Bitcoin and Altcoins", duration: "20 min" },
-        ],
-      },
-    ],
-    progress: 70,
+// Create additional courses to reach 7 total
+const advancedTradingCourse = {
+  id: 'advanced-trading',
+  title: 'Advanced Trading Strategies',
+  description: 'Master technical analysis, derivatives, and professional trading techniques',
+  longDescription: 'Advanced course covering sophisticated trading strategies, risk management, and market psychology for professional traders.',
+  level: 'Advanced' as const,
+  duration: '4-5 weeks',
+  color: 'from-red-400 to-orange-600',
+  gradient: 'bg-gradient-to-br from-red-400 to-orange-600',
+  prerequisites: ['degen'],
+  learningOutcomes: [
+    'Master advanced technical analysis techniques',
+    'Understand derivatives and complex instruments',
+    'Develop professional risk management skills',
+    'Build systematic trading approaches'
+  ],
+  totalXP: 1200,
+  difficulty: 5,
+  category: 'trading' as const,
+  skills: ['Technical Analysis', 'Risk Management', 'Derivatives', 'Market Psychology'],
+  certification: {
+    available: true,
+    requirements: ['Complete all modules', 'Pass trading simulation', 'Pass final assessment'],
+    credentialName: 'Advanced Trading Certificate'
   },
-  {
-    id: "defi",
-    title: "DeFi Mastery",
-    description: "Learn decentralized finance protocols, yield farming, and liquidity provision",
-    instructor: "Sarah Kim",
-    duration: "3 weeks",
-    level: "Intermediate",
-    enrolled: 890,
-    rating: 4.9,
-    price: "$49",
-    image: "https://images.unsplash.com/photo-1639322537228-f710d846310a?w=400&h=250&fit=crop",
-    tags: ["DeFi", "Yield Farming", "Liquidity"],
-    chapters: [
-      {
-        title: "DeFi Protocols",
-        lessons: [
-          { title: "Introduction to DeFi", duration: "30 min" },
-          { title: "Lending and Borrowing", duration: "25 min" },
-        ],
-      },
-      {
-        title: "Yield Farming Strategies",
-        lessons: [
-          { title: "What is Yield Farming?", duration: "35 min" },
-          { title: "Risks of Yield Farming", duration: "30 min" },
-        ],
-      },
-    ],
-    progress: 30,
+  xpReward: 1200,
+  modules: [
+    {
+      id: 1,
+      title: 'Advanced Technical Analysis',
+      description: 'Master sophisticated charting and analysis techniques',
+      estimatedTime: '1.5 weeks',
+      xpReward: 400,
+      chapters: [
+        {
+          id: 1,
+          title: 'Advanced Chart Patterns',
+          duration: '45 min',
+          content: `
+## Advanced Chart Patterns and Market Structure
+
+### Complex Chart Patterns
+
+**Advanced Reversal Patterns:**
+• **Head and Shoulders:** Classic reversal pattern with three peaks
+• **Double Top/Bottom:** Strong reversal signals at key levels
+• **Triple Top/Bottom:** Rare but powerful reversal patterns
+• **Rounding Top/Bottom:** Gradual trend reversal patterns
+
+**Continuation Patterns:**
+• **Flags and Pennants:** Brief consolidation before trend continuation
+• **Triangles:** Ascending, descending, and symmetrical formations
+• **Rectangles:** Horizontal support and resistance ranges
+• **Cup and Handle:** Bullish continuation pattern
+
+### Market Structure Analysis
+
+**Understanding Market Phases:**
+• **Accumulation:** Smart money building positions
+• **Markup:** Public participation and price appreciation
+• **Distribution:** Smart money taking profits
+• **Markdown:** Public selling and price decline
+
+**Volume Analysis:**
+• **Volume Profile:** Understanding price acceptance levels
+• **On-Balance Volume:** Tracking money flow
+• **Volume Weighted Average Price (VWAP):** Institutional reference point
+• **Accumulation/Distribution Line:** Measuring buying/selling pressure
+          `,
+          keyTakeaways: [
+            'Advanced patterns provide higher probability trade setups',
+            'Market structure analysis reveals institutional behavior',
+            'Volume confirmation is crucial for pattern validity',
+            'Understanding market phases improves timing'
+          ],
+          xpReward: 100,
+          difficulty: 'hard' as const,
+          tags: ['technical-analysis', 'chart-patterns', 'market-structure']
+        }
+      ]
+    }
+  ]
+};
+
+const blockchainDevelopmentCourse = {
+  id: 'development',
+  title: 'Blockchain Development Mastery',
+  description: 'Complete guide to building on blockchain networks and creating dApps',
+  longDescription: 'Comprehensive development course covering smart contracts, dApp development, and blockchain integration.',
+  level: 'Advanced' as const,
+  duration: '6-8 weeks',
+  color: 'from-green-400 to-blue-600',
+  gradient: 'bg-gradient-to-br from-green-400 to-blue-600',
+  prerequisites: ['foundation', 'defi-fundamentals'],
+  learningOutcomes: [
+    'Build and deploy smart contracts',
+    'Create full-stack dApps',
+    'Understand blockchain architecture',
+    'Master Web3 development tools'
+  ],
+  totalXP: 1500,
+  difficulty: 5,
+  category: 'development' as const,
+  skills: ['Solidity', 'Web3.js', 'React', 'Smart Contracts'],
+  certification: {
+    available: true,
+    requirements: ['Complete all modules', 'Build capstone project', 'Pass final assessment'],
+    credentialName: 'Blockchain Development Certificate'
   },
-  {
-    id: "degen",
-    title: "Degen Trading",
-    description: "Explore memecoins, leverage trading, and airdrop strategies",
-    instructor: "Tom Lee",
-    duration: "2 weeks",
-    level: "Advanced",
-    enrolled: 620,
-    rating: 4.7,
-    price: "$79",
-    image: "https://images.unsplash.com/photo-1618523444535-c489ca1640ca?w=400&h=250&fit=crop",
-    tags: ["Memecoins", "Leverage", "Airdrops"],
-    chapters: [
-      {
-        title: "Memecoin Mania",
-        lessons: [
-          { title: "Understanding Memecoins", duration: "20 min" },
-          { title: "Risks of Memecoins", duration: "15 min" },
-        ],
-      },
-      {
-        title: "Leverage Trading",
-        lessons: [
-          { title: "Introduction to Leverage", duration: "25 min" },
-          { title: "Managing Risk", duration: "20 min" },
-        ],
-      },
-    ],
-    progress: 10,
+  xpReward: 1500,
+  modules: [
+    {
+      id: 1,
+      title: 'Smart Contract Fundamentals',
+      description: 'Learn Solidity and smart contract development',
+      estimatedTime: '2 weeks',
+      xpReward: 500,
+      chapters: [
+        {
+          id: 1,
+          title: 'Introduction to Solidity',
+          duration: '60 min',
+          content: `
+## Smart Contract Development with Solidity
+
+### Solidity Fundamentals
+
+**What is Solidity?**
+Solidity is a high-level programming language designed for implementing smart contracts on Ethereum and other EVM-compatible blockchains.
+
+**Key Features:**
+• **Statically typed:** Variable types must be declared
+• **Contract-oriented:** Designed specifically for smart contracts
+• **Inheritance support:** Object-oriented programming features
+• **Built-in security features:** Gas optimization and safety checks
+
+### Basic Syntax and Structure
+
+**Contract Structure:**
+\`\`\`solidity
+pragma solidity ^0.8.0;
+
+contract MyContract {
+    // State variables
+    uint256 public myNumber;
+    address public owner;
+
+    // Constructor
+    constructor() {
+        owner = msg.sender;
+        myNumber = 0;
+    }
+
+    // Functions
+    function setNumber(uint256 _number) public {
+        require(msg.sender == owner, "Only owner can set number");
+        myNumber = _number;
+    }
+}
+\`\`\`
+
+**Data Types:**
+• **uint256:** Unsigned integer (256 bits)
+• **address:** Ethereum address (20 bytes)
+• **bool:** Boolean true/false
+• **string:** Dynamic string
+• **bytes:** Dynamic byte array
+• **mapping:** Key-value storage
+          `,
+          keyTakeaways: [
+            'Solidity is specifically designed for smart contract development',
+            'Understanding data types and contract structure is fundamental',
+            'Security considerations must be built into every contract',
+            'Gas optimization is crucial for cost-effective contracts'
+          ],
+          xpReward: 125,
+          difficulty: 'hard' as const,
+          tags: ['solidity', 'smart-contracts', 'programming']
+        }
+      ]
+    }
+  ]
+};
+
+// Convert degenCourse modules to proper format
+const degenCourseFormatted = {
+  ...degenCourseMetadata,
+  longDescription: degenCourseMetadata.description,
+  color: 'from-yellow-400 to-red-600',
+  gradient: 'bg-gradient-to-br from-yellow-400 to-red-600',
+  category: 'trading' as const,
+  skills: ['Risk Management', 'Technical Analysis', 'DeFi Strategies', 'Market Psychology'],
+  certification: {
+    available: true,
+    requirements: ['Complete all modules', 'Pass risk assessment', 'Pass final assessment'],
+    credentialName: 'Degen Trading Certificate'
   },
-  {
-    id: "advanced-trading",
-    title: "Advanced Trading",
-    description: "Learn technical analysis and derivatives trading",
-    instructor: "Alice Johnson",
-    duration: "3 weeks",
-    level: "Advanced",
-    enrolled: 480,
-    rating: 4.6,
-    price: "$99",
-    image: "https://images.unsplash.com/photo-1576766411991-305b83c59951?w=400&h=250&fit=crop",
-    tags: ["Technical Analysis", "Derivatives", "Trading"],
-    chapters: [
-      {
-        title: "Technical Analysis",
-        lessons: [
-          { title: "Chart Patterns", duration: "30 min" },
-          { title: "Indicators", duration: "25 min" },
-        ],
-      },
-      {
-        title: "Derivatives Trading",
-        lessons: [
-          { title: "Futures", duration: "35 min" },
-          { title: "Options", duration: "30 min" },
-        ],
-      },
-    ],
-    progress: 0,
-  },
-  {
-    id: "development",
-    title: "Smart Contract Development",
-    description: "Develop smart contracts and decentralized applications",
-    instructor: "Bob Williams",
-    duration: "4 weeks",
-    level: "Intermediate",
-    enrolled: 750,
-    rating: 4.5,
-    price: "$69",
-    image: "https://images.unsplash.com/photo-1518770660439-464c4c6902b4?w=400&h=250&fit=crop",
-    tags: ["Solidity", "dApps", "Smart Contracts"],
-    chapters: [
-      {
-        title: "Solidity Basics",
-        lessons: [
-          { title: "Introduction to Solidity", duration: "20 min" },
-          { title: "Data Types", duration: "15 min" },
-        ],
-      },
-      {
-        title: "dApp Development",
-        lessons: [
-          { title: "Building a dApp", duration: "25 min" },
-          { title: "Testing and Deployment", duration: "20 min" },
-        ],
-      },
-    ],
-    progress: 0,
-  },
-];
+  modules: degenCourse.map((module, index) => ({
+    id: index + 1,
+    title: module.title,
+    description: module.description,
+    estimatedTime: '1 week',
+    xpReward: 300,
+    chapters: module.chapters.map((chapter, chapterIndex) => ({
+      id: chapterIndex + 1,
+      title: chapter.title,
+      duration: chapter.duration,
+      content: `
+## ${chapter.title}
+
+${chapter.content.description}
+
+### Key Points:
+${chapter.content.keyPoints.map(point => `• ${point}`).join('\n')}
+
+### Practical Example:
+${chapter.content.practicalExample}
+
+${chapter.content.warning ? `### ⚠️ Warning:
+${chapter.content.warning}` : ''}
+      `,
+      keyTakeaways: chapter.content.keyPoints,
+      xpReward: chapter.xpReward,
+      difficulty: 'medium' as const,
+      tags: ['degen-trading', 'high-risk', 'advanced-strategies']
+    }))
+  }))
+};
+
+// Create the courses object that maps IDs to course data
+export const courses: Record<string, any> = {
+  'foundation': foundationCourse,
+  'defi-fundamentals': defiFundamentalsCourse,
+  'degen': degenCourseFormatted,
+  'nft-creation': nftCreationCourse,
+  'content-creation': contentCreationCourse,
+  'advanced-trading': advancedTradingCourse,
+  'development': blockchainDevelopmentCourse
+};

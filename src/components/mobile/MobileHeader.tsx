@@ -1,6 +1,7 @@
 
-import { Bell, Search, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface MobileHeaderProps {
   title?: string;
@@ -42,12 +43,11 @@ const MobileHeader = ({
 
         {/* Right side - Action buttons */}
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" className="p-2">
-            <Search className="h-5 w-5 text-slate-600" />
-          </Button>
-          <Button variant="ghost" size="sm" className="p-2">
-            <Bell className="h-5 w-5 text-slate-600" />
-          </Button>
+          <Link to="/mobile/explore">
+            <Button variant="ghost" size="sm" className="p-2" title="Search Courses">
+              <Search className="h-5 w-5 text-slate-600" />
+            </Button>
+          </Link>
           {showMenu && (
             <Button variant="ghost" size="sm" onClick={onMenuClick} className="p-2">
               <Menu className="h-5 w-5 text-slate-600" />

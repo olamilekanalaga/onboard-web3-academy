@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,13 +7,31 @@ import { Progress } from "@/components/ui/progress";
 import { BookOpen, Clock, Users, Star, ArrowRight, Filter, Search, Coins, Target, TrendingUp, Code, BarChart3, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
+import { courses } from "@/data/courses";
 
 const Courses = () => {
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("all");
-  const { userProgress, isCourseUnlocked, isCourseCompleted, getCourseProgress, courseProgression } = useCourseProgression();
+  // Try database first, fallback to localStorage
+  const dbHook = useCourseProgressionDB();
+  const localHook = useCourseProgression();
+
+  // Use database hook if loading is complete and no error, otherwise use localStorage hook
+  const useDB = !dbHook.isLoading && dbHook.userProgress;
+  const { userProgress, isCourseUnlocked, isCourseCompleted, getCourseProgress, courseProgression, getNextRecommendedCourse } = useDB ? dbHook : localHook;
+  const isLoading = useDB ? dbHook.isLoading : false;
+
+  // Set search term from URL parameter on component mount
+  useEffect(() => {
+    const searchFromUrl = searchParams.get('search');
+    if (searchFromUrl) {
+      setSearchTerm(searchFromUrl);
+    }
+  }, [searchParams]);
 
   const levels = ["all", "Foundation", "Beginner", "Intermediate", "Advanced", "Expert"];
 
@@ -41,16 +59,35 @@ const Courses = () => {
   }));
 
   const filteredCourses = allCourses.filter(course => {
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchTerm.toLowerCase());
+    // Enhanced search functionality
+    const searchLower = searchTerm.toLowerCase().trim();
+    if (!searchLower) return selectedLevel === "all" || course.level === selectedLevel;
+
+    const matchesSearch =
+      course.title.toLowerCase().includes(searchLower) ||
+      course.description.toLowerCase().includes(searchLower) ||
+      course.level.toLowerCase().includes(searchLower);
+
     const matchesLevel = selectedLevel === "all" || course.level === selectedLevel;
     return matchesSearch && matchesLevel;
-  }).sort((a, b) => a.difficulty - b.difficulty); // Sort by difficulty
+  }).sort((a, b) => {
+    // Sort by difficulty level, then by title
+    if (a.difficulty !== b.difficulty) {
+      return a.difficulty - b.difficulty;
+    }
+    return a.title.localeCompare(b.title);
+  });
 
   const getCourseStats = (courseId: string) => {
-    // Mock stats since we don't have the detailed module data
-    const totalChapters = 5; // Default chapters per course
-    const estimatedHours = Math.ceil(totalChapters * 0.5); // 30 min per chapter
+    const courseData = courses[courseId];
+    if (courseData && courseData.modules) {
+      const totalChapters = courseData.modules.reduce((sum: number, module: any) => sum + module.chapters.length, 0);
+      const estimatedHours = Math.ceil(totalChapters * 0.5); // 30 min per chapter
+      return { totalChapters, estimatedHours };
+    }
+    // Fallback for courses without detailed module data
+    const totalChapters = 5;
+    const estimatedHours = Math.ceil(totalChapters * 0.5);
     return { totalChapters, estimatedHours };
   };
 
@@ -58,6 +95,23 @@ const Courses = () => {
     const progress = getCourseProgress(courseId);
     return progress ? progress.progressPercentage : 0;
   };
+
+  const nextRecommendedCourse = getNextRecommendedCourse();
+  const nextCourseData = nextRecommendedCourse ? courseProgression[nextRecommendedCourse as keyof typeof courseProgression] : null;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-600">Loading your course progress...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -75,16 +129,56 @@ const Courses = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <Input
-                  placeholder="Search courses..."
+                  placeholder="Search courses, descriptions, or levels..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white/90 border-0"
+                  className="pl-10 pr-10 bg-white border border-white/20 text-slate-900 placeholder:text-slate-500 focus:bg-white focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300 transition-all"
                 />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Next Course Recommendation */}
+      {nextRecommendedCourse && nextCourseData && (
+        <section className="py-8 px-4 md:px-6 bg-gradient-to-r from-emerald-50 to-blue-50 border-b">
+          <div className="container mx-auto max-w-6xl">
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-emerald-200">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                      <Target className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900">Recommended Next Course</h3>
+                  </div>
+                  <div className="ml-11">
+                    <h4 className="font-medium text-slate-900">{nextCourseData.title}</h4>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Continue your learning journey • {nextCourseData.xpReward} XP • {nextCourseData.estimatedTime}
+                    </p>
+                  </div>
+                </div>
+                <Link to={`/course/${nextRecommendedCourse}`}>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    Start Course
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Filters */}
       <section className="py-8 px-4 md:px-6 bg-white border-b">
@@ -160,7 +254,18 @@ const Courses = () => {
                         {!isUnlocked && <Lock className="inline-block ml-2 h-4 w-4" />}
                       </CardTitle>
                       <CardDescription className={`mt-2 ${isUnlocked ? 'text-slate-600' : 'text-gray-400'}`}>
-                        {isUnlocked ? course.description : 'Complete previous courses to unlock'}
+                        {isUnlocked ? course.description : (() => {
+                          const courseConfig = courseProgression[course.id as keyof typeof courseProgression];
+                          const prerequisites = courseConfig?.prerequisites || [];
+                          if (prerequisites.length > 0) {
+                            const prereqNames = prerequisites.map(prereqId => {
+                              const prereqConfig = courseProgression[prereqId as keyof typeof courseProgression];
+                              return prereqConfig?.title || prereqId;
+                            }).join(', ');
+                            return `Complete: ${prereqNames}`;
+                          }
+                          return 'Complete previous courses to unlock';
+                        })()}
                       </CardDescription>
                     </div>
                   </CardHeader>

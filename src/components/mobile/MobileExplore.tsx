@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSocialVerification } from "@/contexts/SocialVerificationContext";
+import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
 import { Search, Filter, TrendingUp, Clock, Star, Users, Target, Code, BarChart3, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,13 @@ import MobileHeader from "./MobileHeader";
 const MobileExplore = () => {
   const navigate = useNavigate();
   const { isVerified, setVerified } = useSocialVerification();
-  const { isCourseUnlocked, courseProgression } = useCourseProgression();
+  // Try database first, fallback to localStorage
+  const dbHook = useCourseProgressionDB();
+  const localHook = useCourseProgression();
+
+  // Use database hook if loading is complete and no error, otherwise use localStorage hook
+  const useDB = !dbHook.isLoading && dbHook.userProgress;
+  const { isCourseUnlocked, courseProgression } = useDB ? dbHook : localHook;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showSocialVerification, setShowSocialVerification] = useState(false);
@@ -43,17 +50,28 @@ const MobileExplore = () => {
     { name: "Security", key: "security", icon: "🛡️", count: courseList.filter(c => c.category === "security").length }
   ];
 
-  // Filter and sort courses based on search and category
+  // Enhanced filter and sort courses based on search and category
   const filteredCourses = courseList
     .filter(course => {
-      const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        course.description.toLowerCase().includes(searchQuery.toLowerCase());
+      // Enhanced search - includes title, description, category, and level
+      const searchLower = searchQuery.toLowerCase().trim();
+      if (!searchLower) return selectedCategory === "all" || course.category === selectedCategory;
+
+      const matchesSearch =
+        course.title.toLowerCase().includes(searchLower) ||
+        course.description.toLowerCase().includes(searchLower) ||
+        course.category.toLowerCase().includes(searchLower) ||
+        course.level.toLowerCase().includes(searchLower);
+
       const matchesCategory = selectedCategory === "all" || course.category === selectedCategory;
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
-      // Sort by difficulty level (1 = easiest first)
-      return a.difficulty - b.difficulty;
+      // Sort by difficulty level (1 = easiest first), then by title
+      if (a.difficulty !== b.difficulty) {
+        return a.difficulty - b.difficulty;
+      }
+      return a.title.localeCompare(b.title);
     });
 
   const getIconForCourse = (courseId: string) => {
@@ -110,16 +128,24 @@ const MobileExplore = () => {
       <div className="bg-white px-6 pt-12 pb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-900 mb-4">Explore Courses</h1>
 
-        {/* Search Bar */}
+        {/* Enhanced Search Bar */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
           <Input
             type="text"
-            placeholder="Search for courses..."
+            placeholder="Search courses, descriptions, or levels..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 pr-4 py-3 bg-slate-100 rounded-lg border-0"
+            className="pl-12 pr-4 py-3 bg-slate-100 rounded-lg border-0 focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {/* Filter Button */}

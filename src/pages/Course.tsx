@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -10,15 +10,24 @@ import Header from "@/components/Header";
 import ChapterQA from "@/components/ChapterQA";
 import TradingDemo from "@/components/TradingDemo";
 import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
+import CourseCompletionModal from "@/components/CourseCompletionModal";
+import CourseWelcomeModal from "@/components/CourseWelcomeModal";
 import { courses } from "@/data/courses";
+import { useCourseProgression } from "@/hooks/useCourseProgression";
 
 const Course = () => {
   const { courseId } = useParams();
+  const location = useLocation();
   const [completedChapters, setCompletedChapters] = useState<string[]>([]);
   const [selectedModule, setSelectedModule] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [courseJustCompleted, setCourseJustCompleted] = useState(false);
 
+  const { updateChapterProgress, courseProgression, getCourseProgress } = useCourseProgression();
   const course = courseId ? courses[courseId] : undefined;
+  const courseConfig = courseId ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
 
   if (!course) {
     return (
@@ -58,13 +67,57 @@ const Course = () => {
   const markChapterComplete = () => {
     const chapterId = getChapterId(selectedModule, selectedChapter);
     if (!completedChapters.includes(chapterId)) {
-      setCompletedChapters([...completedChapters, chapterId]);
+      const newCompletedChapters = [...completedChapters, chapterId];
+      setCompletedChapters(newCompletedChapters);
+
+      // Update progress in the progression system
+      if (courseId) {
+        updateChapterProgress(courseId, chapterId, totalChapters);
+      }
+
+      // Check if course is now completed
+      const newCompletedCount = newCompletedChapters.length;
+      if (newCompletedCount === totalChapters && !courseJustCompleted) {
+        setCourseJustCompleted(true);
+        // Show completion modal after a short delay
+        setTimeout(() => {
+          setShowCompletionModal(true);
+        }, 1000);
+      }
     }
   };
 
   const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
   const completedCount = completedChapters.length;
   const progressPercentage = (completedCount / totalChapters) * 100;
+
+  // Reset completion state when course changes and check for welcome modal
+  useEffect(() => {
+    setCourseJustCompleted(false);
+    setShowCompletionModal(false);
+
+    // Check if we should show welcome modal
+    if (courseId) {
+      const courseProgress = getCourseProgress(courseId);
+      const isFirstTime = !courseProgress || courseProgress.progressPercentage === 0;
+
+      // Show welcome modal if:
+      // 1. Coming from course completion (showWelcome state), OR
+      // 2. First time visiting this course (no progress)
+      if (location.state?.showWelcome || isFirstTime) {
+        setShowWelcomeModal(true);
+        // Clear the state to prevent showing again on refresh
+        if (location.state?.showWelcome) {
+          window.history.replaceState({}, document.title);
+        }
+      }
+    }
+  }, [courseId, location.state, getCourseProgress]);
+
+  const handleStartCourse = () => {
+    setShowWelcomeModal(false);
+    // Course content is already loaded, user can start immediately
+  };
 
   // Function to format chapter content with proper typography and spacing
   const formatContent = (content: string) => {
@@ -406,6 +459,29 @@ const Course = () => {
           </div>
         </div>
       </div>
+
+      {/* Course Completion Modal */}
+      {courseId && courseConfig && (
+        <CourseCompletionModal
+          isOpen={showCompletionModal}
+          onClose={() => setShowCompletionModal(false)}
+          completedCourseId={courseId}
+          xpEarned={courseConfig.xpReward}
+          onStartNextCourse={(nextCourseId) => {
+            // This will be handled by the navigation with state
+          }}
+        />
+      )}
+
+      {/* Course Welcome Modal */}
+      {courseId && (
+        <CourseWelcomeModal
+          isOpen={showWelcomeModal}
+          onClose={() => setShowWelcomeModal(false)}
+          onStartCourse={handleStartCourse}
+          courseId={courseId}
+        />
+      )}
     </div>
   );
 };

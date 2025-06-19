@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { initializeUserStats } from '@/utils/setupDatabase';
 
 interface AuthContextType {
   user: User | null;
@@ -24,23 +25,64 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [showFollowFlow, setShowFollowFlow] = useState(false);
 
   useEffect(() => {
+    // Set timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.log('Auth loading timeout - setting loading to false');
+      setLoading(false);
+    }, 5000); // 5 second timeout
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        clearTimeout(loadingTimeout);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Initialize user stats when user signs in (non-blocking)
+        if (event === 'SIGNED_IN' && session?.user) {
+          initializeUserStats(session.user.id).catch(error => {
+            console.log('Failed to initialize user stats:', error);
+            // Don't block the auth flow if this fails
+          });
+        }
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Check for existing session with timeout
+    const getSessionWithTimeout = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        clearTimeout(loadingTimeout);
 
-    return () => subscription.unsubscribe();
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+
+        // Initialize user stats for existing session (non-blocking)
+        if (session?.user) {
+          initializeUserStats(session.user.id).catch(error => {
+            console.log('Failed to initialize user stats:', error);
+            // Don't block the auth flow if this fails
+          });
+        }
+      } catch (error) {
+        console.error('Session check failed:', error);
+        clearTimeout(loadingTimeout);
+        setLoading(false);
+      }
+    };
+
+    getSessionWithTimeout();
+
+    return () => {
+      clearTimeout(loadingTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, userData?: any) => {

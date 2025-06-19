@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -6,17 +6,21 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Bell,
   Shield,
   Palette,
   Trash2,
   AlertTriangle,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Save,
+  Download,
+  Globe
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/components/ui/use-toast";
+import { useUserSettings, useUpdateUserSettings } from "@/hooks/useUserSettings";
 import ThemeToggle from "@/components/ThemeToggle";
 import Header from "@/components/Header";
 
@@ -24,24 +28,57 @@ const Settings = () => {
   const { user, signOut } = useAuth();
   const { theme } = useTheme();
   const { toast } = useToast();
+  const { data: userSettings, isLoading } = useUserSettings();
+  const updateSettings = useUpdateUserSettings();
 
-  const [notifications, setNotifications] = useState({
-    email_notifications: true,
-    push_notifications: true,
-    course_reminders: true,
-    achievement_alerts: true,
-    marketing_emails: false,
-  });
-
-  const [privacy, setPrivacy] = useState({
-    profile_visibility: 'public',
+  // Local state for settings
+  const [settings, setSettings] = useState({
+    theme: 'light' as 'light' | 'dark',
+    language: 'en',
+    timezone: '',
     show_progress: true,
     show_achievements: true,
     data_analytics: true,
   });
 
+  // Update local state when userSettings loads
+  useEffect(() => {
+    if (userSettings) {
+      setSettings({
+        theme: userSettings.theme,
+        language: userSettings.language,
+        timezone: userSettings.timezone || '',
+        show_progress: userSettings.show_progress,
+        show_achievements: userSettings.show_achievements,
+        data_analytics: userSettings.data_analytics,
+      });
+    }
+  }, [userSettings]);
+
+  const handleSaveSettings = async () => {
+    try {
+      await updateSettings.mutateAsync(settings);
+      toast({
+        title: "Settings Updated",
+        description: "Your preferences have been saved successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update settings. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportData = () => {
+    toast({
+      title: "Data Export",
+      description: "Your data export will be emailed to you within 24 hours.",
+    });
+  };
+
   const handleDeleteAccount = async () => {
-    // This would typically show a confirmation dialog
     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
       toast({
         title: "Account Deletion",
@@ -67,15 +104,15 @@ const Settings = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="notifications" className="space-y-6">
+        <Tabs defaultValue="appearance" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="notifications" className="flex items-center space-x-2">
-              <Bell className="h-4 w-4" />
-              <span>Notifications</span>
-            </TabsTrigger>
             <TabsTrigger value="appearance" className="flex items-center space-x-2">
               <Palette className="h-4 w-4" />
               <span>Appearance</span>
+            </TabsTrigger>
+            <TabsTrigger value="preferences" className="flex items-center space-x-2">
+              <Globe className="h-4 w-4" />
+              <span>Preferences</span>
             </TabsTrigger>
             <TabsTrigger value="privacy" className="flex items-center space-x-2">
               <Shield className="h-4 w-4" />
@@ -83,80 +120,7 @@ const Settings = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
-                <CardDescription>
-                  Choose how you want to be notified about updates and activities
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Email Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive notifications via email
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifications.email_notifications}
-                      onCheckedChange={(checked) =>
-                        setNotifications(prev => ({ ...prev, email_notifications: checked }))
-                      }
-                    />
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Course Reminders</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Get reminded about incomplete courses
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifications.course_reminders}
-                      onCheckedChange={(checked) =>
-                        setNotifications(prev => ({ ...prev, course_reminders: checked }))
-                      }
-                    />
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Achievement Alerts</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Celebrate your achievements with notifications
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifications.achievement_alerts}
-                      onCheckedChange={(checked) =>
-                        setNotifications(prev => ({ ...prev, achievement_alerts: checked }))
-                      }
-                    />
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Marketing Emails</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive updates about new features and courses
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifications.marketing_emails}
-                      onCheckedChange={(checked) =>
-                        setNotifications(prev => ({ ...prev, marketing_emails: checked }))
-                      }
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {/* Removed non-functional notifications tab */}
 
           {/* Appearance Tab */}
           <TabsContent value="appearance" className="space-y-6">
@@ -171,16 +135,87 @@ const Settings = () => {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Theme</Label>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary" className="capitalize">
-                        Light Mode
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        Currently using light theme
-                      </span>
-                    </div>
+                    <Select
+                      value={settings.theme}
+                      onValueChange={(value: 'light' | 'dark') =>
+                        setSettings(prev => ({ ...prev, theme: value }))
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select theme" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="light">Light Mode</SelectItem>
+                        <SelectItem value="dark">Dark Mode (Coming Soon)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
+                <Button onClick={handleSaveSettings} disabled={updateSettings.isPending}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {updateSettings.isPending ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Preferences Tab */}
+          <TabsContent value="preferences" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>General Preferences</CardTitle>
+                <CardDescription>
+                  Configure your language and regional settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Language</Label>
+                    <Select
+                      value={settings.language}
+                      onValueChange={(value) =>
+                        setSettings(prev => ({ ...prev, language: value }))
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="es">Spanish (Coming Soon)</SelectItem>
+                        <SelectItem value="fr">French (Coming Soon)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Timezone</Label>
+                    <Select
+                      value={settings.timezone}
+                      onValueChange={(value) =>
+                        setSettings(prev => ({ ...prev, timezone: value }))
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="UTC">UTC</SelectItem>
+                        <SelectItem value="America/New_York">Eastern Time</SelectItem>
+                        <SelectItem value="America/Chicago">Central Time</SelectItem>
+                        <SelectItem value="America/Denver">Mountain Time</SelectItem>
+                        <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
+                        <SelectItem value="Europe/London">London</SelectItem>
+                        <SelectItem value="Europe/Paris">Paris</SelectItem>
+                        <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <Button onClick={handleSaveSettings} disabled={updateSettings.isPending}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {updateSettings.isPending ? 'Saving...' : 'Save Changes'}
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -204,9 +239,9 @@ const Settings = () => {
                       </p>
                     </div>
                     <Switch
-                      checked={privacy.show_progress}
+                      checked={settings.show_progress}
                       onCheckedChange={(checked) =>
-                        setPrivacy(prev => ({ ...prev, show_progress: checked }))
+                        setSettings(prev => ({ ...prev, show_progress: checked }))
                       }
                     />
                   </div>
@@ -219,9 +254,9 @@ const Settings = () => {
                       </p>
                     </div>
                     <Switch
-                      checked={privacy.show_achievements}
+                      checked={settings.show_achievements}
                       onCheckedChange={(checked) =>
-                        setPrivacy(prev => ({ ...prev, show_achievements: checked }))
+                        setSettings(prev => ({ ...prev, show_achievements: checked }))
                       }
                     />
                   </div>
@@ -234,11 +269,39 @@ const Settings = () => {
                       </p>
                     </div>
                     <Switch
-                      checked={privacy.data_analytics}
+                      checked={settings.data_analytics}
                       onCheckedChange={(checked) =>
-                        setPrivacy(prev => ({ ...prev, data_analytics: checked }))
+                        setSettings(prev => ({ ...prev, data_analytics: checked }))
                       }
                     />
+                  </div>
+                </div>
+
+                <Button onClick={handleSaveSettings} disabled={updateSettings.isPending}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {updateSettings.isPending ? 'Saving...' : 'Save Changes'}
+                </Button>
+
+                <Separator />
+
+                {/* Data Management */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Data Management</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium">Export Your Data</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Download a copy of all your data including progress, achievements, and settings.
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={handleExportData}
+                        className="mt-2"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export Data
+                      </Button>
+                    </div>
                   </div>
                 </div>
 

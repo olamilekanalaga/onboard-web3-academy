@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Search, User, BookOpen, Menu, ChevronDown, Trophy, Zap, LogOut, Settings } from "lucide-react";
+import { Search, User, BookOpen, Menu, ChevronDown, Trophy, Zap, LogOut, Settings } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,10 +9,12 @@ import { useProfile } from "@/hooks/useProfile";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import { useToast } from "@/components/ui/use-toast";
 import ThemeToggle from "./ThemeToggle";
+import SearchPopup from "./SearchPopup";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [exploreDropdownOpen, setExploreDropdownOpen] = useState(false);
+  const [searchPopupOpen, setSearchPopupOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
   const { toast } = useToast();
@@ -36,17 +38,28 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <header className="bg-gradient-to-r from-emerald-600 to-emerald-700 border-b border-emerald-800 sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto max-w-7xl px-4 md:px-6">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-24">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <img 
-              src="/academia web display.png" 
-              alt="Academia" 
-              className="h-16 w-auto object-contain"
+            {/* Desktop Logo */}
+            <img
+              src="/academia web display.png"
+              alt="Academia"
+              className="hidden md:block h-20 w-auto object-contain"
               onError={(e) => {
-                console.error("Failed to load logo image");
+                console.error("Failed to load web logo image");
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+            {/* Mobile Logo */}
+            <img
+              src="/academia mobile.png"
+              alt="Academia"
+              className="block md:hidden h-16 w-auto object-contain"
+              onError={(e) => {
+                console.error("Failed to load mobile logo image");
                 e.currentTarget.style.display = 'none';
               }}
             />
@@ -57,7 +70,7 @@ const Header = () => {
             <nav className="hidden lg:flex items-center space-x-8">
               <div className="relative">
                 <button
-                  className="flex items-center space-x-1 text-slate-700 hover:text-emerald-600 transition-colors"
+                  className="flex items-center space-x-1 text-white hover:text-emerald-100 transition-colors font-medium"
                   onMouseEnter={() => setExploreDropdownOpen(true)}
                   onMouseLeave={() => setExploreDropdownOpen(false)}
                 >
@@ -118,17 +131,17 @@ const Header = () => {
                   </div>
                 )}
               </div>
-              <Link to="/gamification" className="flex items-center space-x-1 text-slate-700 hover:text-emerald-600 transition-colors">
+              <Link to="/gamification" className="flex items-center space-x-1 text-white hover:text-emerald-100 transition-colors font-medium">
                 <Trophy className="h-4 w-4" />
                 <span>Gamification</span>
               </Link>
-              <Link to="/demo" className="text-slate-700 hover:text-emerald-600 transition-colors">
+              <Link to="/demo" className="text-white hover:text-emerald-100 transition-colors font-medium">
                 Demo
               </Link>
-              <Link to="/profile" className="text-slate-700 hover:text-emerald-600 transition-colors">
+              <Link to="/profile" className="text-white hover:text-emerald-100 transition-colors font-medium">
                 Profile
               </Link>
-              <Link to="/settings" className="text-slate-700 hover:text-emerald-600 transition-colors">
+              <Link to="/settings" className="text-white hover:text-emerald-100 transition-colors font-medium">
                 Settings
               </Link>
             </nav>
@@ -139,20 +152,23 @@ const Header = () => {
             {user ? (
               /* Authenticated User Actions */
               <div className="hidden md:flex items-center space-x-3">
-                <Button variant="ghost" size="sm" className="p-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="p-2 text-white hover:text-emerald-100 hover:bg-emerald-500"
+                  title="Search Courses"
+                  onClick={() => setSearchPopupOpen(true)}
+                >
                   <Search className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="p-2">
-                  <Bell className="h-4 w-4" />
                 </Button>
                 <ThemeToggle />
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">
+                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm">
+                    <span className="text-emerald-600 text-sm font-medium">
                       {getUserInitials(profile, user)}
                     </span>
                   </div>
-                  <Button variant="ghost" onClick={handleSignOut} className="text-slate-700 hover:text-red-600">
+                  <Button variant="ghost" onClick={handleSignOut} className="text-white hover:text-red-200 hover:bg-red-500">
                     <LogOut className="h-4 w-4 mr-1" />
                     Sign Out
                   </Button>
@@ -161,12 +177,18 @@ const Header = () => {
             ) : (
               /* Unauthenticated User Actions */
               <div className="hidden md:flex items-center space-x-3">
-                <Button variant="ghost" size="sm" className="p-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="p-2 text-white hover:text-emerald-100 hover:bg-emerald-500"
+                  title="Search Courses"
+                  onClick={() => setSearchPopupOpen(true)}
+                >
                   <Search className="h-4 w-4" />
                 </Button>
                 <ThemeToggle />
                 <Link to="/auth">
-                  <Button variant="ghost" className="text-slate-700 hover:text-emerald-600">
+                  <Button variant="ghost" className="text-white hover:text-emerald-100 hover:bg-emerald-500 font-medium">
                     Log In
                   </Button>
                 </Link>
@@ -175,7 +197,7 @@ const Header = () => {
 
             {!user && (
               <Link to="/auth">
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2">
+                <Button className="bg-white text-emerald-600 hover:bg-emerald-50 px-6 py-2 font-semibold shadow-sm">
                   Join for Free
                 </Button>
               </Link>
@@ -183,7 +205,7 @@ const Header = () => {
 
             {user && (
               <Link to="/courses">
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2">
+                <Button className="bg-white text-emerald-600 hover:bg-emerald-50 px-6 py-2 font-semibold shadow-sm">
                   My Courses
                 </Button>
               </Link>
@@ -193,7 +215,7 @@ const Header = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="lg:hidden p-2"
+              className="lg:hidden p-2 text-white hover:text-emerald-100 hover:bg-emerald-500"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <Menu className="h-5 w-5" />
@@ -203,19 +225,19 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-slate-200 py-4 space-y-4">
+          <div className="lg:hidden border-t border-emerald-800 py-4 space-y-4 bg-emerald-600">
             {user && (
               <nav className="flex flex-col space-y-3">
                 <Link
                   to="/courses"
-                  className="text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
+                  className="text-white hover:text-emerald-100 transition-colors px-2 py-1 font-medium"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   All Courses
                 </Link>
                 <Link
                   to="/gamification"
-                  className="flex items-center space-x-2 text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
+                  className="flex items-center space-x-2 text-white hover:text-emerald-100 transition-colors px-2 py-1 font-medium"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Trophy className="h-4 w-4" />
@@ -223,7 +245,7 @@ const Header = () => {
                 </Link>
                 <Link
                   to="/demo"
-                  className="flex items-center space-x-2 text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
+                  className="flex items-center space-x-2 text-white hover:text-emerald-100 transition-colors px-2 py-1 font-medium"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Zap className="h-4 w-4" />
@@ -231,7 +253,7 @@ const Header = () => {
                 </Link>
                 <Link
                   to="/profile"
-                  className="flex items-center space-x-2 text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
+                  className="flex items-center space-x-2 text-white hover:text-emerald-100 transition-colors px-2 py-1 font-medium"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <User className="h-4 w-4" />
@@ -239,7 +261,7 @@ const Header = () => {
                 </Link>
                 <Link
                   to="/settings"
-                  className="flex items-center space-x-2 text-slate-700 hover:text-emerald-600 transition-colors px-2 py-1"
+                  className="flex items-center space-x-2 text-white hover:text-emerald-100 transition-colors px-2 py-1 font-medium"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Settings className="h-4 w-4" />
@@ -247,24 +269,31 @@ const Header = () => {
                 </Link>
               </nav>
             )}
-            <div className="flex flex-col space-y-3 px-2 pt-2 border-t border-slate-100">
-              <Button variant="ghost" className="justify-start p-2">
+            <div className="flex flex-col space-y-3 px-2 pt-2 border-t border-emerald-800">
+              <Button
+                variant="ghost"
+                className="justify-start p-2 text-white hover:text-emerald-100 hover:bg-emerald-500 w-full"
+                onClick={() => {
+                  setSearchPopupOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
                 <Search className="h-4 w-4 mr-2" />
-                Search
+                Search Courses
               </Button>
               {user ? (
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2 px-2 py-1">
-                    <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs font-medium">
+                    <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm">
+                      <span className="text-emerald-600 text-xs font-medium">
                         {getUserInitials(profile, user)}
                       </span>
                     </div>
-                    <span className="text-sm text-slate-700">{getDisplayName(profile, user)}</span>
+                    <span className="text-sm text-white">{getDisplayName(profile, user)}</span>
                   </div>
                   <Button
                     variant="ghost"
-                    className="justify-start p-2 text-red-600 hover:text-red-700"
+                    className="justify-start p-2 text-white hover:text-red-200 hover:bg-red-500"
                     onClick={() => {
                       handleSignOut();
                       setMobileMenuOpen(false);
@@ -276,7 +305,7 @@ const Header = () => {
                 </div>
               ) : (
                 <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" className="justify-start p-2 w-full">
+                  <Button variant="ghost" className="justify-start p-2 w-full text-white hover:text-emerald-100 hover:bg-emerald-500">
                     <User className="h-4 w-4 mr-2" />
                     Log In
                   </Button>
@@ -286,6 +315,12 @@ const Header = () => {
           </div>
         )}
       </div>
+
+      {/* Search Popup */}
+      <SearchPopup
+        isOpen={searchPopupOpen}
+        onClose={() => setSearchPopupOpen(false)}
+      />
     </header>
   );
 };
