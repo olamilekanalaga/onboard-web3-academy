@@ -4,6 +4,11 @@ import { defiFundamentalsCourse } from './defiFundamentalsCourse';
 import { degenCourseMetadata, degenCourse } from './degenCourse';
 import { nftCreationCourse } from './nftCreationCourse';
 import { contentCreationCourse } from './contentCreationCourse';
+import { web3SecurityCourse } from './web3SecurityCourse';
+import { daoGovernanceCourse } from './daoGovernanceCourse';
+import { web3GamingCourse } from './web3GamingCourse';
+import { cryptoTaxCourse } from './cryptoTaxCourse';
+import { web3SocialCourse } from './web3SocialCourse';
 
 // Create additional courses to reach 7 total
 const advancedTradingCourse = {
@@ -243,5 +248,10 @@ export const courses: Record<string, any> = {
   'nft-creation': nftCreationCourse,
   'content-creation': contentCreationCourse,
   'advanced-trading': advancedTradingCourse,
-  'development': blockchainDevelopmentCourse
+  'development': blockchainDevelopmentCourse,
+  'web3-security': web3SecurityCourse,
+  'dao-governance': daoGovernanceCourse,
+  'web3-gaming': web3GamingCourse,
+  'crypto-tax': cryptoTaxCourse,
+  'web3-social': web3SocialCourse
 };

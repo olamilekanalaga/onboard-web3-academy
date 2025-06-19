@@ -305,11 +305,12 @@ The original purchase price plus any fees
 - Fees paid
 
 **Template example:**
-```
-Date | Type | Amount | Crypto | USD Value | Exchange | Fee | Notes
-2024-01-15 | Buy | 0.5 | BTC | $21,500 | Coinbase | $25 | Initial purchase
-2024-02-01 | Trade | 0.1 | BTC | $4,200 | Uniswap | $15 | Swapped for ETH
-```
+\`\`\`
+Date     | Type  | Amount | Crypto | USD Value | Exchange | Fee | Notes
+---------|-------|--------|--------|-----------|----------|-----|-------
+01-15-24 | Buy   | 0.5    | BTC    | $21,500   | Coinbase | $25 | Initial purchase
+02-01-24 | Trade | 0.1    | BTC    | $4,200    | Uniswap  | $15 | Swapped for ETH
+\`\`\`
 
 #### Blockchain Explorers:
 - **Etherscan** - Ethereum transactions
