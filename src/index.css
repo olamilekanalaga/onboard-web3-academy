@@ -99,3 +99,48 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Enhanced PWA Safe Area Support for iPhone */
+@supports (padding: max(0px)) {
+  .pb-safe {
+    padding-bottom: max(1.5rem, calc(1rem + env(safe-area-inset-bottom)));
+  }
+
+  .pt-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .pl-safe {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+
+  .pr-safe {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  /* Bottom navigation specific safe area */
+  .bottom-nav-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Content safe area for pages with bottom navigation */
+  .content-safe-bottom {
+    padding-bottom: max(6rem, calc(4rem + env(safe-area-inset-bottom)));
+  }
+}
+
+/* Fallback for browsers that don't support env() */
+@supports not (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: 1.5rem;
+  }
+
+  .bottom-nav-safe {
+    padding-bottom: 1rem;
+  }
+
+  .content-safe-bottom {
+    padding-bottom: 6rem;
+  }
+}
