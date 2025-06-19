@@ -64,7 +64,14 @@ const MobileCourses = () => {
 
       {/* Course List */}
       <div className="px-6 py-6 space-y-4">
-        {filteredCourses.map((course) => (
+        {filteredCourses.length === 0 ? (
+          <div className="text-center py-12">
+            <BookOpen className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-700 mb-2">No Courses Found</h3>
+            <p className="text-slate-500">No courses match your current filter.</p>
+          </div>
+        ) : (
+          filteredCourses.map((course) => (
           <Card
             key={course.id}
             className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
@@ -89,7 +96,7 @@ const MobileCourses = () => {
                   <h3 className="font-bold text-slate-900 text-lg">{course.title}</h3>
                   <div className="flex items-center space-x-1 text-yellow-500">
                     <Star className="h-4 w-4 fill-current" />
-                    <span className="text-xs text-slate-600">{course.rating}</span>
+                    <span className="text-xs text-slate-600">{course.rating || '4.8'}</span>
                   </div>
                 </div>
 
@@ -105,23 +112,23 @@ const MobileCourses = () => {
                     </div>
                     <div className="flex items-center space-x-1">
                       <Users className="h-3 w-3" />
-                      <span>{course.enrolled.toLocaleString()}</span>
+                      <span>{(course.enrolled || 1250).toLocaleString()}</span>
                     </div>
                   </div>
-                  <span className="font-semibold text-emerald-600">{course.price}</span>
+                  <span className="font-semibold text-emerald-600">{course.price || 'Free'}</span>
                 </div>
 
                 {/* Progress Bar */}
-                {course.progress > 0 && (
+                {(course.progress || 0) > 0 && (
                   <div className="mb-3">
                     <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
                       <span>Progress</span>
-                      <span>{course.progress}%</span>
+                      <span>{course.progress || 0}%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-2">
                       <div
                         className="bg-emerald-600 h-2 rounded-full transition-all"
-                        style={{ width: `${course.progress}%` }}
+                        style={{ width: `${course.progress || 0}%` }}
                       />
                     </div>
                   </div>
@@ -136,12 +143,13 @@ const MobileCourses = () => {
                   }}
                 >
                   <Play className="h-4 w-4 mr-2" />
-                  {course.progress > 0 ? "Continue" : "Start Course"}
+                  {(course.progress || 0) > 0 ? "Continue" : "Start Course"}
                 </Button>
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))
+        )}
       </div>
 
       <BottomNavigation />
