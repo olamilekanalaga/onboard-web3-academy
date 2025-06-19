@@ -79,7 +79,7 @@ const MobileDemo = () => {
 
   if (selectedDemo && demosUnlocked) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-20">
         {/* Mobile Header */}
         <div className="sticky top-0 bg-background border-b border-border z-40 p-4">
           <Button
@@ -103,7 +103,7 @@ const MobileDemo = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-20">
       {/* Mobile Header */}
       <div className="sticky top-0 bg-background border-b border-border z-40 p-4">
         <h1 className="text-2xl font-bold text-foreground">Trading Simulators</h1>
