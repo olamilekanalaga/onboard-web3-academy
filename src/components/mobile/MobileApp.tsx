@@ -12,6 +12,7 @@ const MobileApp = () => {
   const navigate = useNavigate();
   const [showSplash, setShowSplash] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasShownSplash, setHasShownSplash] = useState(false);
 
   // Handle navigation for authenticated users
   useEffect(() => {
@@ -27,11 +28,21 @@ const MobileApp = () => {
       } else {
         navigate('/mobile/home', { replace: true });
       }
+    } else {
+      // User is not authenticated, reset to show auth flow
+      // Only show splash if we haven't shown it before in this session
+      if (!hasShownSplash) {
+        setShowSplash(true);
+      } else {
+        setShowSplash(false);
+        setShowOnboarding(false);
+      }
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, hasShownSplash]);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
+    setHasShownSplash(true);
     if (!user) {
       setShowOnboarding(true);
     }
@@ -53,13 +64,13 @@ const MobileApp = () => {
     );
   }
 
-  // Show splash screen first
-  if (showSplash) {
+  // Show splash screen first (only if not shown before)
+  if (showSplash && !hasShownSplash) {
     return <MobileSplash onComplete={handleSplashComplete} />;
   }
 
-  // Show onboarding for non-authenticated users
-  if (!user && showOnboarding) {
+  // Show onboarding for non-authenticated users (only if splash was completed)
+  if (!user && showOnboarding && hasShownSplash) {
     return <MobileOnboarding onComplete={handleOnboardingComplete} />;
   }
 
