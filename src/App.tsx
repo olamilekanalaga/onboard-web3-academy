@@ -31,6 +31,7 @@ import MobileHome from "./components/mobile/MobileHome";
 import MobileAuth from "./components/mobile/MobileAuth";
 import MobileGamification from "./components/mobile/MobileGamification";
 import MobileDemo from "./components/mobile/MobileDemo";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -185,6 +186,7 @@ const App = () => {
                 )}
               </SocialVerificationProvider>
             </AuthProvider>
+            <PWAInstallPrompt />
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
