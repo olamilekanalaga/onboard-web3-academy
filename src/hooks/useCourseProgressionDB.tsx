@@ -379,6 +379,8 @@ export const useCourseProgressionDB = () => {
 
       console.log('Progress updated successfully:', updatedProgress);
 
+      let xpEarned = 0;
+
       // If course completed, update user stats
       if (isCompleted && courseConfig) {
         console.log('Course completed, updating user stats...');
@@ -397,11 +399,26 @@ export const useCourseProgressionDB = () => {
             const newCompletedCourses = [...completedCourses, courseId];
             const newTotalXP = (currentStats.total_xp || 0) + courseConfig.xpReward;
             const newLevel = Math.floor(newTotalXP / 500) + 1;
+            xpEarned = courseConfig.xpReward;
+
+            // Unlock next courses based on completion
+            const currentUnlockedCourses = currentStats.unlocked_courses || ['foundation'];
+            const newUnlockedCourses = [...currentUnlockedCourses];
+            
+            // Check if this course unlocks other courses
+            if (courseConfig.unlocks) {
+              courseConfig.unlocks.forEach(unlockedCourseId => {
+                if (!newUnlockedCourses.includes(unlockedCourseId)) {
+                  newUnlockedCourses.push(unlockedCourseId);
+                }
+              });
+            }
 
             const { error: updateStatsError } = await supabase
               .from('user_stats')
               .update({
                 completed_courses: newCompletedCourses,
+                unlocked_courses: newUnlockedCourses,
                 total_xp: newTotalXP,
                 level: newLevel,
                 last_activity_date: new Date().toISOString().split('T')[0],
@@ -421,7 +438,7 @@ export const useCourseProgressionDB = () => {
       return { 
         progress: updatedProgress, 
         completed: isCompleted,
-        xpEarned: isCompleted && courseConfig ? courseConfig.xpReward : 0
+        xpEarned: xpEarned
       };
     },
     onSuccess: (data) => {
@@ -430,7 +447,8 @@ export const useCourseProgressionDB = () => {
       queryClient.invalidateQueries({ queryKey: ['user-stats'] });
       
       if (data.completed) {
-        toast.success(`Course completed! +${data.xpEarned} XP earned!`);
+        // Don't show toast here - let the modal handle the celebration
+        console.log(`Course completed! +${data.xpEarned} XP earned!`);
       } else {
         toast.success('Chapter completed!');
       }

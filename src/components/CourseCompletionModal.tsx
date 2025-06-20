@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Trophy, Star, ArrowRight, BookOpen, Target } from 'lucide-react';
+import { CheckCircle, Trophy, Star, ArrowRight, BookOpen, Target, Sparkles } from 'lucide-react';
 import { useCourseProgressionDB } from '@/hooks/useCourseProgressionDB';
 import { courses } from '@/data/courses';
 
@@ -84,6 +84,28 @@ const CourseCompletionModal = ({ isOpen, onClose, completedCourseId, xpEarned, o
                 </div>
                 <div className="text-lg sm:text-2xl font-bold text-emerald-900">{userProgress.completedCourses.length}</div>
                 <div className="text-xs sm:text-sm text-emerald-700">Courses Completed</div>
+              </div>
+            </div>
+          </div>
+
+          {/* XP Breakdown */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-3 flex items-center">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-purple-600" />
+              Experience Points Breakdown
+            </h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600">Course Completion Bonus</span>
+                <span className="font-semibold text-purple-600">+{xpEarned} XP</span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-blue-200">
+                <span className="text-sm font-medium text-slate-700">Total XP Gained</span>
+                <span className="text-lg font-bold text-emerald-600">+{xpEarned} XP</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600">Your Total XP</span>
+                <span className="font-semibold text-slate-900">{userProgress.totalXP} XP</span>
               </div>
             </div>
           </div>
