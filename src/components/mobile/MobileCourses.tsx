@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
@@ -151,6 +152,13 @@ const MobileCourses = () => {
           const courseConfig = courseProgression[course.id as keyof typeof courseProgression];
           const isUnlocked = isCourseUnlocked(course.id);
 
+          console.log(`Course ${course.id}:`, {
+            title: course.title,
+            description: course.description,
+            level: course.level,
+            duration: course.duration
+          });
+
           return (
             <Card 
               key={course.id} 
@@ -162,8 +170,12 @@ const MobileCourses = () => {
                   <div className="flex items-start space-x-3">
                     <div className="text-2xl">{getIconForCourse(course.id)}</div>
                     <div className="flex-1">
-                      <CardTitle className="text-base">{course.title}</CardTitle>
-                      <p className="text-sm text-slate-600 mt-1">{course.description}</p>
+                      <CardTitle className="text-base">
+                        {typeof course.title === 'string' ? course.title : JSON.stringify(course.title)}
+                      </CardTitle>
+                      <p className="text-sm text-slate-600 mt-1">
+                        {typeof course.description === 'string' ? course.description : JSON.stringify(course.description)}
+                      </p>
                     </div>
                   </div>
                   <Badge className={`${status.color} text-xs`}>
@@ -179,10 +191,10 @@ const MobileCourses = () => {
                   <div className="flex items-center space-x-4 text-sm text-slate-600">
                     <div className="flex items-center space-x-1">
                       <Clock className="h-4 w-4" />
-                      <span>{course.duration}</span>
+                      <span>{typeof course.duration === 'string' ? course.duration : JSON.stringify(course.duration)}</span>
                     </div>
-                    <Badge className={`${getDifficultyColor(course.level)} text-xs`}>
-                      {course.level}
+                    <Badge className={`${getDifficultyColor(course.level || 'beginner')} text-xs`}>
+                      {typeof course.level === 'string' ? course.level : JSON.stringify(course.level)}
                     </Badge>
                     {courseConfig && (
                       <div className="flex items-center space-x-1">
