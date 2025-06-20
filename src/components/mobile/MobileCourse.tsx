@@ -33,7 +33,7 @@ const MobileCourse = () => {
 
   // Get completed chapters from progression system
   const courseProgress = getCourseProgress(courseId || '');
-  const completedChapters = courseProgress?.completedChapters || [];
+  const completedChapters = courseProgress?.completed_chapters || [];
 
   const course = courseId ? courses[courseId] : undefined;
   const courseConfig = courseId ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
@@ -92,7 +92,7 @@ const MobileCourse = () => {
       try {
         console.log('Marking chapter complete:', { courseId, chapterId, totalChapters });
         
-        const result = await updateChapterProgress({
+        const result = await updateChapterProgress.mutateAsync({
           courseId,
           chapterId,
           totalChapters

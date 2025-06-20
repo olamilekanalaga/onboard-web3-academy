@@ -219,9 +219,9 @@ const MobileCourses = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-600">Progress</span>
-                        <span className="font-medium">{Math.round(progress.progressPercentage)}%</span>
+                        <span className="font-medium">{Math.round(progress.progress_percentage)}%</span>
                       </div>
-                      <Progress value={progress.progressPercentage} className="h-2" />
+                      <Progress value={progress.progress_percentage} className="h-2" />
                     </div>
                   )}
 
@@ -249,7 +249,7 @@ const MobileCourses = () => {
                       </DropdownMenu>
                     ) : (
                       <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
-                        {progress?.progressPercentage ? 'Continue' : 'Start'} Course
+                        {progress?.progress_percentage ? 'Continue' : 'Start'} Course
                       </Button>
                     )}
                   </div>

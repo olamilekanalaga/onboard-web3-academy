@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -52,7 +51,7 @@ const MobileCourseViewer = () => {
     // Mark current chapter as completed
     if (currentChapter) {
       try {
-        const result = await updateChapterProgress({
+        const result = await updateChapterProgress.mutateAsync({
           courseId: courseId!,
           chapterId: currentChapter.id,
           totalChapters
