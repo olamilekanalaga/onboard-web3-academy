@@ -91,7 +91,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      <div className="relative">
+      <div className="relative mb-2">
         <Avatar className={sizeClasses[size]}>
           <AvatarImage src={currentAvatarUrl || undefined} alt="Profile picture" />
           <AvatarFallback className="text-lg font-semibold bg-gradient-to-br from-emerald-500 to-blue-600 text-white">
@@ -103,7 +103,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
           <Button
             size="sm"
             variant="outline"
-            className="absolute -bottom-2 -right-2 rounded-full p-2 h-8 w-8 bg-white shadow-lg border-2 border-gray-200"
+            className="absolute -bottom-4 -right-4 rounded-full p-2 h-8 w-8 bg-white shadow-lg border-2 border-gray-200"
             onClick={handleFileSelect}
             disabled={uploading}
           >
