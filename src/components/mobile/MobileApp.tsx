@@ -14,27 +14,48 @@ const MobileApp = () => {
   const navigate = useNavigate();
   const [showSplash, setShowSplash] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showFollowFlow, setShowFollowFlow] = useState(false);
+  const [followFlowCompleted, setFollowFlowCompleted] = useState(false);
 
   // Check follow flow completion for authenticated users
   useEffect(() => {
-    if (loading) return;
+    if (loading || !user) return;
 
-    // If user is authenticated, navigate to home
-    if (user) {
-      // Check if there's an intended destination
-      const intendedDestination = sessionStorage.getItem('mobile_intended_destination');
-      if (intendedDestination && intendedDestination !== '/') {
-        sessionStorage.removeItem('mobile_intended_destination');
-        navigate(intendedDestination, { replace: true });
-      } else {
-        navigate('/mobile/home', { replace: true });
+    const checkFollowFlowCompletion = async () => {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('follow_flow_completed')
+          .eq('id', user.id)
+          .single();
+
+        const completed = profile?.follow_flow_completed || false;
+        setFollowFlowCompleted(completed);
+
+        if (completed) {
+          // Check if there's an intended destination
+          const intendedDestination = sessionStorage.getItem('mobile_intended_destination');
+          if (intendedDestination && intendedDestination !== '/') {
+            sessionStorage.removeItem('mobile_intended_destination');
+            navigate(intendedDestination, { replace: true });
+          } else {
+            navigate('/mobile/home', { replace: true });
+          }
+        } else {
+          setShowFollowFlow(true);
+        }
+      } catch (error) {
+        console.error('Error checking follow flow completion:', error);
+        // Default to showing follow flow if there's an error
+        setShowFollowFlow(true);
       }
-    }
+    };
+
+    checkFollowFlowCompletion();
   }, [user, loading, navigate]);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
-    setHasShownSplash(true);
     if (!user) {
       setShowOnboarding(true);
     }
@@ -62,13 +83,13 @@ const MobileApp = () => {
     );
   }
 
-  // Show splash screen first (only if not shown before)
-  if (showSplash && !hasShownSplash) {
+  // Show splash screen first
+  if (showSplash) {
     return <MobileSplash onComplete={handleSplashComplete} />;
   }
 
-  // Show onboarding for non-authenticated users (only if splash was completed)
-  if (!user && showOnboarding && hasShownSplash) {
+  // Show onboarding for non-authenticated users
+  if (!user && showOnboarding) {
     return <MobileOnboarding onComplete={handleOnboardingComplete} />;
   }
 
