@@ -178,6 +178,7 @@ export const useCourseProgressionDB = () => {
     queryKey: ['course-progression', user?.id],
     queryFn: async () => {
       if (!user) {
+        console.log('No user found, returning defaults');
         return {
           completedCourses: [],
           unlockedCourses: ['foundation'],
@@ -188,6 +189,8 @@ export const useCourseProgressionDB = () => {
       }
 
       try {
+        console.log('Fetching user stats for user:', user.id);
+        
         // Get user stats
         const { data: userStats, error: statsError } = await supabase
           .from('user_stats')
@@ -199,7 +202,7 @@ export const useCourseProgressionDB = () => {
           console.log('User stats not found, creating defaults');
           
           // Create default user stats
-          const { error: insertError } = await supabase
+          const { data: newStats, error: insertError } = await supabase
             .from('user_stats')
             .insert({
               user_id: user.id,
@@ -207,7 +210,9 @@ export const useCourseProgressionDB = () => {
               unlocked_courses: ['foundation'],
               total_xp: 0,
               level: 1
-            });
+            })
+            .select()
+            .single();
 
           if (insertError) {
             console.error('Error creating user stats:', insertError);
@@ -226,6 +231,8 @@ export const useCourseProgressionDB = () => {
           console.error('Stats error:', statsError);
           throw statsError;
         }
+
+        console.log('User stats retrieved:', userStats);
 
         // Get detailed progress for each course
         const { data: progressData, error: progressError } = await supabase
@@ -249,6 +256,8 @@ export const useCourseProgressionDB = () => {
           throw progressError;
         }
 
+        console.log('User progress data retrieved:', progressData);
+
         // Transform database data to our format
         const courseProgress: Record<string, CourseProgress> = {};
         progressData?.forEach(progress => {
@@ -264,13 +273,16 @@ export const useCourseProgressionDB = () => {
           };
         });
 
-        return {
+        const result = {
           completedCourses: userStats?.completed_courses || [],
           unlockedCourses: userStats?.unlocked_courses || ['foundation'],
           totalXP: userStats?.total_xp || 0,
           currentLevel: userStats?.level || 1,
           courseProgress
         } as UserProgressData;
+
+        console.log('Final user progress result:', result);
+        return result;
       } catch (error) {
         console.error('Database error, falling back to defaults:', error);
         return {
@@ -320,7 +332,7 @@ export const useCourseProgressionDB = () => {
         const isCompleted = progressPercentage === 100;
         const xpEarned = isCompleted ? courseConfig.xpReward : 0;
 
-        console.log('Progress update:', { 
+        console.log('Progress update details:', { 
           newCompletedChapters, 
           progressPercentage, 
           isCompleted, 
@@ -340,11 +352,16 @@ export const useCourseProgressionDB = () => {
             updated_at: new Date().toISOString()
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating user progress:', error);
+          throw error;
+        }
+
+        console.log('User progress updated successfully');
 
         // If course is completed, update user stats
         if (isCompleted) {
-          console.log('Course completed, updating user stats');
+          console.log('Course completed! Updating user stats...');
           
           const { data: currentStats } = await supabase
             .from('user_stats')
@@ -368,7 +385,7 @@ export const useCourseProgressionDB = () => {
             const newTotalXP = currentXP + xpEarned;
             const newLevel = Math.floor(newTotalXP / 1000) + 1;
 
-            console.log('Updating user stats:', { 
+            console.log('Updating user stats with:', { 
               newCompletedCourses, 
               newUnlockedCourses, 
               newTotalXP, 
@@ -390,26 +407,34 @@ export const useCourseProgressionDB = () => {
               console.error('Error updating user stats:', statsError);
               throw statsError;
             }
+
+            console.log('User stats updated successfully!');
           }
         }
+      } else {
+        console.log('Chapter already completed:', chapterId);
       }
     },
     onSuccess: () => {
-      console.log('Chapter progress updated successfully');
+      console.log('Chapter progress mutation completed successfully');
       queryClient.invalidateQueries({ queryKey: ['course-progression'] });
     },
     onError: (error) => {
-      console.error('Error updating chapter progress:', error);
+      console.error('Error in chapter progress mutation:', error);
     }
   });
 
   // Helper functions
   const isCourseUnlocked = (courseId: string): boolean => {
-    return userProgress?.unlockedCourses.includes(courseId) || false;
+    const unlocked = userProgress?.unlockedCourses.includes(courseId) || false;
+    console.log(`Course ${courseId} unlocked:`, unlocked);
+    return unlocked;
   };
 
   const isCourseCompleted = (courseId: string): boolean => {
-    return userProgress?.completedCourses.includes(courseId) || false;
+    const completed = userProgress?.completedCourses.includes(courseId) || false;
+    console.log(`Course ${courseId} completed:`, completed);
+    return completed;
   };
 
   const getCourseProgress = (courseId: string): CourseProgress | null => {
@@ -417,7 +442,7 @@ export const useCourseProgressionDB = () => {
   };
 
   const updateChapterProgress = (courseId: string, chapterId: string, totalChapters?: number) => {
-    console.log('updateChapterProgress called:', { courseId, chapterId, totalChapters });
+    console.log('updateChapterProgress called with:', { courseId, chapterId, totalChapters });
     updateChapterProgressMutation.mutate({ courseId, chapterId, totalChapters });
   };
 
@@ -450,6 +475,8 @@ export const useCourseProgressionDB = () => {
     if (!user) return;
 
     try {
+      console.log('Unlocking course:', courseId);
+      
       const { data: currentStats } = await supabase
         .from('user_stats')
         .select('unlocked_courses')
@@ -466,7 +493,10 @@ export const useCourseProgressionDB = () => {
           .update({ unlocked_courses: newUnlockedCourses })
           .eq('user_id', user.id);
 
+        console.log('Course unlocked successfully:', courseId);
         queryClient.invalidateQueries({ queryKey: ['course-progression'] });
+      } else {
+        console.log('Course already unlocked:', courseId);
       }
     } catch (error) {
       console.error('Error unlocking course:', error);
