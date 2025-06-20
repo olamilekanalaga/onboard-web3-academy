@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,19 +19,16 @@ const SocialVerification: React.FC<SocialVerificationProps> = ({
 }) => {
   const [verifications, setVerifications] = useState({
     telegram_group: false,
-    telegram_channel: false,
     twitter_follow: false
   });
 
   const [linkClicks, setLinkClicks] = useState({
     telegram_group: false,
-    telegram_channel: false,
     twitter_follow: false
   });
 
   const [timeSpent, setTimeSpent] = useState({
     telegram_group: 0,
-    telegram_channel: 0,
     twitter_follow: 0
   });
 
@@ -71,15 +69,6 @@ const SocialVerification: React.FC<SocialVerificationProps> = ({
       icon: Users,
       url: 'https://t.me/+Kft2cP_KReQ5ZWU0',
       color: 'bg-blue-500 hover:bg-blue-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'telegram_channel',
-      title: 'Join Telegram Channel',
-      description: 'Get exclusive updates, announcements, and learning resources',
-      icon: MessageCircle,
-      url: 'https://t.me/+0_OkfTcRVb0zMmQ0',
-      color: 'bg-blue-600 hover:bg-blue-700',
       textColor: 'text-white'
     }
   ];

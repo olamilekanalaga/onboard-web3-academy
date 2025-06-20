@@ -24,8 +24,9 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
   const [twitterFollowed, setTwitterFollowed] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
 
-  const telegramUrl = "https://t.me/onboardweb3academy";
-  const twitterUrl = "https://x.com/onboardweb3";
+  // Updated with correct social links
+  const telegramUrl = "https://t.me/+Kft2cP_KReQ5ZWU0";
+  const twitterUrl = "https://x.com/Ola_crrypt";
 
   const handleTelegramFollow = () => {
     window.open(telegramUrl, '_blank');
@@ -92,10 +93,10 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
             <Sparkles className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">
-            Welcome to Web3 Academy! 🎉
+            Join Our Community First! 🎉
           </h1>
           <p className="text-blue-200 text-lg px-4">
-            Join our community for support and updates!
+            Before starting this course, join our community for support and updates!
           </p>
         </div>
 
@@ -110,7 +111,7 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-semibold text-white mb-1">
-                    Follow Telegram
+                    Join Telegram Group
                   </h3>
                   <p className="text-blue-200 text-sm">
                     Get instant support and connect with learners
@@ -133,7 +134,7 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <ExternalLink className="w-3 h-3 mr-1" />
-                      Follow
+                      Join
                     </Button>
                   )}
                 </div>
@@ -225,7 +226,7 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
               <span>Completing...</span>
             ) : canContinue ? (
               <>
-                <span>Continue to Academy</span>
+                <span>Continue to Course</span>
                 <ArrowRight className="w-5 h-5 ml-2" />
               </>
             ) : (
@@ -246,7 +247,7 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
           
           {!canContinue && (
             <p className="text-blue-300 text-sm mt-2 text-center">
-              Please follow both Telegram and X accounts to access the academy
+              Please follow both Telegram and X accounts to access the course
             </p>
           )}
         </div>

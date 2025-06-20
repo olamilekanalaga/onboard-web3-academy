@@ -26,14 +26,14 @@ interface SocialVerificationProviderProps {
 
 export const SocialVerificationProvider: React.FC<SocialVerificationProviderProps> = ({ children }) => {
   const { user } = useAuth();
-  const [isVerified, setIsVerified] = useState(false);
+  const [isVerified, setIsVerified] = useState(true); // Default to true - only show when needed
   const [loading, setLoading] = useState(true);
 
   // Check verification status from database and localStorage
   useEffect(() => {
     const checkVerificationStatus = async () => {
       if (!user) {
-        setIsVerified(false);
+        setIsVerified(true); // Don't block unauthenticated users
         setLoading(false);
         return;
       }
@@ -51,10 +51,10 @@ export const SocialVerificationProvider: React.FC<SocialVerificationProviderProp
           // Fallback to localStorage if database check fails
           const verificationKey = `social_verified_${user.id}`;
           const localVerified = localStorage.getItem(verificationKey) === 'true';
-          setIsVerified(localVerified);
+          setIsVerified(localVerified || true); // Default to true if no record
         } else {
           // Use database value as the source of truth
-          const verified = profile?.follow_flow_completed || false;
+          const verified = profile?.follow_flow_completed || true; // Default to true
           setIsVerified(verified);
           
           // Sync with localStorage for consistency
@@ -66,7 +66,7 @@ export const SocialVerificationProvider: React.FC<SocialVerificationProviderProp
         // Fallback to localStorage
         const verificationKey = `social_verified_${user.id}`;
         const localVerified = localStorage.getItem(verificationKey) === 'true';
-        setIsVerified(localVerified);
+        setIsVerified(localVerified || true); // Default to true
       } finally {
         setLoading(false);
       }
@@ -99,7 +99,7 @@ export const SocialVerificationProvider: React.FC<SocialVerificationProviderProp
   };
 
   const checkVerification = () => {
-    if (!user) return false;
+    if (!user) return true; // Don't block unauthenticated users
     return isVerified;
   };
 

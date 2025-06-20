@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,8 +30,9 @@ const FollowFlow: React.FC<FollowFlowProps> = ({ onComplete }) => {
   const [telegramFollowed, setTelegramFollowed] = useState(false);
   const [twitterFollowed, setTwitterFollowed] = useState(false);
 
-  const telegramUrl = "https://t.me/onboardweb3academy"; // Update with your actual Telegram
-  const twitterUrl = "https://x.com/onboardweb3"; // Update with your actual X/Twitter
+  // Updated with correct social links
+  const telegramUrl = "https://t.me/+Kft2cP_KReQ5ZWU0";
+  const twitterUrl = "https://x.com/Ola_crrypt";
 
   const handleTelegramFollow = () => {
     window.open(telegramUrl, '_blank');
@@ -75,10 +77,10 @@ const FollowFlow: React.FC<FollowFlowProps> = ({ onComplete }) => {
               <Sparkles className="w-10 h-10 text-white" />
             </div>
             <CardTitle className="text-3xl font-bold text-white mb-2">
-              Welcome to Web3 Academy! 🎉
+              Join Our Community First! 🎉
             </CardTitle>
             <p className="text-blue-200 text-lg">
-              Join our community to get support, ask questions, and stay updated with the latest Web3 trends!
+              Before starting this course, join our community for support, ask questions, and stay updated with the latest Web3 trends!
             </p>
           </CardHeader>
 
@@ -93,7 +95,7 @@ const FollowFlow: React.FC<FollowFlowProps> = ({ onComplete }) => {
                     </div>
                     <div>
                       <h3 className="text-xl font-semibold text-white mb-1">
-                        Follow our Telegram
+                        Join our Telegram Group
                       </h3>
                       <p className="text-blue-200 text-sm">
                         Get instant support, ask questions, and connect with other learners
@@ -109,7 +111,7 @@ const FollowFlow: React.FC<FollowFlowProps> = ({ onComplete }) => {
                     {telegramFollowed ? (
                       <div className="flex items-center space-x-2 text-green-400">
                         <CheckCircle className="w-6 h-6" />
-                        <span className="font-medium">Followed!</span>
+                        <span className="font-medium">Joined!</span>
                       </div>
                     ) : (
                       <Button
@@ -117,7 +119,7 @@ const FollowFlow: React.FC<FollowFlowProps> = ({ onComplete }) => {
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         <ExternalLink className="w-4 h-4 mr-2" />
-                        Follow Telegram
+                        Join Telegram
                       </Button>
                     )}
                   </div>
@@ -207,7 +209,7 @@ const FollowFlow: React.FC<FollowFlowProps> = ({ onComplete }) => {
               >
                 {canContinue ? (
                   <>
-                    <span>Continue to Academy</span>
+                    <span>Continue to Course</span>
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 ) : (
@@ -219,7 +221,7 @@ const FollowFlow: React.FC<FollowFlowProps> = ({ onComplete }) => {
 
               {!canContinue && (
                 <p className="text-blue-300 text-sm mt-2">
-                  Please follow both Telegram and X accounts to access the academy
+                  Please follow both Telegram and X accounts to access the course
                 </p>
               )}
             </div>
