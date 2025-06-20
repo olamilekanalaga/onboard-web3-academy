@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useCourseProgression } from "@/hooks/useCourseProgression";
+import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,7 @@ import CourseCompletionModal from "@/components/CourseCompletionModal";
 const MobileCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { updateChapterProgress, getCourseProgress, courseProgression, unlockCourse } = useCourseProgression();
+  const { updateChapterProgress, getCourseProgress, userProgress, courseProgression, unlockCourse, getNextRecommendedCourse } = useCourseProgressionDB();
   const [selectedModule, setSelectedModule] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
@@ -93,7 +94,7 @@ const MobileCourse = () => {
           setCourseJustCompleted(true);
           setShowCompletionModal(true);
         }
-      }, 100);
+      }, 500);
     }
   };
 
@@ -104,6 +105,9 @@ const MobileCourse = () => {
   const handleStartNextCourse = async (nextCourseId: string) => {
     // Unlock the next course first
     await unlockCourse(nextCourseId);
+    
+    // Close modal
+    setShowCompletionModal(false);
     
     // Navigate to the next course
     navigate(`/mobile/course/${nextCourseId}`);
@@ -116,7 +120,7 @@ const MobileCourse = () => {
   const getIconForCourse = (courseId: string) => {
     switch (courseId) {
       case "foundation": return "🎓";
-      case "defi": return "💰";
+      case "defi-fundamentals": return "💰";
       case "degen": return "🚀";
       case "advanced-trading": return "📈";
       case "development": return "💻";

@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -177,7 +178,6 @@ export const useCourseProgressionDB = () => {
     queryKey: ['course-progression', user?.id],
     queryFn: async () => {
       if (!user) {
-        // Return default data for unauthenticated users
         return {
           completedCourses: [],
           unlockedCourses: ['foundation'],
@@ -195,7 +195,6 @@ export const useCourseProgressionDB = () => {
           .eq('user_id', user.id)
           .single();
 
-        // If table doesn't exist or user stats don't exist, return defaults
         if (statsError && (statsError.code === 'PGRST116' || statsError.code === '42P01')) {
           console.log('User stats not found, using defaults');
           return {
@@ -224,7 +223,7 @@ export const useCourseProgressionDB = () => {
             completedCourses: userStats?.completed_courses || [],
             unlockedCourses: userStats?.unlocked_courses || ['foundation'],
             totalXP: userStats?.total_xp || 0,
-            currentLevel: userStats?.current_level || 1,
+            currentLevel: userStats?.level || 1,
             courseProgress: {}
           };
         }
@@ -234,43 +233,30 @@ export const useCourseProgressionDB = () => {
           throw progressError;
         }
 
-      // Transform database data to our format
-      const courseProgress: Record<string, CourseProgress> = {};
-      progressData?.forEach(progress => {
-        courseProgress[progress.course_id] = {
-          courseId: progress.course_id,
-          completed: progress.progress_percentage === 100,
-          completedChapters: progress.completed_chapters || [],
-          totalChapters: progress.total_chapters || 0,
-          progressPercentage: progress.progress_percentage || 0,
-          completedAt: progress.completed_at ? new Date(progress.completed_at) : undefined,
-          xpEarned: progress.xp_earned || 0
-        };
-      });
+        // Transform database data to our format
+        const courseProgress: Record<string, CourseProgress> = {};
+        progressData?.forEach(progress => {
+          const courseConfig = COURSE_PROGRESSION[progress.course_id as keyof typeof COURSE_PROGRESSION];
+          courseProgress[progress.course_id] = {
+            courseId: progress.course_id,
+            completed: progress.progress_percentage === 100,
+            completedChapters: progress.completed_chapters || [],
+            totalChapters: courseConfig?.totalChapters || 0,
+            progressPercentage: progress.progress_percentage || 0,
+            completedAt: progress.completed_at ? new Date(progress.completed_at) : undefined,
+            xpEarned: progress.xp_earned || 0
+          };
+        });
 
         return {
           completedCourses: userStats?.completed_courses || [],
           unlockedCourses: userStats?.unlocked_courses || ['foundation'],
           totalXP: userStats?.total_xp || 0,
-          currentLevel: userStats?.current_level || 1,
+          currentLevel: userStats?.level || 1,
           courseProgress
         } as UserProgressData;
       } catch (error) {
         console.error('Database error, falling back to defaults:', error);
-        // Fallback to localStorage if available
-        if (user) {
-          const savedProgress = localStorage.getItem(`course_progress_${user.id}`);
-          if (savedProgress) {
-            try {
-              const parsed = JSON.parse(savedProgress);
-              return parsed;
-            } catch (parseError) {
-              console.error('Error parsing localStorage data:', parseError);
-            }
-          }
-        }
-
-        // Final fallback to defaults
         return {
           completedCourses: [],
           unlockedCourses: ['foundation'],
@@ -280,12 +266,12 @@ export const useCourseProgressionDB = () => {
         };
       }
     },
-    enabled: true, // Always enabled, will handle unauthenticated users
-    retry: 1, // Only retry once
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: true,
+    retry: 1,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Mutation to update chapter progress
+  // Mutation to update chapter progress and handle course completion
   const updateChapterProgressMutation = useMutation({
     mutationFn: async ({ courseId, chapterId, totalChapters }: {
       courseId: string;
@@ -324,13 +310,49 @@ export const useCourseProgressionDB = () => {
             course_id: courseId,
             progress_percentage: progressPercentage,
             completed_chapters: newCompletedChapters,
-            total_chapters: chaptersCount,
             xp_earned: xpEarned,
             completed_at: isCompleted ? new Date().toISOString() : null,
             updated_at: new Date().toISOString()
           });
 
         if (error) throw error;
+
+        // If course is completed, update user stats
+        if (isCompleted) {
+          const { data: currentStats } = await supabase
+            .from('user_stats')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+          const completedCourses = currentStats?.completed_courses || [];
+          const unlockedCourses = currentStats?.unlocked_courses || ['foundation'];
+          const currentXP = currentStats?.total_xp || 0;
+          
+          // Add course to completed if not already there
+          if (!completedCourses.includes(courseId)) {
+            const newCompletedCourses = [...completedCourses, courseId];
+            
+            // Unlock next courses
+            const coursesToUnlock = courseConfig.unlocks || [];
+            const newUnlockedCourses = [...new Set([...unlockedCourses, ...coursesToUnlock])];
+            
+            // Calculate new level (every 1000 XP = 1 level)
+            const newTotalXP = currentXP + xpEarned;
+            const newLevel = Math.floor(newTotalXP / 1000) + 1;
+
+            await supabase
+              .from('user_stats')
+              .upsert({
+                user_id: user.id,
+                completed_courses: newCompletedCourses,
+                unlocked_courses: newUnlockedCourses,
+                total_xp: newTotalXP,
+                level: newLevel,
+                updated_at: new Date().toISOString()
+              });
+          }
+        }
       }
     },
     onSuccess: () => {
@@ -355,8 +377,20 @@ export const useCourseProgressionDB = () => {
     updateChapterProgressMutation.mutate({ courseId, chapterId, totalChapters });
   };
 
-  const getNextRecommendedCourse = (): string | null => {
+  const getNextRecommendedCourse = (currentCourseId?: string): string | null => {
     if (!userProgress) return 'foundation';
+
+    // If a current course is provided, get its unlocks
+    if (currentCourseId) {
+      const currentCourse = COURSE_PROGRESSION[currentCourseId as keyof typeof COURSE_PROGRESSION];
+      if (currentCourse && currentCourse.unlocks) {
+        for (const nextCourseId of currentCourse.unlocks) {
+          if (isCourseUnlocked(nextCourseId) && !isCourseCompleted(nextCourseId)) {
+            return nextCourseId;
+          }
+        }
+      }
+    }
 
     // Find the first unlocked course that's not completed
     for (const [courseId, courseConfig] of Object.entries(COURSE_PROGRESSION)) {
@@ -366,6 +400,29 @@ export const useCourseProgressionDB = () => {
     }
 
     return null;
+  };
+
+  const unlockCourse = async (courseId: string) => {
+    if (!user) return;
+
+    const { data: currentStats } = await supabase
+      .from('user_stats')
+      .select('unlocked_courses')
+      .eq('user_id', user.id)
+      .single();
+
+    const unlockedCourses = currentStats?.unlocked_courses || ['foundation'];
+    
+    if (!unlockedCourses.includes(courseId)) {
+      const newUnlockedCourses = [...unlockedCourses, courseId];
+      
+      await supabase
+        .from('user_stats')
+        .update({ unlocked_courses: newUnlockedCourses })
+        .eq('user_id', user.id);
+
+      queryClient.invalidateQueries({ queryKey: ['course-progression'] });
+    }
   };
 
   return {
@@ -383,5 +440,6 @@ export const useCourseProgressionDB = () => {
     getCourseProgress,
     updateChapterProgress,
     getNextRecommendedCourse,
+    unlockCourse,
   };
 };
