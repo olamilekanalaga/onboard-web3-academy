@@ -1,434 +1,504 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
-export interface CourseProgress {
-  courseId: string;
-  completed: boolean;
-  completedChapters: string[];
-  totalChapters: number;
-  progressPercentage: number;
-  completedAt?: Date;
-  xpEarned: number;
+interface Course {
+  id: string;
+  title: string;
+  level: string;
+  xpRequired: number;
+  xpReward: number;
+  prerequisites: string[];
+  unlocks: string[];
+  estimatedTime: string;
+  difficulty: number;
+  description: string;
+  keySkills: string[];
+  realWorldApplication: string;
+  industryRelevance: string;
 }
 
-export interface UserProgressData {
-  completedCourses: string[];
-  unlockedCourses: string[];
-  totalXP: number;
-  currentLevel: number;
-  courseProgress: Record<string, CourseProgress>;
+interface CourseProgression {
+  [courseId: string]: {
+    id: string;
+    title: string;
+    level: string;
+    xpRequired: number;
+    xpReward: number;
+    prerequisites: string[];
+    unlocks: string[];
+    estimatedTime: string;
+    difficulty: number;
+    description: string;
+    keySkills: string[];
+    realWorldApplication: string;
+    industryRelevance: string;
+  };
 }
 
-const COURSE_PROGRESSION = {
+const courseProgression: CourseProgression = {
   foundation: {
     id: 'foundation',
-    title: 'Foundation',
+    title: 'Crypto Foundation',
     level: 'Foundation',
-    category: 'fundamentals',
-    difficulty: 1,
-    estimatedTime: '2-3 weeks',
-    unlocks: ['defi-fundamentals'],
+    xpRequired: 0,
     xpReward: 500,
     prerequisites: [],
-    totalChapters: 8
+    unlocks: ['beginner'],
+    estimatedTime: '2 weeks',
+    difficulty: 1,
+    description: 'Master the fundamentals of money and digital currency',
+    keySkills: ['Financial Literacy', 'Blockchain Basics', 'Crypto Terminology'],
+    realWorldApplication: 'Understand crypto news, make informed investment decisions',
+    industryRelevance: 'Essential for any crypto career path'
+  },
+  beginner: {
+    id: 'beginner',
+    title: 'Cryptocurrency Fundamentals',
+    level: 'Beginner',
+    xpRequired: 500,
+    xpReward: 750,
+    prerequisites: ['foundation'],
+    unlocks: ['intermediate'],
+    estimatedTime: '2 weeks',
+    difficulty: 2,
+    description: 'Explore cryptocurrency types, exchanges, and basic trading',
+    keySkills: ['Exchange Navigation', 'Portfolio Management', 'Risk Assessment'],
+    realWorldApplication: 'Trade cryptocurrencies safely, build diversified portfolio',
+    industryRelevance: 'Required for trading, investment, and DeFi participation'
+  },
+  intermediate: {
+    id: 'intermediate',
+    title: 'DeFi Fundamentals',
+    level: 'Intermediate',
+    xpRequired: 1250,
+    xpReward: 1200,
+    prerequisites: ['beginner'],
+    unlocks: ['advanced'],
+    estimatedTime: '4 weeks',
+    difficulty: 3,
+    description: 'Master decentralized finance protocols and yield strategies',
+    keySkills: ['DeFi Protocols', 'Yield Farming', 'Liquidity Provision'],
+    realWorldApplication: 'Earn yield on crypto assets, participate in DeFi ecosystem',
+    industryRelevance: 'Core skill for DeFi analysts, protocol developers'
+  },
+  advanced: {
+    id: 'advanced',
+    title: 'Smart Contract Development',
+    level: 'Advanced',
+    xpRequired: 2450,
+    xpReward: 1500,
+    prerequisites: ['intermediate'],
+    unlocks: ['expert'],
+    estimatedTime: '4 weeks',
+    difficulty: 4,
+    description: 'Build decentralized applications and smart contracts',
+    keySkills: ['Solidity Programming', 'dApp Development', 'Web3 Integration'],
+    realWorldApplication: 'Build and deploy your own DeFi protocols and NFT projects',
+    industryRelevance: 'High-demand skill for blockchain developers (avg. $150k+ salary)'
+  },
+  expert: {
+    id: 'expert',
+    title: 'Advanced Trading & Security',
+    level: 'Expert',
+    xpRequired: 3950,
+    xpReward: 2000,
+    prerequisites: ['advanced'],
+    unlocks: [],
+    estimatedTime: '4 weeks',
+    difficulty: 5,
+    description: 'Master institutional-level trading and security practices',
+    keySkills: ['Advanced Trading', 'Security Auditing', 'Risk Management'],
+    realWorldApplication: 'Professional trading, security consulting, institutional DeFi',
+    industryRelevance: 'Expert-level skills for senior roles and consulting'
   },
   'defi-fundamentals': {
     id: 'defi-fundamentals',
-    title: 'DeFi Fundamentals',
+    title: 'DeFi Demystified',
     level: 'Beginner',
-    category: 'defi',
-    difficulty: 2,
-    estimatedTime: '3-4 weeks',
-    unlocks: ['degen', 'content-creation'],
-    xpReward: 750,
-    prerequisites: ['foundation'],
-    totalChapters: 12
-  },
-  'degen': {
-    id: 'degen',
-    title: 'Degen Trading',
-    level: 'Intermediate',
-    category: 'trading',
-    difficulty: 3,
-    estimatedTime: '2-3 weeks',
-    unlocks: ['advanced-trading'],
-    xpReward: 900,
-    prerequisites: ['defi-fundamentals'],
-    totalChapters: 10
-  },
-  'content-creation': {
-    id: 'content-creation',
-    title: 'Content Creation',
-    level: 'Intermediate',
-    category: 'content',
-    difficulty: 3,
-    estimatedTime: '3-4 weeks',
-    unlocks: ['development'],
+    xpRequired: 750,
     xpReward: 800,
+    prerequisites: ['foundation'],
+    unlocks: [],
+    estimatedTime: '2 weeks',
+    difficulty: 2,
+    description: 'Unlock the potential of decentralized finance',
+    keySkills: ['Yield Farming', 'Liquidity Mining', 'DeFi Protocols'],
+    realWorldApplication: 'Participate in DeFi with confidence',
+    industryRelevance: 'Essential for blockchain enthusiasts'
+  },
+  degen: {
+    id: 'degen',
+    title: 'Degen Playbook',
+    level: 'Intermediate',
+    xpRequired: 1500,
+    xpReward: 1000,
     prerequisites: ['defi-fundamentals'],
-    totalChapters: 15
+    unlocks: [],
+    estimatedTime: '3 weeks',
+    difficulty: 3,
+    description: 'Navigate the high-stakes world of crypto trading',
+    keySkills: ['Risk Management', 'Technical Analysis', 'Leverage Trading'],
+    realWorldApplication: 'Make informed trading decisions',
+    industryRelevance: 'For advanced crypto traders'
   },
   'advanced-trading': {
     id: 'advanced-trading',
-    title: 'Advanced Trading',
+    title: 'Advanced Trading Strategies',
     level: 'Advanced',
-    category: 'trading',
-    difficulty: 4,
-    estimatedTime: '4-5 weeks',
-    unlocks: ['development'],
+    xpRequired: 2500,
     xpReward: 1200,
     prerequisites: ['degen'],
-    totalChapters: 18
-  },
-  'development': {
-    id: 'development',
-    title: 'Blockchain Development',
-    level: 'Advanced',
-    category: 'development',
-    difficulty: 5,
-    estimatedTime: '6-8 weeks',
     unlocks: [],
+    estimatedTime: '4 weeks',
+    difficulty: 4,
+    description: 'Master advanced trading techniques',
+    keySkills: ['Algorithmic Trading', 'Market Making', 'Arbitrage'],
+    realWorldApplication: 'Maximize trading profits',
+    industryRelevance: 'For professional traders'
+  },
+  development: {
+    id: 'development',
+    title: 'Web3 Development',
+    level: 'Expert',
+    xpRequired: 4000,
     xpReward: 1500,
-    prerequisites: ['content-creation', 'advanced-trading'],
-    totalChapters: 25
+    prerequisites: ['advanced'],
+    unlocks: [],
+    estimatedTime: '6 weeks',
+    difficulty: 5,
+    description: 'Build decentralized applications',
+    keySkills: ['Smart Contracts', 'dApp Development', 'Blockchain Architecture'],
+    realWorldApplication: 'Create innovative Web3 solutions',
+    industryRelevance: 'For blockchain developers'
+  },
+  'content-creation': {
+    id: 'content-creation',
+    title: 'Web3 Content Creation',
+    level: 'Beginner',
+    xpRequired: 500,
+    xpReward: 600,
+    prerequisites: ['foundation'],
+    unlocks: [],
+    estimatedTime: '2 weeks',
+    difficulty: 2,
+    description: 'Create engaging content for the Web3 space',
+    keySkills: ['Content Strategy', 'Community Engagement', 'Social Media Marketing'],
+    realWorldApplication: 'Build a Web3 audience',
+    industryRelevance: 'For content creators'
   },
   'nft-creation': {
     id: 'nft-creation',
     title: 'NFT Creation',
     level: 'Intermediate',
-    category: 'content',
+    xpRequired: 1200,
+    xpReward: 900,
+    prerequisites: ['content-creation'],
+    unlocks: [],
+    estimatedTime: '3 weeks',
     difficulty: 3,
-    estimatedTime: '2-3 weeks',
-    unlocks: ['web3-security'],
-    xpReward: 700,
-    prerequisites: ['defi-fundamentals'],
-    totalChapters: 12
+    description: 'Design and launch your own NFTs',
+    keySkills: ['Digital Art', 'Smart Contracts', 'Community Building'],
+    realWorldApplication: 'Monetize your creativity',
+    industryRelevance: 'For digital artists'
   },
   'web3-security': {
     id: 'web3-security',
-    title: 'Web3 Security Essentials',
-    level: 'Beginner',
-    category: 'security',
-    difficulty: 2,
-    estimatedTime: '2-3 weeks',
-    unlocks: ['dao-governance', 'web3-gaming'],
-    xpReward: 600,
-    prerequisites: ['foundation'],
-    totalChapters: 10
+    title: 'Web3 Security',
+    level: 'Advanced',
+    xpRequired: 2400,
+    xpReward: 1100,
+    prerequisites: ['development'],
+    unlocks: [],
+    estimatedTime: '4 weeks',
+    difficulty: 4,
+    description: 'Secure Web3 applications',
+    keySkills: ['Smart Contract Auditing', 'Penetration Testing', 'Incident Response'],
+    realWorldApplication: 'Protect Web3 assets',
+    industryRelevance: 'For security experts'
   },
   'dao-governance': {
     id: 'dao-governance',
-    title: 'DAO Participation & Governance',
+    title: 'DAO Governance',
     level: 'Intermediate',
-    category: 'governance',
+    xpRequired: 1300,
+    xpReward: 850,
+    prerequisites: ['foundation'],
+    unlocks: [],
+    estimatedTime: '3 weeks',
     difficulty: 3,
-    estimatedTime: '2-3 weeks',
-    unlocks: ['crypto-tax'],
-    xpReward: 800,
-    prerequisites: ['web3-security'],
-    totalChapters: 12
+    description: 'Participate in decentralized autonomous organizations',
+    keySkills: ['Voting Mechanisms', 'Community Management', 'Proposal Writing'],
+    realWorldApplication: 'Shape the future of Web3 projects',
+    industryRelevance: 'For DAO contributors'
   },
   'web3-gaming': {
     id: 'web3-gaming',
-    title: 'Web3 Gaming & Play-to-Earn',
+    title: 'Web3 Gaming',
     level: 'Beginner',
-    category: 'gaming',
+    xpRequired: 600,
+    xpReward: 700,
+    prerequisites: ['foundation'],
+    unlocks: [],
+    estimatedTime: '2 weeks',
     difficulty: 2,
-    estimatedTime: '2-3 weeks',
-    unlocks: ['web3-social'],
-    xpReward: 650,
-    prerequisites: ['web3-security'],
-    totalChapters: 11
+    description: 'Explore the world of blockchain gaming',
+    keySkills: ['Game Mechanics', 'NFT Integration', 'Play-to-Earn'],
+    realWorldApplication: 'Earn while playing games',
+    industryRelevance: 'For gamers and developers'
   },
   'crypto-tax': {
     id: 'crypto-tax',
-    title: 'Crypto Tax & Legal Basics',
-    level: 'Beginner',
-    category: 'legal',
-    difficulty: 2,
-    estimatedTime: '2 weeks',
-    unlocks: ['web3-social'],
-    xpReward: 550,
-    prerequisites: ['dao-governance'],
-    totalChapters: 8
+    title: 'Crypto Tax',
+    level: 'Intermediate',
+    xpRequired: 1400,
+    xpReward: 950,
+    prerequisites: ['foundation'],
+    unlocks: [],
+    estimatedTime: '3 weeks',
+    difficulty: 3,
+    description: 'Navigate the complexities of cryptocurrency taxation',
+    keySkills: ['Tax Reporting', 'Compliance', 'Financial Planning'],
+    realWorldApplication: 'Stay compliant with crypto tax laws',
+    industryRelevance: 'For crypto investors'
   },
   'web3-social': {
     id: 'web3-social',
-    title: 'Web3 Social Media & Community Building',
+    title: 'Web3 Social',
     level: 'Beginner',
-    category: 'social',
-    difficulty: 2,
-    estimatedTime: '2-3 weeks',
+    xpRequired: 700,
+    xpReward: 750,
+    prerequisites: ['content-creation'],
     unlocks: [],
-    xpReward: 700,
-    prerequisites: ['web3-gaming', 'crypto-tax'],
-    totalChapters: 13
+    estimatedTime: '2 weeks',
+    difficulty: 2,
+    description: 'Build decentralized social networks',
+    keySkills: ['Community Building', 'Tokenomics', 'Decentralized Identity'],
+    realWorldApplication: 'Create censorship-resistant social platforms',
+    industryRelevance: 'For social media innovators'
   }
 };
 
-// Hook to get user progress from database
 export const useCourseProgressionDB = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
-  // Get user progress from database
-  const { data: userProgress, isLoading, error } = useQuery({
-    queryKey: ['course-progression', user?.id],
+  const userProgressQuery = useQuery({
+    queryKey: ['user-progress', user?.id],
     queryFn: async () => {
-      if (!user) {
-        return {
-          completedCourses: [],
-          unlockedCourses: Object.keys(COURSE_PROGRESSION), // Unlock all courses by default
-          totalXP: 0,
-          currentLevel: 1,
-          courseProgress: {}
-        };
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: userStats, error: statsError } = await supabase
+        .from('user_stats')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (statsError) {
+        console.error('Error fetching user stats:', statsError);
+        throw statsError;
       }
 
-      try {
-        // Get user stats
-        const { data: userStats, error: statsError } = await supabase
+      return {
+        totalXP: userStats?.total_xp || 0,
+        currentLevel: userStats?.level || 1,
+        completedCourses: userStats?.completed_courses || [],
+        unlockedCourses: userStats?.unlocked_courses || ['foundation'],
+        streakDays: userStats?.current_streak || 0,
+        achievements: userStats?.achievements || []
+      };
+    },
+    enabled: !!user,
+  });
+
+  const updateChapterProgress = useMutation({
+    mutationFn: async ({ courseId, chapterId, totalChapters }: {
+      courseId: string;
+      chapterId: string;
+      totalChapters: number;
+    }) => {
+      if (!user) throw new Error('User not authenticated');
+
+      console.log('Updating chapter progress:', { courseId, chapterId, totalChapters });
+
+      // Get current progress
+      const { data: currentProgress, error: fetchError } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('course_id', courseId)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error('Error fetching current progress:', fetchError);
+        throw fetchError;
+      }
+
+      let completedChapters = currentProgress?.completed_chapters || [];
+      
+      // Add chapter if not already completed
+      if (!completedChapters.includes(chapterId)) {
+        completedChapters = [...completedChapters, chapterId];
+        console.log('Added chapter to completed list:', chapterId);
+      }
+
+      const progressPercentage = Math.round((completedChapters.length / totalChapters) * 100);
+      const isCompleted = progressPercentage === 100;
+      const courseConfig = courseProgression[courseId as keyof typeof courseProgression];
+      
+      console.log('Progress calculation:', {
+        completedChapters: completedChapters.length,
+        totalChapters,
+        progressPercentage,
+        isCompleted
+      });
+
+      // Update or insert progress record
+      const progressData = {
+        user_id: user.id,
+        course_id: courseId,
+        completed_chapters: completedChapters,
+        progress_percentage: progressPercentage,
+        completed_at: isCompleted ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data: updatedProgress, error: upsertError } = await supabase
+        .from('user_progress')
+        .upsert(progressData, { onConflict: 'user_id,course_id' })
+        .select()
+        .single();
+
+      if (upsertError) {
+        console.error('Error updating progress:', upsertError);
+        throw upsertError;
+      }
+
+      console.log('Progress updated successfully:', updatedProgress);
+
+      // If course completed, update user stats
+      if (isCompleted && courseConfig) {
+        console.log('Course completed, updating user stats...');
+        
+        const { data: currentStats, error: statsError } = await supabase
           .from('user_stats')
           .select('*')
           .eq('user_id', user.id)
           .single();
 
-        const allCourseIds = Object.keys(COURSE_PROGRESSION);
+        if (statsError) {
+          console.error('Error fetching user stats:', statsError);
+        } else {
+          const completedCourses = currentStats.completed_courses || [];
+          if (!completedCourses.includes(courseId)) {
+            const newCompletedCourses = [...completedCourses, courseId];
+            const newTotalXP = (currentStats.total_xp || 0) + courseConfig.xpReward;
+            const newLevel = Math.floor(newTotalXP / 500) + 1;
 
-        if (statsError && (statsError.code === 'PGRST116' || statsError.code === '42P01')) {
-          // Create default user stats with all courses unlocked
-          const { data: newStats } = await supabase
-            .from('user_stats')
-            .insert({
-              user_id: user.id,
-              completed_courses: [],
-              unlocked_courses: allCourseIds, // Unlock all courses by default
-              total_xp: 0,
-              level: 1
-            })
-            .select()
-            .single();
+            const { error: updateStatsError } = await supabase
+              .from('user_stats')
+              .update({
+                completed_courses: newCompletedCourses,
+                total_xp: newTotalXP,
+                level: newLevel,
+                last_activity_date: new Date().toISOString().split('T')[0],
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id);
 
-          return {
-            completedCourses: [],
-            unlockedCourses: allCourseIds,
-            totalXP: 0,
-            currentLevel: 1,
-            courseProgress: {}
-          };
-        }
-
-        // Get detailed progress for each course
-        const { data: progressData } = await supabase
-          .from('user_progress')
-          .select('*')
-          .eq('user_id', user.id);
-
-        // Transform database data to our format
-        const courseProgress: Record<string, CourseProgress> = {};
-        
-        progressData?.forEach(progress => {
-          const courseConfig = COURSE_PROGRESSION[progress.course_id as keyof typeof COURSE_PROGRESSION];
-          const isCompleted = progress.progress_percentage === 100;
-          
-          courseProgress[progress.course_id] = {
-            courseId: progress.course_id,
-            completed: isCompleted,
-            completedChapters: progress.completed_chapters || [],
-            totalChapters: courseConfig?.totalChapters || 0,
-            progressPercentage: progress.progress_percentage || 0,
-            completedAt: progress.completed_at ? new Date(progress.completed_at) : undefined,
-            xpEarned: progress.xp_earned || 0
-          };
-        });
-
-        // Calculate completed courses from progress data
-        const completedCourses = Object.values(courseProgress)
-          .filter(progress => progress.completed)
-          .map(progress => progress.courseId);
-
-        // Always ensure all courses are unlocked
-        const unlockedCourses = allCourseIds;
-
-        // Calculate total XP from all earned XP
-        const totalXP = Object.values(courseProgress).reduce((sum, progress) => sum + progress.xpEarned, 0);
-        
-        // Calculate level (every 1000 XP = 1 level)
-        const currentLevel = Math.floor(totalXP / 1000) + 1;
-
-        // Update user stats if they need to be updated (especially to ensure all courses are unlocked)
-        if (userStats && (
-          JSON.stringify(userStats.unlocked_courses?.sort()) !== JSON.stringify(allCourseIds.sort()) ||
-          JSON.stringify(userStats.completed_courses?.sort()) !== JSON.stringify(completedCourses.sort()) ||
-          userStats.total_xp !== totalXP ||
-          userStats.level !== currentLevel
-        )) {
-          await supabase
-            .from('user_stats')
-            .update({
-              completed_courses: completedCourses,
-              unlocked_courses: allCourseIds, // Always unlock all courses
-              total_xp: totalXP,
-              level: currentLevel,
-              updated_at: new Date().toISOString()
-            })
-            .eq('user_id', user.id);
-        }
-
-        return {
-          completedCourses,
-          unlockedCourses: allCourseIds, // Always return all courses as unlocked
-          totalXP,
-          currentLevel,
-          courseProgress
-        } as UserProgressData;
-
-      } catch (error) {
-        console.error('Database error:', error);
-        return {
-          completedCourses: [],
-          unlockedCourses: Object.keys(COURSE_PROGRESSION), // Unlock all courses even on error
-          totalXP: 0,
-          currentLevel: 1,
-          courseProgress: {}
-        };
-      }
-    },
-    enabled: true,
-    retry: 1,
-    staleTime: 1 * 60 * 1000, // 1 minute
-  });
-
-  // Mutation to update chapter progress and handle course completion
-  const updateChapterProgressMutation = useMutation({
-    mutationFn: async ({ courseId, chapterId, totalChapters }: {
-      courseId: string;
-      chapterId: string;
-      totalChapters?: number;
-    }) => {
-      if (!user) throw new Error('User not authenticated');
-
-      const courseConfig = COURSE_PROGRESSION[courseId as keyof typeof COURSE_PROGRESSION];
-      if (!courseConfig) throw new Error('Invalid course ID');
-
-      const chaptersCount = totalChapters || courseConfig.totalChapters;
-      
-      // Get current progress
-      const { data: currentProgress } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('course_id', courseId)
-        .single();
-
-      const completedChapters = currentProgress?.completed_chapters || [];
-      
-      // Add new chapter if not already completed
-      if (!completedChapters.includes(chapterId)) {
-        const newCompletedChapters = [...completedChapters, chapterId];
-        const progressPercentage = Math.round((newCompletedChapters.length / chaptersCount) * 100);
-        const isCompleted = progressPercentage === 100;
-        const xpEarned = isCompleted ? courseConfig.xpReward : 0;
-
-        // Update progress in database
-        await supabase
-          .from('user_progress')
-          .upsert({
-            user_id: user.id,
-            course_id: courseId,
-            progress_percentage: progressPercentage,
-            completed_chapters: newCompletedChapters,
-            xp_earned: xpEarned,
-            completed_at: isCompleted ? new Date().toISOString() : null,
-            updated_at: new Date().toISOString()
-          });
-
-        // If course is completed, show success message
-        if (isCompleted) {
-          toast({
-            title: "🎉 Course Completed!",
-            description: `You've completed ${courseConfig.title} and earned ${xpEarned} XP!`,
-          });
-
-          // Return completion info for modal
-          return {
-            completed: true,
-            courseId,
-            xpEarned,
-            unlockedCourses: courseConfig.unlocks
-          };
-        }
-      }
-
-      return { completed: false };
-    },
-    onSuccess: () => {
-      // Invalidate to refresh data
-      queryClient.invalidateQueries({ queryKey: ['course-progression'] });
-    }
-  });
-
-  // Helper functions
-  const isCourseUnlocked = (courseId: string): boolean => {
-    return true; // All courses are always unlocked
-  };
-
-  const isCourseCompleted = (courseId: string): boolean => {
-    return userProgress?.completedCourses.includes(courseId) || false;
-  };
-
-  const getCourseProgress = (courseId: string): CourseProgress | null => {
-    return userProgress?.courseProgress[courseId] || null;
-  };
-
-  const updateChapterProgress = (courseId: string, chapterId: string, totalChapters?: number) => {
-    return updateChapterProgressMutation.mutateAsync({ courseId, chapterId, totalChapters });
-  };
-
-  const getNextRecommendedCourse = (currentCourseId?: string): string | null => {
-    if (!userProgress) return 'foundation';
-
-    // If a current course is provided, get its unlocks
-    if (currentCourseId) {
-      const currentCourse = COURSE_PROGRESSION[currentCourseId as keyof typeof COURSE_PROGRESSION];
-      if (currentCourse && currentCourse.unlocks) {
-        for (const nextCourseId of currentCourse.unlocks) {
-          if (!isCourseCompleted(nextCourseId)) {
-            return nextCourseId;
+            if (updateStatsError) {
+              console.error('Error updating user stats:', updateStatsError);
+            } else {
+              console.log('User stats updated successfully');
+            }
           }
         }
       }
+
+      return { 
+        progress: updatedProgress, 
+        completed: isCompleted,
+        xpEarned: isCompleted && courseConfig ? courseConfig.xpReward : 0
+      };
+    },
+    onSuccess: (data) => {
+      console.log('Chapter progress mutation successful:', data);
+      queryClient.invalidateQueries({ queryKey: ['user-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['user-stats'] });
+      
+      if (data.completed) {
+        toast.success(`Course completed! +${data.xpEarned} XP earned!`);
+      } else {
+        toast.success('Chapter completed!');
+      }
+    },
+    onError: (error) => {
+      console.error('Error updating chapter progress:', error);
+      toast.error('Failed to update progress. Please try again.');
+    }
+  });
+
+  const getCourseProgress = (courseId: string) => {
+    const { data: userProgress } = userProgressQuery;
+    if (!userProgress) return null;
+
+    const totalChapters = Object.values(courses[courseId]?.modules || []).reduce((sum, module: any) => sum + module.chapters.length, 0);
+    const completedChapters = [];
+
+    return {
+      courseId,
+      progressPercentage: Math.round((completedChapters.length / totalChapters) * 100),
+      completedChapters
+    };
+  };
+
+  const isCourseUnlocked = (courseId: string) => {
+    const { data: userProgress } = userProgressQuery;
+    return userProgress?.unlockedCourses.includes(courseId);
+  };
+
+  const isCourseCompleted = (courseId: string) => {
+    const { data: userProgress } = userProgressQuery;
+    return userProgress?.completedCourses.includes(courseId);
+  };
+
+  const getNextRecommendedCourse = (): Course | undefined => {
+    const { data: userProgress } = userProgressQuery;
+
+    if (!userProgress) {
+      return undefined;
     }
 
-    // Find the first course that's not completed
-    for (const [courseId] of Object.entries(COURSE_PROGRESSION)) {
-      if (!isCourseCompleted(courseId)) {
-        return courseId;
+    // Find the first course that is not yet unlocked and whose prerequisites are met
+    for (const courseId in courseProgression) {
+      if (!userProgress.unlockedCourses.includes(courseId)) {
+        const course = courseProgression[courseId];
+        if (course.prerequisites.every(prerequisite => userProgress.completedCourses.includes(prerequisite))) {
+          return course as Course;
+        }
       }
     }
 
-    return null;
+    return undefined;
   };
 
   return {
-    userProgress: userProgress || {
-      completedCourses: [],
-      unlockedCourses: Object.keys(COURSE_PROGRESSION),
+    userProgress: userProgressQuery.data || {
       totalXP: 0,
       currentLevel: 1,
-      courseProgress: {}
+      completedCourses: [],
+      unlockedCourses: ['foundation'],
+      streakDays: 0,
+      achievements: []
     },
-    isLoading,
-    courseProgression: COURSE_PROGRESSION,
+    isLoading: userProgressQuery.isLoading,
+    courseProgression,
+    updateChapterProgress: updateChapterProgress.mutateAsync,
+    isUpdating: updateChapterProgress.isPending,
+    getCourseProgress,
     isCourseUnlocked,
     isCourseCompleted,
-    getCourseProgress,
-    updateChapterProgress,
-    getNextRecommendedCourse,
-    isUpdating: updateChapterProgressMutation.isPending
+    getNextRecommendedCourse
   };
 };

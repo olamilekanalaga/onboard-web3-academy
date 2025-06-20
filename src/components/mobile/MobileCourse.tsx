@@ -90,7 +90,15 @@ const MobileCourse = () => {
       const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
       
       try {
-        const result = await updateChapterProgress(courseId, chapterId, totalChapters);
+        console.log('Marking chapter complete:', { courseId, chapterId, totalChapters });
+        
+        const result = await updateChapterProgress({
+          courseId,
+          chapterId,
+          totalChapters
+        });
+        
+        console.log('Chapter completion result:', result);
         
         // Check if course was completed
         if (result?.completed && !courseJustCompleted) {
@@ -100,6 +108,8 @@ const MobileCourse = () => {
       } catch (error) {
         console.error('Error updating chapter progress:', error);
       }
+    } else {
+      console.log('Chapter already completed:', chapterId);
     }
   };
 
