@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
@@ -24,7 +23,6 @@ const MobileCourse = () => {
     courseProgression, 
     getNextRecommendedCourse, 
     isCourseCompleted,
-    unlockAllCourses,
     isUpdating
   } = useCourseProgressionDB();
   
@@ -239,14 +237,6 @@ const MobileCourse = () => {
           </div>
           <Progress value={progressPercentage} className="h-2" />
         </div>
-
-        {/* Unlock All Courses Button (for testing) */}
-        <Button 
-          onClick={unlockAllCourses}
-          className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white text-xs"
-        >
-          🔓 Unlock All Courses
-        </Button>
       </div>
 
       {/* Course Content */}
