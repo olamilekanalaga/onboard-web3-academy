@@ -18,7 +18,7 @@ const MobileCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { updateChapterProgress, getCourseProgress, courseProgression } = useCourseProgression();
+  const { updateChapterProgress, getCourseProgress, courseProgression, unlockCourse } = useCourseProgression();
   const [selectedModule, setSelectedModule] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -123,6 +123,22 @@ const MobileCourse = () => {
     } else {
       console.error('Mobile course or modules not available:', { course, modules: course?.modules });
     }
+  };
+
+  const handleCloseWelcomeModal = () => {
+    setShowWelcomeModal(false);
+  };
+
+  const handleCloseCompletionModal = () => {
+    setShowCompletionModal(false);
+  };
+
+  const handleStartNextCourse = async (nextCourseId: string) => {
+    // Unlock the next course first
+    await unlockCourse(nextCourseId);
+    
+    // Navigate to the next course with welcome modal
+    navigate(`/mobile/course/${nextCourseId}`, { state: { showWelcome: true } });
   };
 
   const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
@@ -432,7 +448,7 @@ const MobileCourse = () => {
       {courseId && (
         <CourseWelcomeModal
           isOpen={showWelcomeModal}
-          onClose={() => setShowWelcomeModal(false)}
+          onClose={handleCloseWelcomeModal}
           onStartCourse={handleStartCourse}
           courseId={courseId}
         />
@@ -442,12 +458,10 @@ const MobileCourse = () => {
       {courseId && courseConfig && (
         <CourseCompletionModal
           isOpen={showCompletionModal}
-          onClose={() => setShowCompletionModal(false)}
+          onClose={handleCloseCompletionModal}
           completedCourseId={courseId}
           xpEarned={courseConfig.xpReward}
-          onStartNextCourse={(nextCourseId) => {
-            navigate(`/mobile/course/${nextCourseId}`, { state: { showWelcome: true } });
-          }}
+          onStartNextCourse={handleStartNextCourse}
         />
       )}
     </div>

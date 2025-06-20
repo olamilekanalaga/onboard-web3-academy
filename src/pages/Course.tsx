@@ -157,6 +157,14 @@ const Course = () => {
     }, 100);
   };
 
+  const handleCloseWelcomeModal = () => {
+    setShowWelcomeModal(false);
+  };
+
+  const handleCloseCompletionModal = () => {
+    setShowCompletionModal(false);
+  };
+
   // Function to format chapter content with proper typography and spacing
   const formatContent = (content: string) => {
     return content
@@ -502,11 +510,11 @@ const Course = () => {
       {courseId && courseConfig && (
         <CourseCompletionModal
           isOpen={showCompletionModal}
-          onClose={() => setShowCompletionModal(false)}
+          onClose={handleCloseCompletionModal}
           completedCourseId={courseId}
           xpEarned={courseConfig.xpReward}
           onStartNextCourse={(nextCourseId) => {
-            // This will be handled by the navigation with state
+            navigate(`/course/${nextCourseId}`, { state: { showWelcome: true } });
           }}
         />
       )}
@@ -515,13 +523,11 @@ const Course = () => {
       {courseId && (
         <CourseWelcomeModal
           isOpen={showWelcomeModal}
-          onClose={() => setShowWelcomeModal(false)}
+          onClose={handleCloseWelcomeModal}
           onStartCourse={handleStartCourse}
           courseId={courseId}
         />
       )}
-
-
     </div>
   );
 };

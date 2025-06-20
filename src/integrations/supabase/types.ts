@@ -248,6 +248,8 @@ export type Database = {
           avatar_url: string | null
           country_id: number | null
           created_at: string | null
+          email: string | null
+          follow_flow_completed: boolean | null
           full_name: string | null
           id: string
           phone: string | null
@@ -259,6 +261,8 @@ export type Database = {
           avatar_url?: string | null
           country_id?: number | null
           created_at?: string | null
+          email?: string | null
+          follow_flow_completed?: boolean | null
           full_name?: string | null
           id: string
           phone?: string | null
@@ -270,6 +274,8 @@ export type Database = {
           avatar_url?: string | null
           country_id?: number | null
           created_at?: string | null
+          email?: string | null
+          follow_flow_completed?: boolean | null
           full_name?: string | null
           id?: string
           phone?: string | null
@@ -418,6 +424,7 @@ export type Database = {
       user_progress: {
         Row: {
           completed_at: string | null
+          completed_chapters: string[] | null
           course_id: string
           created_at: string | null
           id: string
@@ -425,9 +432,11 @@ export type Database = {
           progress_percentage: number | null
           updated_at: string | null
           user_id: string
+          xp_earned: number | null
         }
         Insert: {
           completed_at?: string | null
+          completed_chapters?: string[] | null
           course_id: string
           created_at?: string | null
           id?: string
@@ -435,9 +444,11 @@ export type Database = {
           progress_percentage?: number | null
           updated_at?: string | null
           user_id: string
+          xp_earned?: number | null
         }
         Update: {
           completed_at?: string | null
+          completed_chapters?: string[] | null
           course_id?: string
           created_at?: string | null
           id?: string
@@ -445,23 +456,105 @@ export type Database = {
           progress_percentage?: number | null
           updated_at?: string | null
           user_id?: string
+          xp_earned?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_progress_course_id_fkey"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_progress_lesson_id_fkey"
-            columns: ["lesson_id"]
-            isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          course_reminders: boolean | null
+          created_at: string | null
+          data_analytics: boolean | null
+          email_notifications: boolean | null
+          id: string
+          language: string | null
+          marketing_emails: boolean | null
+          show_achievements: boolean | null
+          show_progress: boolean | null
+          theme: string | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          course_reminders?: boolean | null
+          created_at?: string | null
+          data_analytics?: boolean | null
+          email_notifications?: boolean | null
+          id?: string
+          language?: string | null
+          marketing_emails?: boolean | null
+          show_achievements?: boolean | null
+          show_progress?: boolean | null
+          theme?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          course_reminders?: boolean | null
+          created_at?: string | null
+          data_analytics?: boolean | null
+          email_notifications?: boolean | null
+          id?: string
+          language?: string | null
+          marketing_emails?: boolean | null
+          show_achievements?: boolean | null
+          show_progress?: boolean | null
+          theme?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_stats: {
+        Row: {
+          achievements: string[] | null
+          completed_courses: string[] | null
+          created_at: string | null
+          current_streak: number | null
+          id: string
+          last_activity_date: string | null
+          level: number | null
+          longest_streak: number | null
+          total_study_time: number | null
+          total_xp: number | null
+          unlocked_courses: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievements?: string[] | null
+          completed_courses?: string[] | null
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          level?: number | null
+          longest_streak?: number | null
+          total_study_time?: number | null
+          total_xp?: number | null
+          unlocked_courses?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievements?: string[] | null
+          completed_courses?: string[] | null
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          level?: number | null
+          longest_streak?: number | null
+          total_study_time?: number | null
+          total_xp?: number | null
+          unlocked_courses?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
