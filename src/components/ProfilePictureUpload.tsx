@@ -103,11 +103,11 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
           <Button
             size="sm"
             variant="outline"
-            className="absolute -bottom-2 -right-2 rounded-full p-2 h-8 w-8 bg-white shadow-md border-2"
+            className="absolute -bottom-2 -right-2 rounded-full p-2 h-8 w-8 bg-white shadow-lg border-2 border-gray-200"
             onClick={handleFileSelect}
             disabled={uploading}
           >
-            <Camera className="h-3 w-3" />
+            <Camera className="h-4 w-4 text-gray-700" />
           </Button>
         )}
       </div>
