@@ -43,43 +43,44 @@ const CourseCompletionModal = ({ isOpen, onClose, completedCourseId, xpEarned, o
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <div className="fixed inset-0 bg-black/80 z-[9998]" style={{ zIndex: 9998 }} />
+      <DialogContent className="w-[95vw] max-w-2xl sm:w-full" style={{ zIndex: 9999 }}>
         <DialogHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
             <Trophy className="w-8 h-8 text-emerald-600" />
           </div>
-          <DialogTitle className="text-2xl font-bold text-emerald-900">
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-emerald-900">
             🎉 Course Completed!
           </DialogTitle>
-          <DialogDescription className="text-lg text-slate-600">
+          <DialogDescription className="text-base sm:text-lg text-slate-600 px-4 sm:px-0">
             Congratulations! You've successfully completed <strong>{completedCourse?.title}</strong>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Achievement Summary */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
-            <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 sm:p-6">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
               <div>
                 <div className="flex items-center justify-center mb-2">
                   <Star className="w-6 h-6 text-yellow-500" />
                 </div>
-                <div className="text-2xl font-bold text-emerald-900">{xpEarned}</div>
-                <div className="text-sm text-emerald-700">XP Earned</div>
+                <div className="text-xl sm:text-2xl font-bold text-emerald-900">{xpEarned}</div>
+                <div className="text-xs sm:text-sm text-emerald-700">XP Earned</div>
               </div>
               <div>
                 <div className="flex items-center justify-center mb-2">
-                  <Target className="w-6 h-6 text-blue-500" />
+                  <Target className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
                 </div>
-                <div className="text-2xl font-bold text-emerald-900">{userProgress.currentLevel}</div>
-                <div className="text-sm text-emerald-700">Current Level</div>
+                <div className="text-xl sm:text-2xl font-bold text-emerald-900">{userProgress.currentLevel}</div>
+                <div className="text-xs sm:text-sm text-emerald-700">Current Level</div>
               </div>
               <div>
                 <div className="flex items-center justify-center mb-2">
-                  <CheckCircle className="w-6 h-6 text-emerald-500" />
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500" />
                 </div>
-                <div className="text-2xl font-bold text-emerald-900">{userProgress.completedCourses.length}</div>
-                <div className="text-sm text-emerald-700">Courses Completed</div>
+                <div className="text-xl sm:text-2xl font-bold text-emerald-900">{userProgress.completedCourses.length}</div>
+                <div className="text-xs sm:text-sm text-emerald-700">Courses Completed</div>
               </div>
             </div>
           </div>
@@ -115,18 +116,18 @@ const CourseCompletionModal = ({ isOpen, onClose, completedCourseId, xpEarned, o
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <Button 
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
                   onClick={handleContinueToNext}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-2"
                 >
                   Start Next Course
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handleBackToCourses}
-                  className="flex-1"
+                  className="flex-1 py-3 sm:py-2"
                 >
                   Browse All Courses
                 </Button>
