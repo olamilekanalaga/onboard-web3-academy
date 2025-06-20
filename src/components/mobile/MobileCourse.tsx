@@ -34,6 +34,7 @@ const MobileCourse = () => {
 
   // Check for welcome modal on course load
   useEffect(() => {
+    console.log('MobileCourse useEffect triggered for courseId:', courseId);
     setCourseJustCompleted(false);
     setShowCompletionModal(false);
 
@@ -41,10 +42,13 @@ const MobileCourse = () => {
       const courseProgress = getCourseProgress(courseId);
       const isFirstTime = !courseProgress || courseProgress.progressPercentage === 0;
 
+      console.log('Mobile course progress check:', { courseProgress, isFirstTime, locationState: location.state });
+
       // Show welcome modal if:
       // 1. Coming from course completion (showWelcome state), OR
       // 2. First time visiting this course (no progress)
       if (location.state?.showWelcome || isFirstTime) {
+        console.log('Mobile showing welcome modal');
         setShowWelcomeModal(true);
         // Clear the state to prevent showing again on refresh
         if (location.state?.showWelcome) {
@@ -113,19 +117,23 @@ const MobileCourse = () => {
     console.log('Current course:', course);
     console.log('Course modules:', course?.modules);
 
+    // Close welcome modal first
     setShowWelcomeModal(false);
 
     // Ensure we have a valid course and modules before setting states
     if (course && course.modules && course.modules.length > 0) {
-      setSelectedModule(0);
-      setSelectedChapter(0);
-      console.log('Mobile states set - selectedModule: 0, selectedChapter: 0');
+      setTimeout(() => {
+        setSelectedModule(0);
+        setSelectedChapter(0);
+        console.log('Mobile states set - selectedModule: 0, selectedChapter: 0');
+      }, 100);
     } else {
       console.error('Mobile course or modules not available:', { course, modules: course?.modules });
     }
   };
 
   const handleCloseWelcomeModal = () => {
+    console.log('MobileCourse: handleCloseWelcomeModal called');
     setShowWelcomeModal(false);
   };
 

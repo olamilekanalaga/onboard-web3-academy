@@ -31,7 +31,8 @@ const Course = () => {
     getCourseProgress,
     userProgress,
     isCourseUnlocked,
-    getNextRecommendedCourse
+    getNextRecommendedCourse,
+    unlockCourse
   } = useCourseProgression();
   const course = courseId ? courses[courseId] : undefined;
   const courseConfig = courseId ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
@@ -124,6 +125,7 @@ const Course = () => {
 
   // Reset completion state when course changes and check for welcome modal
   useEffect(() => {
+    console.log('Course useEffect triggered for courseId:', courseId);
     setCourseJustCompleted(false);
     setShowCompletionModal(false);
 
@@ -132,7 +134,10 @@ const Course = () => {
       const courseProgress = getCourseProgress(courseId);
       const isFirstTime = !courseProgress || courseProgress.progressPercentage === 0;
 
+      console.log('Course progress check:', { courseProgress, isFirstTime, locationState: location.state });
+
       if (location.state?.showWelcome || isFirstTime) {
+        console.log('Showing welcome modal');
         setShowWelcomeModal(true);
         // Clear the state to prevent showing again on refresh
         if (location.state?.showWelcome) {
@@ -143,14 +148,21 @@ const Course = () => {
   }, [courseId, location.state, getCourseProgress]);
 
   const handleStartCourse = () => {
+    console.log('Course: handleStartCourse called');
+    console.log('Setting selectedModule to 0, selectedChapter to 0');
+    
+    // Close welcome modal first
     setShowWelcomeModal(false);
 
     // Set to first module and chapter
     setSelectedModule(0);
     setSelectedChapter(0);
 
-    // Scroll to course content
+    // Force a re-render by updating state
     setTimeout(() => {
+      console.log('Course started - selectedModule:', 0, 'selectedChapter:', 0);
+      
+      // Scroll to course content
       const courseContent = document.getElementById('course-content');
       if (courseContent) {
         courseContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -159,6 +171,7 @@ const Course = () => {
   };
 
   const handleCloseWelcomeModal = () => {
+    console.log('Course: handleCloseWelcomeModal called');
     setShowWelcomeModal(false);
   };
 
@@ -514,7 +527,8 @@ const Course = () => {
           onClose={handleCloseCompletionModal}
           completedCourseId={courseId}
           xpEarned={courseConfig.xpReward}
-          onStartNextCourse={(nextCourseId) => {
+          onStartNextCourse={async (nextCourseId) => {
+            await unlockCourse(nextCourseId);
             navigate(`/course/${nextCourseId}`, { state: { showWelcome: true } });
           }}
         />
