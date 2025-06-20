@@ -260,28 +260,65 @@ export const useCourseProgressionDB = () => {
 
         // Transform database data to our format
         const courseProgress: Record<string, CourseProgress> = {};
+        const completedCourses: string[] = [];
+        
         progressData?.forEach(progress => {
           const courseConfig = COURSE_PROGRESSION[progress.course_id as keyof typeof COURSE_PROGRESSION];
+          const isCompleted = progress.progress_percentage === 100;
+          
           courseProgress[progress.course_id] = {
             courseId: progress.course_id,
-            completed: progress.progress_percentage === 100,
+            completed: isCompleted,
             completedChapters: progress.completed_chapters || [],
             totalChapters: courseConfig?.totalChapters || 0,
             progressPercentage: progress.progress_percentage || 0,
             completedAt: progress.completed_at ? new Date(progress.completed_at) : undefined,
             xpEarned: progress.xp_earned || 0
           };
+          
+          // Add to completed courses if 100% complete
+          if (isCompleted) {
+            completedCourses.push(progress.course_id);
+          }
         });
 
+        // Calculate unlocked courses based on completed courses
+        const unlockedCourses = ['foundation']; // Foundation is always unlocked
+        
+        // For each completed course, unlock its next courses
+        completedCourses.forEach(completedCourseId => {
+          const courseConfig = COURSE_PROGRESSION[completedCourseId as keyof typeof COURSE_PROGRESSION];
+          if (courseConfig && courseConfig.unlocks) {
+            courseConfig.unlocks.forEach(unlockedCourseId => {
+              if (!unlockedCourses.includes(unlockedCourseId)) {
+                unlockedCourses.push(unlockedCourseId);
+              }
+            });
+          }
+        });
+
+        // Calculate total XP from all earned XP
+        const totalXP = Object.values(courseProgress).reduce((sum, progress) => sum + progress.xpEarned, 0);
+        
+        // Calculate level (every 1000 XP = 1 level)
+        const currentLevel = Math.floor(totalXP / 1000) + 1;
+
         const result = {
-          completedCourses: userStats?.completed_courses || [],
-          unlockedCourses: userStats?.unlocked_courses || ['foundation'],
-          totalXP: userStats?.total_xp || 0,
-          currentLevel: userStats?.level || 1,
+          completedCourses,
+          unlockedCourses,
+          totalXP,
+          currentLevel,
           courseProgress
         } as UserProgressData;
 
-        console.log('Final user progress result:', result);
+        console.log('=== FINAL COMPUTED RESULT ===');
+        console.log('Completed courses:', completedCourses);
+        console.log('Unlocked courses:', unlockedCourses);
+        console.log('Total XP:', totalXP);
+        console.log('Current level:', currentLevel);
+        console.log('Course progress:', courseProgress);
+        console.log('=============================');
+
         return result;
       } catch (error) {
         console.error('Database error, falling back to defaults:', error);
@@ -359,7 +396,7 @@ export const useCourseProgressionDB = () => {
 
         console.log('User progress updated successfully');
 
-        // If course is completed, update user stats
+        // If course is completed, update user stats IMMEDIATELY
         if (isCompleted) {
           console.log('Course completed! Updating user stats...');
           
@@ -385,12 +422,15 @@ export const useCourseProgressionDB = () => {
             const newTotalXP = currentXP + xpEarned;
             const newLevel = Math.floor(newTotalXP / 1000) + 1;
 
-            console.log('Updating user stats with:', { 
-              newCompletedCourses, 
-              newUnlockedCourses, 
-              newTotalXP, 
-              newLevel 
-            });
+            console.log('=== UPDATING USER STATS ===');
+            console.log('Old completed courses:', completedCourses);
+            console.log('New completed courses:', newCompletedCourses);
+            console.log('Old unlocked courses:', unlockedCourses);
+            console.log('New unlocked courses:', newUnlockedCourses);
+            console.log('Old XP:', currentXP);
+            console.log('New XP:', newTotalXP);
+            console.log('New level:', newLevel);
+            console.log('==========================');
 
             const { error: statsError } = await supabase
               .from('user_stats')
@@ -408,7 +448,7 @@ export const useCourseProgressionDB = () => {
               throw statsError;
             }
 
-            console.log('User stats updated successfully!');
+            console.log('✅ User stats updated successfully!');
           }
         }
       } else {
@@ -417,6 +457,7 @@ export const useCourseProgressionDB = () => {
     },
     onSuccess: () => {
       console.log('Chapter progress mutation completed successfully');
+      // Invalidate to refresh data
       queryClient.invalidateQueries({ queryKey: ['course-progression'] });
     },
     onError: (error) => {
