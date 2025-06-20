@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
 import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,17 +11,14 @@ import { courses } from "@/data/courses";
 import TradingDemo from "@/components/TradingDemo";
 import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
 import BottomNavigation from "./BottomNavigation";
-import CourseWelcomeModal from "@/components/CourseWelcomeModal";
 import CourseCompletionModal from "@/components/CourseCompletionModal";
 
 const MobileCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const { updateChapterProgress, getCourseProgress, courseProgression, unlockCourse } = useCourseProgression();
   const [selectedModule, setSelectedModule] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [courseJustCompleted, setCourseJustCompleted] = useState(false);
 
@@ -32,31 +29,19 @@ const MobileCourse = () => {
   const course = courseId ? courses[courseId] : undefined;
   const courseConfig = courseId ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
 
-  // Check for welcome modal on course load
+  // Auto-start course on load
   useEffect(() => {
     console.log('MobileCourse useEffect triggered for courseId:', courseId);
     setCourseJustCompleted(false);
     setShowCompletionModal(false);
 
     if (courseId) {
-      const courseProgress = getCourseProgress(courseId);
-      const isFirstTime = !courseProgress || courseProgress.progressPercentage === 0;
-
-      console.log('Mobile course progress check:', { courseProgress, isFirstTime, locationState: location.state });
-
-      // Show welcome modal if:
-      // 1. Coming from course completion (showWelcome state), OR
-      // 2. First time visiting this course (no progress)
-      if (location.state?.showWelcome || isFirstTime) {
-        console.log('Mobile showing welcome modal');
-        setShowWelcomeModal(true);
-        // Clear the state to prevent showing again on refresh
-        if (location.state?.showWelcome) {
-          window.history.replaceState({}, document.title);
-        }
-      }
+      // Start with first module and chapter
+      setSelectedModule(0);
+      setSelectedChapter(0);
+      console.log('Mobile course auto-started - selectedModule: 0, selectedChapter: 0');
     }
-  }, [courseId, location.state, getCourseProgress]);
+  }, [courseId]);
 
   if (!course) {
     return (
@@ -112,22 +97,6 @@ const MobileCourse = () => {
     }
   };
 
-  const handleStartCourse = () => {
-    console.log('MobileCourse.tsx: handleStartCourse called - starting course');
-    
-    // Set to first module and chapter immediately
-    setSelectedModule(0);
-    setSelectedChapter(0);
-    setShowWelcomeModal(false);
-    
-    console.log('Mobile course started - selectedModule: 0, selectedChapter: 0');
-  };
-
-  const handleCloseWelcomeModal = () => {
-    console.log('MobileCourse: handleCloseWelcomeModal called');
-    setShowWelcomeModal(false);
-  };
-
   const handleCloseCompletionModal = () => {
     setShowCompletionModal(false);
   };
@@ -136,8 +105,8 @@ const MobileCourse = () => {
     // Unlock the next course first
     await unlockCourse(nextCourseId);
     
-    // Navigate to the next course with welcome modal
-    navigate(`/mobile/course/${nextCourseId}`, { state: { showWelcome: true } });
+    // Navigate to the next course
+    navigate(`/mobile/course/${nextCourseId}`);
   };
 
   const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
@@ -442,16 +411,6 @@ const MobileCourse = () => {
       </div>
 
       <BottomNavigation />
-
-      {/* Course Welcome Modal */}
-      {courseId && (
-        <CourseWelcomeModal
-          isOpen={showWelcomeModal}
-          onClose={handleCloseWelcomeModal}
-          onStartCourse={handleStartCourse}
-          courseId={courseId}
-        />
-      )}
 
       {/* Course Completion Modal */}
       {courseId && courseConfig && (
