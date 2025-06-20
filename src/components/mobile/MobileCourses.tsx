@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
@@ -6,7 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Clock, Star, Lock, CheckCircle, Trophy, Zap } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { BookOpen, Clock, Star, Lock, CheckCircle, Trophy, Zap, ChevronDown, RotateCcw } from "lucide-react";
 import { courses } from "@/data/courses";
 import BottomNavigation from "./BottomNavigation";
 
@@ -80,6 +85,11 @@ const MobileCourses = () => {
     }
   };
 
+  const handleRestartCourse = (courseId: string) => {
+    // Navigate to course - the course system will handle showing from the beginning
+    navigate(`/mobile/course/${courseId}`);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
@@ -151,19 +161,19 @@ const MobileCourses = () => {
           const StatusIcon = status.icon;
           const courseConfig = courseProgression[course.id as keyof typeof courseProgression];
           const isUnlocked = isCourseUnlocked(course.id);
-
-          console.log(`Course ${course.id}:`, {
-            title: course.title,
-            description: course.description,
-            level: course.level,
-            duration: course.duration
-          });
+          const isCompleted = isCourseCompleted(course.id);
 
           return (
             <Card 
               key={course.id} 
-              className={`transition-all ${isUnlocked ? 'cursor-pointer hover:shadow-md' : 'opacity-60'}`}
-              onClick={() => handleCourseClick(course.id)}
+              className={`transition-all ${
+                isCompleted 
+                  ? 'opacity-60 bg-gray-50' 
+                  : isUnlocked 
+                    ? 'cursor-pointer hover:shadow-md' 
+                    : 'opacity-60'
+              }`}
+              onClick={() => !isCompleted && handleCourseClick(course.id)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -217,11 +227,26 @@ const MobileCourses = () => {
 
                   {/* Action button */}
                   <div className="pt-2">
-                    {isCourseCompleted(course.id) ? (
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Trophy className="h-4 w-4 mr-2" />
-                        Review Course
-                      </Button>
+                    {isCompleted ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full">
+                            <Trophy className="h-4 w-4 mr-2" />
+                            Course Options
+                            <ChevronDown className="h-4 w-4 ml-2" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-full">
+                          <DropdownMenuItem disabled>
+                            <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                            Course Completed
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleRestartCourse(course.id)}>
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                            Restart Course
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     ) : (
                       <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
                         {progress?.progressPercentage ? 'Continue' : 'Start'} Course
