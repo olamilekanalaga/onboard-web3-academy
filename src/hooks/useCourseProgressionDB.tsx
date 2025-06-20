@@ -1,7 +1,9 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { courses } from '@/data/courses';
 
 interface Course {
   id: string;
@@ -443,8 +445,11 @@ export const useCourseProgressionDB = () => {
     const { data: userProgress } = userProgressQuery;
     if (!userProgress) return null;
 
-    const totalChapters = Object.values(courses[courseId]?.modules || []).reduce((sum, module: any) => sum + module.chapters.length, 0);
-    const completedChapters = [];
+    const courseData = courses[courseId];
+    if (!courseData) return null;
+
+    const totalChapters = courseData.modules?.reduce((sum: number, module: any) => sum + (module.chapters?.length || 0), 0) || 0;
+    const completedChapters: string[] = [];
 
     return {
       courseId,

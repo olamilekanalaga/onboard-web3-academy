@@ -20,18 +20,18 @@ const CourseCompletionModal = ({ isOpen, onClose, completedCourseId, xpEarned, o
   const { getNextRecommendedCourse, userProgress, courseProgression } = useCourseProgressionDB();
   
   const completedCourse = courses[completedCourseId];
-  const nextCourseId = getNextRecommendedCourse(completedCourseId);
-  const nextCourse = nextCourseId ? courses[nextCourseId] : null;
-  const nextCourseConfig = nextCourseId ? courseProgression[nextCourseId as keyof typeof courseProgression] : null;
+  const nextRecommendedCourse = getNextRecommendedCourse();
+  const nextCourse = nextRecommendedCourse ? courses[nextRecommendedCourse.id] : null;
+  const nextCourseConfig = nextRecommendedCourse ? courseProgression[nextRecommendedCourse.id as keyof typeof courseProgression] : null;
 
   const handleContinueToNext = async () => {
-    if (nextCourseId) {
+    if (nextRecommendedCourse) {
       onClose();
       // Navigate to next course
-      navigate(`/mobile/course/${nextCourseId}`);
+      navigate(`/mobile/course/${nextRecommendedCourse.id}`);
       // Also call the callback if provided
       if (onStartNextCourse) {
-        onStartNextCourse(nextCourseId);
+        onStartNextCourse(nextRecommendedCourse.id);
       }
     }
   };
