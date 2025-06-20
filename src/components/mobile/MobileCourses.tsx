@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Clock, Star, Lock, CheckCircle, Trophy, Zap, RefreshCw } from "lucide-react";
+import { BookOpen, Clock, Star, Lock, CheckCircle, Trophy, Zap } from "lucide-react";
 import { courses } from "@/data/courses";
 import BottomNavigation from "./BottomNavigation";
 
@@ -17,9 +16,7 @@ const MobileCourses = () => {
     isCourseUnlocked, 
     isCourseCompleted, 
     getCourseProgress, 
-    courseProgression,
-    unlockAllCourses,
-    isUpdating 
+    courseProgression
   } = useCourseProgressionDB();
   
   const [filter, setFilter] = useState<'all' | 'available' | 'completed'>('all');
@@ -82,11 +79,6 @@ const MobileCourses = () => {
     }
   };
 
-  const handleUnlockAll = () => {
-    console.log('Unlocking all courses...');
-    unlockAllCourses();
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
@@ -122,7 +114,7 @@ const MobileCourses = () => {
         </div>
 
         {/* Filter buttons */}
-        <div className="flex space-x-2 mb-4">
+        <div className="flex space-x-2">
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
             size="sm"
@@ -148,24 +140,6 @@ const MobileCourses = () => {
             Completed
           </Button>
         </div>
-
-        {/* Debug unlock button - more prominent */}
-        <Button 
-          onClick={handleUnlockAll}
-          disabled={isUpdating}
-          className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3"
-        >
-          {isUpdating ? (
-            <>
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              Unlocking...
-            </>
-          ) : (
-            <>
-              🔓 UNLOCK ALL COURSES (DEBUG MODE)
-            </>
-          )}
-        </Button>
       </div>
 
       {/* Course List */}
@@ -236,14 +210,9 @@ const MobileCourses = () => {
                         <Trophy className="h-4 w-4 mr-2" />
                         Review Course
                       </Button>
-                    ) : isCourseUnlocked(course.id) ? (
+                    ) : (
                       <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
                         {progress?.progressPercentage ? 'Continue' : 'Start'} Course
-                      </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" className="w-full" disabled>
-                        <Lock className="h-4 w-4 mr-2" />
-                        Complete Prerequisites
                       </Button>
                     )}
                   </div>

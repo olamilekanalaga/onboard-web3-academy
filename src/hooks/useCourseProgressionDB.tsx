@@ -181,7 +181,7 @@ export const useCourseProgressionDB = () => {
       if (!user) {
         return {
           completedCourses: [],
-          unlockedCourses: ['foundation'],
+          unlockedCourses: Object.keys(COURSE_PROGRESSION), // Unlock all courses by default
           totalXP: 0,
           currentLevel: 1,
           courseProgress: {}
@@ -196,14 +196,16 @@ export const useCourseProgressionDB = () => {
           .eq('user_id', user.id)
           .single();
 
+        const allCourseIds = Object.keys(COURSE_PROGRESSION);
+
         if (statsError && (statsError.code === 'PGRST116' || statsError.code === '42P01')) {
-          // Create default user stats
+          // Create default user stats with all courses unlocked
           const { data: newStats } = await supabase
             .from('user_stats')
             .insert({
               user_id: user.id,
               completed_courses: [],
-              unlocked_courses: ['foundation'],
+              unlocked_courses: allCourseIds, // Unlock all courses by default
               total_xp: 0,
               level: 1
             })
@@ -212,7 +214,7 @@ export const useCourseProgressionDB = () => {
 
           return {
             completedCourses: [],
-            unlockedCourses: ['foundation'],
+            unlockedCourses: allCourseIds,
             totalXP: 0,
             currentLevel: 1,
             courseProgress: {}
@@ -248,34 +250,8 @@ export const useCourseProgressionDB = () => {
           .filter(progress => progress.completed)
           .map(progress => progress.courseId);
 
-        // Calculate unlocked courses based on completed courses
-        const unlockedCourses = ['foundation']; // Foundation is always unlocked
-        
-        // Add all completed courses to unlocked
-        completedCourses.forEach(courseId => {
-          if (!unlockedCourses.includes(courseId)) {
-            unlockedCourses.push(courseId);
-          }
-        });
-
-        // For each completed course, unlock its next courses
-        completedCourses.forEach(completedCourseId => {
-          const courseConfig = COURSE_PROGRESSION[completedCourseId as keyof typeof COURSE_PROGRESSION];
-          if (courseConfig && courseConfig.unlocks) {
-            courseConfig.unlocks.forEach(unlockedCourseId => {
-              const unlockedCourseConfig = COURSE_PROGRESSION[unlockedCourseId as keyof typeof COURSE_PROGRESSION];
-              if (unlockedCourseConfig) {
-                // Check if all prerequisites are met
-                const allPrereqsMet = unlockedCourseConfig.prerequisites.every(prereq => 
-                  completedCourses.includes(prereq)
-                );
-                if (allPrereqsMet && !unlockedCourses.includes(unlockedCourseId)) {
-                  unlockedCourses.push(unlockedCourseId);
-                }
-              }
-            });
-          }
-        });
+        // Always ensure all courses are unlocked
+        const unlockedCourses = allCourseIds;
 
         // Calculate total XP from all earned XP
         const totalXP = Object.values(courseProgress).reduce((sum, progress) => sum + progress.xpEarned, 0);
@@ -283,10 +259,10 @@ export const useCourseProgressionDB = () => {
         // Calculate level (every 1000 XP = 1 level)
         const currentLevel = Math.floor(totalXP / 1000) + 1;
 
-        // Update user stats if they're outdated
+        // Update user stats if they need to be updated (especially to ensure all courses are unlocked)
         if (userStats && (
+          JSON.stringify(userStats.unlocked_courses?.sort()) !== JSON.stringify(allCourseIds.sort()) ||
           JSON.stringify(userStats.completed_courses?.sort()) !== JSON.stringify(completedCourses.sort()) ||
-          JSON.stringify(userStats.unlocked_courses?.sort()) !== JSON.stringify(unlockedCourses.sort()) ||
           userStats.total_xp !== totalXP ||
           userStats.level !== currentLevel
         )) {
@@ -294,7 +270,7 @@ export const useCourseProgressionDB = () => {
             .from('user_stats')
             .update({
               completed_courses: completedCourses,
-              unlocked_courses: unlockedCourses,
+              unlocked_courses: allCourseIds, // Always unlock all courses
               total_xp: totalXP,
               level: currentLevel,
               updated_at: new Date().toISOString()
@@ -304,7 +280,7 @@ export const useCourseProgressionDB = () => {
 
         return {
           completedCourses,
-          unlockedCourses,
+          unlockedCourses: allCourseIds, // Always return all courses as unlocked
           totalXP,
           currentLevel,
           courseProgress
@@ -314,7 +290,7 @@ export const useCourseProgressionDB = () => {
         console.error('Database error:', error);
         return {
           completedCourses: [],
-          unlockedCourses: ['foundation'],
+          unlockedCourses: Object.keys(COURSE_PROGRESSION), // Unlock all courses even on error
           totalXP: 0,
           currentLevel: 1,
           courseProgress: {}
@@ -441,7 +417,7 @@ export const useCourseProgressionDB = () => {
 
   // Helper functions
   const isCourseUnlocked = (courseId: string): boolean => {
-    return userProgress?.unlockedCourses.includes(courseId) || false;
+    return true; // All courses are always unlocked
   };
 
   const isCourseCompleted = (courseId: string): boolean => {
@@ -464,16 +440,16 @@ export const useCourseProgressionDB = () => {
       const currentCourse = COURSE_PROGRESSION[currentCourseId as keyof typeof COURSE_PROGRESSION];
       if (currentCourse && currentCourse.unlocks) {
         for (const nextCourseId of currentCourse.unlocks) {
-          if (isCourseUnlocked(nextCourseId) && !isCourseCompleted(nextCourseId)) {
+          if (!isCourseCompleted(nextCourseId)) {
             return nextCourseId;
           }
         }
       }
     }
 
-    // Find the first unlocked course that's not completed
+    // Find the first course that's not completed
     for (const [courseId] of Object.entries(COURSE_PROGRESSION)) {
-      if (isCourseUnlocked(courseId) && !isCourseCompleted(courseId)) {
+      if (!isCourseCompleted(courseId)) {
         return courseId;
       }
     }
@@ -488,7 +464,7 @@ export const useCourseProgressionDB = () => {
   return {
     userProgress: userProgress || {
       completedCourses: [],
-      unlockedCourses: ['foundation'],
+      unlockedCourses: Object.keys(COURSE_PROGRESSION),
       totalXP: 0,
       currentLevel: 1,
       courseProgress: {}
