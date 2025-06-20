@@ -188,30 +188,34 @@ const MobileProfile = () => {
           <CardContent className="p-0">
             {profileSections.map((section, index) => (
               <div key={section.action}>
-                <button
-                  onClick={() => handleSectionClick(section.action)}
-                  className={`w-full flex items-center justify-between p-4 text-left transition-colors ${
-                    section.danger 
-                      ? 'hover:bg-red-50 text-red-600' 
-                      : 'hover:bg-slate-50 text-slate-900'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <section.icon className={`h-5 w-5 ${section.danger ? 'text-red-500' : 'text-slate-500'}`} />
-                    <span className="font-medium">{section.label}</span>
+                {section.action === "notifications" ? (
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center space-x-3">
+                      <section.icon className="h-5 w-5 text-slate-500" />
+                      <span className="font-medium text-slate-900">{section.label}</span>
+                    </div>
+                    <Switch
+                      checked={settings?.email_notifications || false}
+                      onCheckedChange={(checked) => updateSettings({ email_notifications: checked })}
+                    />
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {section.action === "notifications" && (
-                      <Switch
-                        checked={settings?.email_notifications || false}
-                        onCheckedChange={(checked) => updateSettings({ email_notifications: checked })}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    )}
+                ) : (
+                  <button
+                    onClick={() => handleSectionClick(section.action)}
+                    className={`w-full flex items-center justify-between p-4 text-left transition-colors ${
+                      section.danger 
+                        ? 'hover:bg-red-50 text-red-600' 
+                        : 'hover:bg-slate-50 text-slate-900'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <section.icon className={`h-5 w-5 ${section.danger ? 'text-red-500' : 'text-slate-500'}`} />
+                      <span className="font-medium">{section.label}</span>
+                    </div>
+                    
                     {!section.danger && <ChevronRight className="h-4 w-4 text-slate-400" />}
-                  </div>
-                </button>
+                  </button>
+                )}
                 {index < profileSections.length - 1 && <Separator />}
               </div>
             ))}
