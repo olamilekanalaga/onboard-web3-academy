@@ -1,155 +1,241 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Clock, Users, Star, Play, ChevronRight, Filter } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Progress } from "@/components/ui/progress";
+import { BookOpen, Clock, Star, Lock, CheckCircle, Trophy, Zap } from "lucide-react";
 import { courses } from "@/data/courses";
-import MobileHeader from "./MobileHeader";
 import BottomNavigation from "./BottomNavigation";
 
 const MobileCourses = () => {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState("all");
+  const { 
+    userProgress, 
+    isCourseUnlocked, 
+    isCourseCompleted, 
+    getCourseProgress, 
+    courseProgression,
+    unlockAllCourses 
+  } = useCourseProgressionDB();
+  
+  const [filter, setFilter] = useState<'all' | 'available' | 'completed'>('all');
 
-  const filteredCourses = Object.values(courses).filter(course => {
-    if (filter === "all") return true;
-    if (filter === "beginner") return course.level === "Beginner";
-    if (filter === "intermediate") return course.level === "Intermediate";
-    if (filter === "advanced") return course.level === "Advanced";
-    return true;
+  const courseList = Object.values(courses);
+
+  const filteredCourses = courseList.filter(course => {
+    switch (filter) {
+      case 'available':
+        return isCourseUnlocked(course.id) && !isCourseCompleted(course.id);
+      case 'completed':
+        return isCourseCompleted(course.id);
+      default:
+        return true;
+    }
   });
 
   const getIconForCourse = (courseId: string) => {
     switch (courseId) {
-      case "foundation": return "🏗️";
-      case "defi": return "🏦";
-      case "degen": return "⚡";
+      case "foundation": return "🎓";
+      case "defi-fundamentals": return "💰";
+      case "degen": return "🚀";
       case "advanced-trading": return "📈";
-      case "development": return "⚡";
-      default: return "📖";
+      case "development": return "💻";
+      case "content-creation": return "🎨";
+      case "nft-creation": return "🖼️";
+      case "web3-security": return "🔒";
+      case "dao-governance": return "🏛️";
+      case "web3-gaming": return "🎮";
+      case "crypto-tax": return "📊";
+      case "web3-social": return "👥";
+      default: return "📚";
+    }
+  };
+
+  const getDifficultyColor = (level: string) => {
+    switch (level.toLowerCase()) {
+      case "foundation": return "bg-emerald-100 text-emerald-700";
+      case "beginner": return "bg-green-100 text-green-700";
+      case "intermediate": return "bg-yellow-100 text-yellow-700";
+      case "advanced": return "bg-orange-100 text-orange-700";
+      case "expert": return "bg-red-100 text-red-700";
+      default: return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const getCourseStatus = (courseId: string) => {
+    if (isCourseCompleted(courseId)) {
+      return { text: "Completed", color: "bg-green-100 text-green-700", icon: CheckCircle };
+    }
+    if (isCourseUnlocked(courseId)) {
+      return { text: "Available", color: "bg-blue-100 text-blue-700", icon: BookOpen };
+    }
+    return { text: "Locked", color: "bg-gray-100 text-gray-500", icon: Lock };
+  };
+
+  const handleCourseClick = (courseId: string) => {
+    if (isCourseUnlocked(courseId)) {
+      navigate(`/mobile/course/${courseId}`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MobileHeader title="All Courses" />
-      
-      {/* Filter Tabs */}
-      <div className="px-6 py-4 bg-white border-b border-slate-200">
-        <div className="flex space-x-2 overflow-x-auto">
-          {[
-            { key: "all", label: "All Courses" },
-            { key: "beginner", label: "Beginner" },
-            { key: "intermediate", label: "Intermediate" },
-            { key: "advanced", label: "Advanced" }
-          ].map((tab) => (
-            <Button
-              key={tab.key}
-              variant={filter === tab.key ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter(tab.key)}
-              className={`whitespace-nowrap ${
-                filter === tab.key 
-                  ? "bg-emerald-600 text-white" 
-                  : "text-slate-600"
-              }`}
-            >
-              {tab.label}
-            </Button>
-          ))}
+    <div className="min-h-screen bg-slate-50 pb-20">
+      {/* Header */}
+      <div className="bg-white px-4 pt-12 pb-6 border-b border-slate-200">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">My Courses</h1>
+            <p className="text-slate-600 text-sm mt-1">Continue your Web3 learning journey</p>
+          </div>
+          <div className="text-right">
+            <div className="flex items-center space-x-1 text-yellow-600">
+              <Zap className="h-4 w-4" />
+              <span className="font-bold">{userProgress.totalXP}</span>
+            </div>
+            <div className="text-xs text-slate-500">Level {userProgress.currentLevel}</div>
+          </div>
         </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="text-center">
+            <div className="text-lg font-bold text-slate-900">{userProgress.completedCourses.length}</div>
+            <div className="text-xs text-slate-500">Completed</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-slate-900">{userProgress.unlockedCourses.length}</div>
+            <div className="text-xs text-slate-500">Unlocked</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-slate-900">{Object.keys(courses).length}</div>
+            <div className="text-xs text-slate-500">Total</div>
+          </div>
+        </div>
+
+        {/* Filter buttons */}
+        <div className="flex space-x-2">
+          <Button
+            variant={filter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('all')}
+            className="flex-1"
+          >
+            All Courses
+          </Button>
+          <Button
+            variant={filter === 'available' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('available')}
+            className="flex-1"
+          >
+            Available
+          </Button>
+          <Button
+            variant={filter === 'completed' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('completed')}
+            className="flex-1"
+          >
+            Completed
+          </Button>
+        </div>
+
+        {/* Debug button */}
+        <Button 
+          onClick={unlockAllCourses}
+          className="mt-3 w-full bg-purple-600 hover:bg-purple-700 text-white text-xs"
+        >
+          🔓 Unlock All Courses (Debug)
+        </Button>
       </div>
 
       {/* Course List */}
-      <div className="px-6 py-6 space-y-4">
-        {filteredCourses.length === 0 ? (
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-700 mb-2">No Courses Found</h3>
-            <p className="text-slate-500">No courses match your current filter.</p>
-          </div>
-        ) : (
-          filteredCourses.map((course) => (
-          <Card
-            key={course.id}
-            className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate(`/mobile/course/${course.id}`)}
-          >
-            <CardContent className="p-0">
-              {/* Course Image */}
-              <div className="relative h-32 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-t-lg">
-                <div className="absolute inset-0 flex items-center justify-center text-4xl">
-                  {getIconForCourse(course.id)}
-                </div>
-                <div className="absolute top-3 right-3">
-                  <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                    {course.level}
+      <div className="p-4 space-y-4">
+        {filteredCourses.map((course) => {
+          const progress = getCourseProgress(course.id);
+          const status = getCourseStatus(course.id);
+          const StatusIcon = status.icon;
+          const courseConfig = courseProgression[course.id as keyof typeof courseProgression];
+          const isUnlocked = isCourseUnlocked(course.id);
+
+          return (
+            <Card 
+              key={course.id} 
+              className={`transition-all ${isUnlocked ? 'cursor-pointer hover:shadow-md' : 'opacity-60'}`}
+              onClick={() => handleCourseClick(course.id)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3">
+                    <div className="text-2xl">{getIconForCourse(course.id)}</div>
+                    <div className="flex-1">
+                      <CardTitle className="text-base">{course.title}</CardTitle>
+                      <p className="text-sm text-slate-600 mt-1">{course.description}</p>
+                    </div>
+                  </div>
+                  <Badge className={`${status.color} text-xs`}>
+                    <StatusIcon className="h-3 w-3 mr-1" />
+                    {status.text}
                   </Badge>
                 </div>
-              </div>
+              </CardHeader>
 
-              {/* Course Info */}
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-bold text-slate-900 text-lg">{course.title}</h3>
-                  <div className="flex items-center space-x-1 text-yellow-500">
-                    <Star className="h-4 w-4 fill-current" />
-                    <span className="text-xs text-slate-600">{course.rating || '4.8'}</span>
-                  </div>
-                </div>
-
-                <p className="text-sm text-slate-600 mb-3 line-clamp-2">
-                  {course.description}
-                </p>
-
-                <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
-                  <div className="flex items-center space-x-4">
+              <CardContent>
+                <div className="space-y-3">
+                  {/* Course metadata */}
+                  <div className="flex items-center space-x-4 text-sm text-slate-600">
                     <div className="flex items-center space-x-1">
-                      <Clock className="h-3 w-3" />
+                      <Clock className="h-4 w-4" />
                       <span>{course.duration}</span>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <Users className="h-3 w-3" />
-                      <span>{(course.enrolled || 1250).toLocaleString()}</span>
-                    </div>
+                    <Badge className={`${getDifficultyColor(course.level)} text-xs`}>
+                      {course.level}
+                    </Badge>
+                    {courseConfig && (
+                      <div className="flex items-center space-x-1">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span>{courseConfig.xpReward} XP</span>
+                      </div>
+                    )}
                   </div>
-                  <span className="font-semibold text-emerald-600">{course.price || 'Free'}</span>
+
+                  {/* Progress bar */}
+                  {progress && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600">Progress</span>
+                        <span className="font-medium">{Math.round(progress.progressPercentage)}%</span>
+                      </div>
+                      <Progress value={progress.progressPercentage} className="h-2" />
+                    </div>
+                  )}
+
+                  {/* Action button */}
+                  <div className="pt-2">
+                    {isCourseCompleted(course.id) ? (
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Trophy className="h-4 w-4 mr-2" />
+                        Review Course
+                      </Button>
+                    ) : isCourseUnlocked(course.id) ? (
+                      <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
+                        {progress?.progressPercentage ? 'Continue' : 'Start'} Course
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" className="w-full" disabled>
+                        <Lock className="h-4 w-4 mr-2" />
+                        Complete Prerequisites
+                      </Button>
+                    )}
+                  </div>
                 </div>
-
-                {/* Progress Bar */}
-                {(course.progress || 0) > 0 && (
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-                      <span>Progress</span>
-                      <span>{course.progress || 0}%</span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-2">
-                      <div
-                        className="bg-emerald-600 h-2 rounded-full transition-all"
-                        style={{ width: `${course.progress || 0}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Action Button */}
-                <Button
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/mobile/course/${course.id}`);
-                  }}
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  {(course.progress || 0) > 0 ? "Continue" : "Start Course"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          ))
-        )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <BottomNavigation />

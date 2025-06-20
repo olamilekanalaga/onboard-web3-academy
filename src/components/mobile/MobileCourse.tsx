@@ -17,7 +17,17 @@ import CourseCompletionModal from "@/components/CourseCompletionModal";
 const MobileCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { updateChapterProgress, getCourseProgress, userProgress, courseProgression, unlockCourse, getNextRecommendedCourse, isCourseCompleted } = useCourseProgressionDB();
+  const { 
+    updateChapterProgress, 
+    getCourseProgress, 
+    userProgress, 
+    courseProgression, 
+    getNextRecommendedCourse, 
+    isCourseCompleted,
+    unlockAllCourses,
+    isUpdating
+  } = useCourseProgressionDB();
+  
   const [selectedModule, setSelectedModule] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
@@ -30,28 +40,14 @@ const MobileCourse = () => {
   const course = courseId ? courses[courseId] : undefined;
   const courseConfig = courseId ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
 
-  // Debug logging
-  useEffect(() => {
-    console.log('=== MobileCourse Debug Info ===');
-    console.log('courseId:', courseId);
-    console.log('userProgress:', userProgress);
-    console.log('courseProgress:', courseProgress);
-    console.log('completedChapters:', completedChapters);
-    console.log('isCourseCompleted:', isCourseCompleted(courseId || ''));
-    console.log('================================');
-  }, [courseId, userProgress, courseProgress, completedChapters]);
-
   // Auto-start course on load
   useEffect(() => {
-    console.log('MobileCourse useEffect triggered for courseId:', courseId);
     setCourseJustCompleted(false);
     setShowCompletionModal(false);
 
     if (courseId) {
-      // Start with first module and chapter
       setSelectedModule(0);
       setSelectedChapter(0);
-      console.log('Mobile course auto-started - selectedModule: 0, selectedChapter: 0');
     }
   }, [courseId]);
 
@@ -71,11 +67,6 @@ const MobileCourse = () => {
   const currentModule = course.modules[selectedModule];
   const currentChapter = currentModule?.chapters[selectedChapter];
 
-  // Debug logging
-  console.log('Mobile course render - selectedModule:', selectedModule, 'selectedChapter:', selectedChapter);
-  console.log('Mobile currentModule:', currentModule);
-  console.log('Mobile currentChapter:', currentChapter);
-
   const getChapterId = (moduleId: number, chapterId: number) => `${courseId}-${moduleId}-${chapterId}`;
 
   const isChapterCompleted = (moduleId: number, chapterId: number) =>
@@ -92,43 +83,24 @@ const MobileCourse = () => {
     return isChapterCompleted(moduleId, chapterId - 1);
   };
 
-  const markChapterComplete = () => {
-    const chapterId = getChapterId(selectedModule, selectedChapter);
-    console.log('Marking chapter complete:', chapterId);
+  const markChapterComplete = async () => {
+    if (!courseId || isUpdating) return;
     
-    if (!completedChapters.includes(chapterId) && courseId) {
+    const chapterId = getChapterId(selectedModule, selectedChapter);
+    
+    if (!completedChapters.includes(chapterId)) {
       const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
-      console.log('Total chapters in course:', totalChapters);
-      updateChapterProgress(courseId, chapterId, totalChapters);
-
-      // Check if course is now completed
-      setTimeout(() => {
-        const updatedProgress = getCourseProgress(courseId);
-        console.log('Updated progress after chapter completion:', updatedProgress);
-        if (updatedProgress && updatedProgress.progressPercentage === 100 && !courseJustCompleted) {
-          console.log('Course is now 100% complete, showing modal');
+      
+      try {
+        const result = await updateChapterProgress(courseId, chapterId, totalChapters);
+        
+        // Check if course was completed
+        if (result?.completed && !courseJustCompleted) {
           setCourseJustCompleted(true);
           setShowCompletionModal(true);
         }
-      }, 1000); // Increased timeout to allow for database updates
-    } else {
-      console.log('Chapter already completed or no courseId');
-    }
-  };
-
-  // Test function to complete all chapters at once (for debugging)
-  const completeAllChapters = () => {
-    if (!courseId || !course) return;
-    
-    console.log('COMPLETING ALL CHAPTERS FOR TESTING');
-    const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
-    
-    // Mark all chapters as complete
-    for (let moduleIndex = 0; moduleIndex < course.modules.length; moduleIndex++) {
-      const module = course.modules[moduleIndex];
-      for (let chapterIndex = 0; chapterIndex < module.chapters.length; chapterIndex++) {
-        const chapterId = getChapterId(moduleIndex, chapterIndex);
-        updateChapterProgress(courseId, chapterId, totalChapters);
+      } catch (error) {
+        console.error('Error updating chapter progress:', error);
       }
     }
   };
@@ -137,14 +109,8 @@ const MobileCourse = () => {
     setShowCompletionModal(false);
   };
 
-  const handleStartNextCourse = async (nextCourseId: string) => {
-    // Unlock the next course first
-    await unlockCourse(nextCourseId);
-    
-    // Close modal
+  const handleStartNextCourse = (nextCourseId: string) => {
     setShowCompletionModal(false);
-    
-    // Navigate to the next course
     navigate(`/mobile/course/${nextCourseId}`);
   };
 
@@ -274,15 +240,13 @@ const MobileCourse = () => {
           <Progress value={progressPercentage} className="h-2" />
         </div>
 
-        {/* Debug Button - Remove in production */}
-        {courseId === 'foundation' && (
-          <Button 
-            onClick={completeAllChapters}
-            className="mt-2 w-full bg-red-600 hover:bg-red-700 text-white text-xs"
-          >
-            DEBUG: Complete All Chapters
-          </Button>
-        )}
+        {/* Unlock All Courses Button (for testing) */}
+        <Button 
+          onClick={unlockAllCourses}
+          className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white text-xs"
+        >
+          🔓 Unlock All Courses
+        </Button>
       </div>
 
       {/* Course Content */}
@@ -433,10 +397,11 @@ const MobileCourse = () => {
                 {!isChapterCompleted(selectedModule, selectedChapter) && (
                   <Button
                     onClick={markChapterComplete}
+                    disabled={isUpdating}
                     className="bg-green-600 hover:bg-green-700 text-white w-full"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Mark as Complete
+                    {isUpdating ? 'Saving...' : 'Mark as Complete'}
                   </Button>
                 )}
 

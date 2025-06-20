@@ -1,11 +1,10 @@
 
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Trophy, Star, ArrowRight, BookOpen, Target } from 'lucide-react';
-import { useCourseProgression } from '@/hooks/useCourseProgression';
+import { useCourseProgressionDB } from '@/hooks/useCourseProgressionDB';
 import { courses } from '@/data/courses';
 
 interface CourseCompletionModalProps {
@@ -18,7 +17,7 @@ interface CourseCompletionModalProps {
 
 const CourseCompletionModal = ({ isOpen, onClose, completedCourseId, xpEarned, onStartNextCourse }: CourseCompletionModalProps) => {
   const navigate = useNavigate();
-  const { getNextRecommendedCourse, userProgress, courseProgression, unlockCourse } = useCourseProgression();
+  const { getNextRecommendedCourse, userProgress, courseProgression } = useCourseProgressionDB();
   
   const completedCourse = courses[completedCourseId];
   const nextCourseId = getNextRecommendedCourse(completedCourseId);
@@ -27,12 +26,9 @@ const CourseCompletionModal = ({ isOpen, onClose, completedCourseId, xpEarned, o
 
   const handleContinueToNext = async () => {
     if (nextCourseId) {
-      // Unlock the next course first
-      await unlockCourse(nextCourseId);
-      
       onClose();
-      // Navigate to next course and trigger welcome modal
-      navigate(`/course/${nextCourseId}`, { state: { showWelcome: true } });
+      // Navigate to next course
+      navigate(`/mobile/course/${nextCourseId}`);
       // Also call the callback if provided
       if (onStartNextCourse) {
         onStartNextCourse(nextCourseId);
@@ -41,7 +37,7 @@ const CourseCompletionModal = ({ isOpen, onClose, completedCourseId, xpEarned, o
   };
 
   const handleBackToCourses = () => {
-    navigate('/courses');
+    navigate('/mobile/explore');
     onClose();
   };
 
