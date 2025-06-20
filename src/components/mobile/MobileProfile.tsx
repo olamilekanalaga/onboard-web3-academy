@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { useProfile } from "@/hooks/useProfile";
-import { useUserSettings } from "@/hooks/useUserSettings";
+import { useUserSettings, useUpdateUserSettings } from "@/hooks/useUserSettings";
 import { 
   User, 
   Settings, 
@@ -30,8 +30,9 @@ const MobileProfile = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { userProgress, isLoading } = useCourseProgressionDB();
-  const { profile } = useProfile();
-  const { settings, updateSettings } = useUserSettings();
+  const { data: profile } = useProfile();
+  const { data: settings } = useUserSettings();
+  const updateSettingsMutation = useUpdateUserSettings();
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
   const currentStreak = 7;
@@ -45,6 +46,10 @@ const MobileProfile = () => {
     enabled?: boolean;
     onToggle?: (enabled: boolean) => void;
   }
+
+  const updateSettings = (updates: any) => {
+    updateSettingsMutation.mutate(updates);
+  };
 
   const profileSections: ProfileSection[] = [
     {
