@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +13,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
-import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
+import { getUserInitials } from "@/utils/userDisplay";
 import Header from "@/components/Header";
+import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -37,13 +39,15 @@ const Profile = () => {
       <div className="container mx-auto max-w-4xl px-4 py-8">
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-white text-3xl font-bold">
-              {getUserInitials(profile, user)}
-            </span>
+          <div className="mb-6">
+            <ProfilePictureUpload
+              currentAvatarUrl={profile?.avatar_url}
+              userInitials={getUserInitials(profile, user)}
+              size="lg"
+            />
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            {getDisplayName(profile, user)}
+            {profile?.full_name || profile?.username || 'User'}
           </h1>
           <p className="text-muted-foreground mb-4">{user?.email}</p>
           <Badge className="bg-emerald-600 text-white">Level {stats.level}</Badge>

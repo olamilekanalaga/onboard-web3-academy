@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { useProfile } from "@/hooks/useProfile";
 import { useUserSettings, useUpdateUserSettings } from "@/hooks/useUserSettings";
+import { getUserInitials } from "@/utils/userDisplay";
 import { 
   User, 
   Settings, 
@@ -25,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import BottomNavigation from "./BottomNavigation";
+import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 
 const MobileProfile = () => {
   const navigate = useNavigate();
@@ -120,8 +123,12 @@ const MobileProfile = () => {
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 pt-12 pb-8">
         <div className="text-center text-white">
-          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="h-10 w-10" />
+          <div className="mb-4">
+            <ProfilePictureUpload
+              currentAvatarUrl={profile?.avatar_url}
+              userInitials={getUserInitials(profile, user)}
+              size="md"
+            />
           </div>
           <h1 className="text-xl font-bold">{profile?.full_name || profile?.username || 'User'}</h1>
           <p className="text-blue-100 text-sm">{profile?.email}</p>
