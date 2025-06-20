@@ -29,29 +29,28 @@ const CourseWelcomeModal = ({ isOpen, onClose, onStartCourse, courseId }: Course
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <div className="fixed inset-0 bg-black/80 z-[9998]" style={{ zIndex: 9998 }} />
-      <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto sm:w-full" style={{ zIndex: 9999 }}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
             <Sparkles className="w-8 h-8 text-blue-600" />
           </div>
-          <DialogTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Welcome to {course.title}!
           </DialogTitle>
-          <DialogDescription className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto px-4 sm:px-0">
+          <DialogDescription className="text-lg text-slate-600 max-w-2xl mx-auto">
             {course.longDescription || course.description}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Course Overview */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 sm:p-6">
-            <h3 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 flex items-center">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+            <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center">
               <Target className="w-5 h-5 mr-2 text-blue-600" />
               Course Overview
             </h3>
-
-            <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
+            
+            <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-600">Level:</span>
@@ -158,19 +157,19 @@ const CourseWelcomeModal = ({ isOpen, onClose, onStartCourse, courseId }: Course
           )}
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <Button
+          <div className="flex gap-3 pt-4">
+            <Button 
               onClick={handleStartCourse}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-base sm:text-lg py-4 sm:py-6"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg py-6"
             >
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+              <Sparkles className="w-5 h-5 mr-2" />
               Start Learning Journey
-              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
+              <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button
-              variant="outline"
+            <Button 
+              variant="outline" 
               onClick={onClose}
-              className="px-6 sm:px-8 py-4 sm:py-6"
+              className="px-8 py-6"
             >
               Maybe Later
             </Button>
