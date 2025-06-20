@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,9 +19,9 @@ export interface Profile {
 export const useProfile = () => {
   const { user } = useAuth();
 
-  return useQuery({
+  return useQuery<Profile>({
     queryKey: ['profile', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<Profile> => {
       if (!user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
@@ -55,7 +56,7 @@ export const useProfile = () => {
     },
     enabled: !!user,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 10, // 10 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes (renamed from cacheTime)
   });
 };
 
