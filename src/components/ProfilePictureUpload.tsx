@@ -24,6 +24,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
   const { user } = useAuth();
   const updateProfileMutation = useUpdateProfile();
   const [uploading, setUploading] = useState(false);
+  const [currentImageUrl, setCurrentImageUrl] = useState(currentAvatarUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sizeClasses = {
@@ -55,15 +56,33 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
     setUploading(true);
 
     try {
-      // Create file path: user_id/avatar.extension
+      // Create file path with timestamp to ensure uniqueness: user_id/avatar_timestamp.extension
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/avatar.${fileExt}`;
+      const timestamp = Date.now();
+      const fileName = `${user.id}/avatar_${timestamp}.${fileExt}`;
+
+      // Remove old avatar if it exists
+      if (currentImageUrl) {
+        try {
+          // Extract the file path from the URL
+          const oldFilePath = currentImageUrl.split('/').pop();
+          if (oldFilePath && oldFilePath.includes('avatar_')) {
+            await supabase.storage
+              .from('avatars')
+              .remove([`${user.id}/${oldFilePath}`]);
+          }
+        } catch (error) {
+          console.warn('Failed to remove old avatar:', error);
+          // Continue with upload even if removal fails
+        }
+      }
 
       // Upload to Supabase storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, {
-          upsert: true, // Replace existing file
+          upsert: false, // Don't overwrite, use unique filename
+          cacheControl: '3600',
         });
 
       if (uploadError) {
@@ -75,25 +94,45 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
         .from('avatars')
         .getPublicUrl(fileName);
 
+      // Add cache busting parameter to ensure fresh image load
+      const cacheBustedUrl = `${publicUrl}?t=${timestamp}`;
+
       // Update profile with new avatar URL
       await updateProfileMutation.mutateAsync({
-        avatar_url: publicUrl
+        avatar_url: cacheBustedUrl
       });
+
+      // Update local state immediately
+      setCurrentImageUrl(cacheBustedUrl);
 
       toast.success('Profile picture updated successfully!');
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      toast.error('Failed to upload profile picture');
+      toast.error('Failed to upload profile picture. Please try again.');
     } finally {
       setUploading(false);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
+
+  // Use local state if available, fallback to prop
+  const displayAvatarUrl = currentImageUrl || currentAvatarUrl;
 
   return (
     <div className="flex flex-col items-center space-y-4">
       <div className="relative mb-2">
         <Avatar className={sizeClasses[size]}>
-          <AvatarImage src={currentAvatarUrl || undefined} alt="Profile picture" />
+          <AvatarImage 
+            src={displayAvatarUrl || undefined} 
+            alt="Profile picture"
+            onError={() => {
+              console.warn('Avatar image failed to load:', displayAvatarUrl);
+              // Don't update state here to avoid infinite loops
+            }}
+          />
           <AvatarFallback className="text-lg font-semibold bg-gradient-to-br from-emerald-500 to-blue-600 text-white">
             {userInitials}
           </AvatarFallback>
