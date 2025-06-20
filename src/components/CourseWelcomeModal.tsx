@@ -24,6 +24,7 @@ const CourseWelcomeModal = ({ isOpen, onClose, onStartCourse, courseId }: Course
   }
 
   const handleStartCourse = () => {
+    console.log('CourseWelcomeModal: handleStartCourse called');
     onStartCourse();
     onClose();
   };

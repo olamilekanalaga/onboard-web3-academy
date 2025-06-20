@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -480,6 +479,37 @@ export const useCourseProgression = () => {
     await saveProgress(newUserProgress);
   };
 
+  const unlockCourse = async (courseId: string) => {
+    if (!user?.id) return;
+
+    try {
+      // Get current user stats
+      const { data: currentStats } = await supabase
+        .from('user_stats')
+        .select('unlocked_courses')
+        .eq('user_id', user.id)
+        .single();
+
+      if (currentStats && !currentStats.unlocked_courses.includes(courseId)) {
+        // Add the course to unlocked courses
+        const updatedUnlockedCourses = [...currentStats.unlocked_courses, courseId];
+        
+        await supabase
+          .from('user_stats')
+          .update({ unlocked_courses: updatedUnlockedCourses })
+          .eq('user_id', user.id);
+
+        // Update local state
+        setUserProgress(prev => ({
+          ...prev,
+          unlockedCourses: updatedUnlockedCourses
+        }));
+      }
+    } catch (error) {
+      console.error('Error unlocking course:', error);
+    }
+  };
+
   return {
     userProgress,
     isCourseUnlocked,
@@ -492,6 +522,7 @@ export const useCourseProgression = () => {
     getNextRecommendedCourse,
     isDemoUnlocked,
     completeCourse,
-    courseProgression: COURSE_PROGRESSION
+    courseProgression: COURSE_PROGRESSION,
+    unlockCourse
   };
 };
