@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Target, Star, Clock, CheckCircle, Sparkles, ArrowRight, X } from 'lucide-react';
+import { BookOpen, Target, Star, Clock, CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { courses } from '@/data/courses';
 import { useCourseProgression } from '@/hooks/useCourseProgression';
 
@@ -24,39 +24,14 @@ const CourseWelcomeModal = ({ isOpen, onClose, onStartCourse, courseId }: Course
   }
 
   const handleStartCourse = () => {
-    console.log('CourseWelcomeModal: handleStartCourse called');
-    // Close modal first
-    onClose();
-    // Then start course after a small delay to ensure modal is closed
-    setTimeout(() => {
-      onStartCourse();
-    }, 100);
-  };
-
-  const handleClose = () => {
-    console.log('CourseWelcomeModal: handleClose called');
+    console.log('CourseWelcomeModal: Start course clicked');
+    onStartCourse();
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      console.log('CourseWelcomeModal: Dialog onOpenChange called with:', open);
-      if (!open) {
-        handleClose();
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] sm:max-h-[85vh] overflow-y-auto mx-2 sm:mx-4 w-[96vw] sm:w-auto">
-        <div className="absolute right-4 top-4 z-50">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            className="h-8 w-8 p-0 hover:bg-slate-100"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
         <DialogHeader className="text-center space-y-4">
           <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
             <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
@@ -195,7 +170,7 @@ const CourseWelcomeModal = ({ isOpen, onClose, onStartCourse, courseId }: Course
             </Button>
             <Button 
               variant="outline" 
-              onClick={handleClose}
+              onClick={onClose}
               className="px-6 sm:px-8 py-4 sm:py-6 text-sm sm:text-base"
             >
               Maybe Later

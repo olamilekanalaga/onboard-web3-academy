@@ -113,23 +113,14 @@ const MobileCourse = () => {
   };
 
   const handleStartCourse = () => {
-    console.log('MobileCourse.tsx: handleStartCourse called');
-    console.log('Current course:', course);
-    console.log('Course modules:', course?.modules);
-
-    // Close welcome modal first
+    console.log('MobileCourse.tsx: handleStartCourse called - starting course');
+    
+    // Set to first module and chapter immediately
+    setSelectedModule(0);
+    setSelectedChapter(0);
     setShowWelcomeModal(false);
-
-    // Ensure we have a valid course and modules before setting states
-    if (course && course.modules && course.modules.length > 0) {
-      setTimeout(() => {
-        setSelectedModule(0);
-        setSelectedChapter(0);
-        console.log('Mobile states set - selectedModule: 0, selectedChapter: 0');
-      }, 100);
-    } else {
-      console.error('Mobile course or modules not available:', { course, modules: course?.modules });
-    }
+    
+    console.log('Mobile course started - selectedModule: 0, selectedChapter: 0');
   };
 
   const handleCloseWelcomeModal = () => {

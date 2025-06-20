@@ -148,26 +148,20 @@ const Course = () => {
   }, [courseId, location.state, getCourseProgress]);
 
   const handleStartCourse = () => {
-    console.log('Course: handleStartCourse called');
-    console.log('Setting selectedModule to 0, selectedChapter to 0');
+    console.log('Course: handleStartCourse called - setting course to start');
     
-    // Close welcome modal first
-    setShowWelcomeModal(false);
-
-    // Set to first module and chapter
+    // Set to first module and chapter immediately
     setSelectedModule(0);
     setSelectedChapter(0);
+    setShowWelcomeModal(false);
 
-    // Force a re-render by updating state
+    // Scroll to course content after a brief delay
     setTimeout(() => {
-      console.log('Course started - selectedModule:', 0, 'selectedChapter:', 0);
-      
-      // Scroll to course content
       const courseContent = document.getElementById('course-content');
       if (courseContent) {
         courseContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 100);
+    }, 200);
   };
 
   const handleCloseWelcomeModal = () => {
