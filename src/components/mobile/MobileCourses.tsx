@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Clock, Star, Lock, CheckCircle, Trophy, Zap } from "lucide-react";
+import { BookOpen, Clock, Star, Lock, CheckCircle, Trophy, Zap, RefreshCw } from "lucide-react";
 import { courses } from "@/data/courses";
 import BottomNavigation from "./BottomNavigation";
 
@@ -18,7 +18,8 @@ const MobileCourses = () => {
     isCourseCompleted, 
     getCourseProgress, 
     courseProgression,
-    unlockAllCourses 
+    unlockAllCourses,
+    isUpdating 
   } = useCourseProgressionDB();
   
   const [filter, setFilter] = useState<'all' | 'available' | 'completed'>('all');
@@ -81,6 +82,11 @@ const MobileCourses = () => {
     }
   };
 
+  const handleUnlockAll = () => {
+    console.log('Unlocking all courses...');
+    unlockAllCourses();
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
@@ -116,7 +122,7 @@ const MobileCourses = () => {
         </div>
 
         {/* Filter buttons */}
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 mb-4">
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
             size="sm"
@@ -143,12 +149,22 @@ const MobileCourses = () => {
           </Button>
         </div>
 
-        {/* Debug button */}
+        {/* Debug unlock button - more prominent */}
         <Button 
-          onClick={unlockAllCourses}
-          className="mt-3 w-full bg-purple-600 hover:bg-purple-700 text-white text-xs"
+          onClick={handleUnlockAll}
+          disabled={isUpdating}
+          className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3"
         >
-          🔓 Unlock All Courses (Debug)
+          {isUpdating ? (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              Unlocking...
+            </>
+          ) : (
+            <>
+              🔓 UNLOCK ALL COURSES (DEBUG MODE)
+            </>
+          )}
         </Button>
       </div>
 

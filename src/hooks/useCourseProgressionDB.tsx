@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -403,21 +402,40 @@ export const useCourseProgressionDB = () => {
 
       const allCourseIds = Object.keys(COURSE_PROGRESSION);
       
+      // Update user_stats to unlock all courses
       await supabase
         .from('user_stats')
         .upsert({
           user_id: user.id,
           unlocked_courses: allCourseIds,
+          completed_courses: [], // Reset completed courses for testing
+          total_xp: 0, // Reset XP for testing
+          level: 1, // Reset level for testing
           updated_at: new Date().toISOString()
         });
 
+      // Also clear any existing progress for a clean slate
+      await supabase
+        .from('user_progress')
+        .delete()
+        .eq('user_id', user.id);
+
       toast({
         title: "🔓 All Courses Unlocked!",
-        description: "You now have access to all courses in the platform.",
+        description: "You now have access to all courses. Progress has been reset for testing.",
       });
     },
     onSuccess: () => {
+      // Invalidate to refresh data immediately
       queryClient.invalidateQueries({ queryKey: ['course-progression'] });
+    },
+    onError: (error) => {
+      console.error('Error unlocking courses:', error);
+      toast({
+        title: "Error",
+        description: "Failed to unlock courses. Please try again.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -483,6 +501,6 @@ export const useCourseProgressionDB = () => {
     updateChapterProgress,
     getNextRecommendedCourse,
     unlockAllCourses,
-    isUpdating: updateChapterProgressMutation.isPending
+    isUpdating: updateChapterProgressMutation.isPending || unlockAllCoursesMutation.isPending
   };
 };
