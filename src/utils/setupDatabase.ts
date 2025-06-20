@@ -112,6 +112,9 @@ export const initializeUserStats = async (userId: string) => {
       .upsert({
         user_id: userId,
         unlocked_courses: ['foundation']
+      }, {
+        onConflict: 'user_id',
+        ignoreDuplicates: true
       });
 
     const { error } = await Promise.race([initPromise, timeoutPromise]) as any;

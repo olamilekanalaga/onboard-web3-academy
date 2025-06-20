@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface CourseProgress {
   courseId: string;
@@ -208,26 +209,116 @@ export const useCourseProgression = () => {
     courseProgress: {}
   });
 
-  // Load progress from localStorage
+  // Load progress from database
   useEffect(() => {
     if (user) {
-      const savedProgress = localStorage.getItem(`course_progress_${user.id}`);
-      if (savedProgress) {
-        try {
-          const parsed = JSON.parse(savedProgress);
-          // Recalculate unlocked courses based on completed courses
-          parsed.unlockedCourses = calculateUnlockedCourses(parsed.completedCourses);
-          setUserProgress(parsed);
-        } catch (error) {
-          console.error('Error loading course progress:', error);
-        }
-      }
+      loadProgressFromDatabase();
     }
   }, [user]);
 
-  // Save progress to localStorage
-  const saveProgress = (newProgress: UserProgressData) => {
-    if (user) {
+  const loadProgressFromDatabase = async () => {
+    if (!user) return;
+
+    try {
+      // Get user stats from database
+      const { data: userStats, error: statsError } = await supabase
+        .from('user_stats')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (statsError && statsError.code !== 'PGRST116') {
+        console.error('Error loading user stats:', statsError);
+        return;
+      }
+
+      // Get user progress from database
+      const { data: progressData, error: progressError } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('lesson_id', 'course_overall');
+
+      if (progressError) {
+        console.error('Error loading user progress:', progressError);
+        return;
+      }
+
+      // Convert database data to our format
+      const completedCourses = userStats?.completed_courses || [];
+      const courseProgress: Record<string, CourseProgress> = {};
+
+      // Build course progress from database records
+      progressData?.forEach(record => {
+        const courseId = record.course_id;
+        const completedChapters = record.completed_chapters || [];
+        const totalChapters = COURSE_PROGRESSION[courseId as keyof typeof COURSE_PROGRESSION]?.totalChapters || 0;
+        const progressPercentage = totalChapters > 0 ? (completedChapters.length / totalChapters) * 100 : 0;
+
+        courseProgress[courseId] = {
+          courseId,
+          completed: completedCourses.includes(courseId),
+          completedChapters,
+          totalChapters,
+          progressPercentage,
+          completedAt: record.completed_at ? new Date(record.completed_at) : undefined,
+          xpEarned: record.xp_earned || 0
+        };
+      });
+
+      const newProgress: UserProgressData = {
+        completedCourses,
+        unlockedCourses: calculateUnlockedCourses(completedCourses),
+        totalXP: userStats?.total_xp || 0,
+        currentLevel: userStats?.level || 1,
+        courseProgress
+      };
+
+      setUserProgress(newProgress);
+    } catch (error) {
+      console.error('Error loading progress from database:', error);
+    }
+  };
+
+  // Save progress to database
+  const saveProgress = async (newProgress: UserProgressData) => {
+    if (!user) return;
+
+    try {
+      // Update user stats
+      await supabase
+        .from('user_stats')
+        .upsert({
+          user_id: user.id,
+          completed_courses: newProgress.completedCourses,
+          total_xp: newProgress.totalXP,
+          level: newProgress.currentLevel,
+          unlocked_courses: newProgress.unlockedCourses,
+          updated_at: new Date().toISOString()
+        });
+
+      // Update individual course progress
+      for (const [courseId, progress] of Object.entries(newProgress.courseProgress)) {
+        await supabase
+          .from('user_progress')
+          .upsert({
+            user_id: user.id,
+            course_id: courseId,
+            lesson_id: 'course_overall', // Use a default lesson_id for course-level progress
+            completed_chapters: progress.completedChapters,
+            progress_percentage: Math.round(progress.progressPercentage),
+            completed_at: progress.completedAt?.toISOString(),
+            xp_earned: progress.xpEarned,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,course_id,lesson_id'
+          });
+      }
+
+      setUserProgress(newProgress);
+    } catch (error) {
+      console.error('Error saving progress to database:', error);
+      // Fallback to localStorage if database fails
       localStorage.setItem(`course_progress_${user.id}`, JSON.stringify(newProgress));
       setUserProgress(newProgress);
     }
@@ -256,7 +347,7 @@ export const useCourseProgression = () => {
     };
   };
 
-  const updateChapterProgress = (courseId: string, chapterId: string, totalChapters?: number) => {
+  const updateChapterProgress = async (courseId: string, chapterId: string, totalChapters?: number) => {
     const courseConfig = COURSE_PROGRESSION[courseId as keyof typeof COURSE_PROGRESSION];
     if (!courseConfig) return;
 
@@ -306,11 +397,11 @@ export const useCourseProgression = () => {
         newUserProgress.unlockedCourses = calculateUnlockedCourses(newUserProgress.completedCourses);
       }
 
-      saveProgress(newUserProgress);
+      await saveProgress(newUserProgress);
     }
   };
 
-  const resetProgress = () => {
+  const resetProgress = async () => {
     const initialProgress: UserProgressData = {
       completedCourses: [], // No courses completed
       unlockedCourses: ['foundation'], // Only foundation unlocked
@@ -318,7 +409,7 @@ export const useCourseProgression = () => {
       currentLevel: 1,
       courseProgress: {}
     };
-    saveProgress(initialProgress);
+    await saveProgress(initialProgress);
   };
 
   const getNextUnlockedCourse = (): string | null => {
@@ -351,7 +442,7 @@ export const useCourseProgression = () => {
   };
 
   // For testing purposes - complete a course manually
-  const completeCourse = (courseId: string) => {
+  const completeCourse = async (courseId: string) => {
     const courseConfig = COURSE_PROGRESSION[courseId as keyof typeof COURSE_PROGRESSION];
     if (!courseConfig) return;
 
@@ -386,7 +477,7 @@ export const useCourseProgression = () => {
       newUserProgress.unlockedCourses = calculateUnlockedCourses(newUserProgress.completedCourses);
     }
 
-    saveProgress(newUserProgress);
+    await saveProgress(newUserProgress);
   };
 
   return {

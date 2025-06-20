@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   MessageCircle, 
   Twitter, 
@@ -17,8 +19,10 @@ interface MobileFollowFlowProps {
 }
 
 const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
+  const { user } = useAuth();
   const [telegramFollowed, setTelegramFollowed] = useState(false);
   const [twitterFollowed, setTwitterFollowed] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   const telegramUrl = "https://t.me/onboardweb3academy"; // Update with your actual Telegram
   const twitterUrl = "https://x.com/onboardweb3"; // Update with your actual X/Twitter
@@ -34,6 +38,30 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
   };
 
   const canContinue = telegramFollowed && twitterFollowed;
+
+  const handleComplete = async () => {
+    if (!user || !canContinue) return;
+
+    setIsCompleting(true);
+    try {
+      // Mark follow flow as completed in user profile
+      await supabase
+        .from('profiles')
+        .update({
+          follow_flow_completed: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      onComplete();
+    } catch (error) {
+      console.error('Error completing follow flow:', error);
+      // Continue anyway to not block user
+      onComplete();
+    } finally {
+      setIsCompleting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 relative overflow-hidden">
@@ -187,15 +215,17 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
         {/* Continue Button */}
         <div className="pt-6 pb-8">
           <Button
-            onClick={onComplete}
-            disabled={!canContinue}
+            onClick={handleComplete}
+            disabled={!canContinue || isCompleting}
             className={`w-full py-4 text-lg font-semibold transition-all duration-300 ${
-              canContinue
+              canContinue && !isCompleting
                 ? 'bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white shadow-lg'
                 : 'bg-gray-600 text-gray-400 cursor-not-allowed'
             }`}
           >
-            {canContinue ? (
+            {isCompleting ? (
+              <span>Completing...</span>
+            ) : canContinue ? (
               <>
                 <span>Continue to Academy</span>
                 <ArrowRight className="w-5 h-5 ml-2" />

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
 import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,19 +10,49 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { courses } from "@/data/courses";
 import TradingDemo from "@/components/TradingDemo";
 import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
+import BottomNavigation from "./BottomNavigation";
+import CourseWelcomeModal from "@/components/CourseWelcomeModal";
+import CourseCompletionModal from "@/components/CourseCompletionModal";
 
 const MobileCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { updateChapterProgress, getCourseProgress } = useCourseProgression();
+  const location = useLocation();
+  const { updateChapterProgress, getCourseProgress, courseProgression } = useCourseProgression();
   const [selectedModule, setSelectedModule] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [courseJustCompleted, setCourseJustCompleted] = useState(false);
 
   // Get completed chapters from progression system
   const courseProgress = getCourseProgress(courseId || '');
   const completedChapters = courseProgress?.completedChapters || [];
 
   const course = courseId ? courses[courseId] : undefined;
+  const courseConfig = courseId ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
+
+  // Check for welcome modal on course load
+  useEffect(() => {
+    setCourseJustCompleted(false);
+    setShowCompletionModal(false);
+
+    if (courseId) {
+      const courseProgress = getCourseProgress(courseId);
+      const isFirstTime = !courseProgress || courseProgress.progressPercentage === 0;
+
+      // Show welcome modal if:
+      // 1. Coming from course completion (showWelcome state), OR
+      // 2. First time visiting this course (no progress)
+      if (location.state?.showWelcome || isFirstTime) {
+        setShowWelcomeModal(true);
+        // Clear the state to prevent showing again on refresh
+        if (location.state?.showWelcome) {
+          window.history.replaceState({}, document.title);
+        }
+      }
+    }
+  }, [courseId, location.state, getCourseProgress]);
 
   if (!course) {
     return (
@@ -39,6 +69,11 @@ const MobileCourse = () => {
 
   const currentModule = course.modules[selectedModule];
   const currentChapter = currentModule?.chapters[selectedChapter];
+
+  // Debug logging
+  console.log('Mobile course render - selectedModule:', selectedModule, 'selectedChapter:', selectedChapter);
+  console.log('Mobile currentModule:', currentModule);
+  console.log('Mobile currentChapter:', currentChapter);
 
   const getChapterId = (moduleId: number, chapterId: number) => `${courseId}-${moduleId}-${chapterId}`;
 
@@ -61,6 +96,32 @@ const MobileCourse = () => {
     if (!completedChapters.includes(chapterId) && courseId) {
       const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
       updateChapterProgress(courseId, chapterId, totalChapters);
+
+      // Check if course is now completed
+      setTimeout(() => {
+        const updatedProgress = getCourseProgress(courseId);
+        if (updatedProgress && updatedProgress.progressPercentage === 100 && !courseJustCompleted) {
+          setCourseJustCompleted(true);
+          setShowCompletionModal(true);
+        }
+      }, 100);
+    }
+  };
+
+  const handleStartCourse = () => {
+    console.log('MobileCourse.tsx: handleStartCourse called');
+    console.log('Current course:', course);
+    console.log('Course modules:', course?.modules);
+
+    setShowWelcomeModal(false);
+
+    // Ensure we have a valid course and modules before setting states
+    if (course && course.modules && course.modules.length > 0) {
+      setSelectedModule(0);
+      setSelectedChapter(0);
+      console.log('Mobile states set - selectedModule: 0, selectedChapter: 0');
+    } else {
+      console.error('Mobile course or modules not available:', { course, modules: course?.modules });
     }
   };
 
@@ -150,7 +211,7 @@ const MobileCourse = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
       <div className="bg-white px-4 pt-12 pb-4 border-b border-slate-200 sticky top-0 z-10">
         <div className="flex items-center space-x-3 mb-4">
@@ -364,6 +425,31 @@ const MobileCourse = () => {
           </Card>
         )}
       </div>
+
+      <BottomNavigation />
+
+      {/* Course Welcome Modal */}
+      {courseId && (
+        <CourseWelcomeModal
+          isOpen={showWelcomeModal}
+          onClose={() => setShowWelcomeModal(false)}
+          onStartCourse={handleStartCourse}
+          courseId={courseId}
+        />
+      )}
+
+      {/* Course Completion Modal */}
+      {courseId && courseConfig && (
+        <CourseCompletionModal
+          isOpen={showCompletionModal}
+          onClose={() => setShowCompletionModal(false)}
+          completedCourseId={courseId}
+          xpEarned={courseConfig.xpReward}
+          onStartNextCourse={(nextCourseId) => {
+            navigate(`/mobile/course/${nextCourseId}`, { state: { showWelcome: true } });
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -18,14 +18,20 @@ import { useCourseProgression } from "@/hooks/useCourseProgression";
 const Course = () => {
   const { courseId } = useParams();
   const location = useLocation();
-  const [completedChapters, setCompletedChapters] = useState<string[]>([]);
   const [selectedModule, setSelectedModule] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [courseJustCompleted, setCourseJustCompleted] = useState(false);
 
-  const { updateChapterProgress, courseProgression, getCourseProgress } = useCourseProgression();
+  const {
+    updateChapterProgress,
+    courseProgression,
+    getCourseProgress,
+    userProgress,
+    isCourseUnlocked,
+    getNextRecommendedCourse
+  } = useCourseProgression();
   const course = courseId ? courses[courseId] : undefined;
   const courseConfig = courseId ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
 
@@ -43,10 +49,37 @@ const Course = () => {
     );
   }
 
+  // Check if course is unlocked
+  if (!isCourseUnlocked(courseId || '')) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <div className="container mx-auto max-w-4xl px-4 py-12 text-center">
+          <h1 className="text-2xl font-bold text-slate-900 mb-4">Course Locked</h1>
+          <p className="text-slate-600 mb-6">
+            You need to complete the prerequisite courses to unlock this course.
+          </p>
+          <Link to="/">
+            <Button>Back to Courses</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const currentModule = course.modules[selectedModule];
   const currentChapter = currentModule?.chapters[selectedChapter];
 
+  // Ensure we have valid indices
+  const safeSelectedModule = Math.max(0, Math.min(selectedModule, course.modules.length - 1));
+  const safeSelectedChapter = Math.max(0, Math.min(selectedChapter, course.modules[safeSelectedModule]?.chapters.length - 1 || 0));
+  const safeCurrentModule = course.modules[safeSelectedModule];
+  const safeCurrentChapter = safeCurrentModule?.chapters[safeSelectedChapter];
+
   const getChapterId = (moduleId: number, chapterId: number) => `${courseId}-${moduleId}-${chapterId}`;
+
+  const courseProgress = getCourseProgress(courseId || '');
+  const completedChapters = courseProgress?.completedChapters || [];
 
   const isChapterCompleted = (moduleId: number, chapterId: number) =>
     completedChapters.includes(getChapterId(moduleId, chapterId));
@@ -64,46 +97,40 @@ const Course = () => {
     return isChapterCompleted(moduleId, chapterId - 1);
   };
 
-  const markChapterComplete = () => {
+  const markChapterComplete = async () => {
     const chapterId = getChapterId(selectedModule, selectedChapter);
-    if (!completedChapters.includes(chapterId)) {
-      const newCompletedChapters = [...completedChapters, chapterId];
-      setCompletedChapters(newCompletedChapters);
-
+    if (!completedChapters.includes(chapterId) && courseId) {
       // Update progress in the progression system
-      if (courseId) {
-        updateChapterProgress(courseId, chapterId, totalChapters);
-      }
+      await updateChapterProgress(courseId, chapterId, totalChapters);
 
-      // Check if course is now completed
-      const newCompletedCount = newCompletedChapters.length;
-      if (newCompletedCount === totalChapters && !courseJustCompleted) {
-        setCourseJustCompleted(true);
-        // Show completion modal after a short delay
-        setTimeout(() => {
-          setShowCompletionModal(true);
-        }, 1000);
-      }
+      // Force a re-render to get updated progress
+      setTimeout(async () => {
+        const updatedProgress = getCourseProgress(courseId);
+        if (updatedProgress && updatedProgress.progressPercentage === 100 && !courseJustCompleted) {
+          setCourseJustCompleted(true);
+          // Show completion modal after a short delay
+          setTimeout(() => {
+            setShowCompletionModal(true);
+          }, 500);
+        }
+      }, 100);
     }
   };
 
   const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
   const completedCount = completedChapters.length;
-  const progressPercentage = (completedCount / totalChapters) * 100;
+  const progressPercentage = courseProgress?.progressPercentage || 0;
 
   // Reset completion state when course changes and check for welcome modal
   useEffect(() => {
     setCourseJustCompleted(false);
     setShowCompletionModal(false);
 
-    // Check if we should show welcome modal
+    // Show welcome modal for first-time visitors or when coming from course completion
     if (courseId) {
       const courseProgress = getCourseProgress(courseId);
       const isFirstTime = !courseProgress || courseProgress.progressPercentage === 0;
 
-      // Show welcome modal if:
-      // 1. Coming from course completion (showWelcome state), OR
-      // 2. First time visiting this course (no progress)
       if (location.state?.showWelcome || isFirstTime) {
         setShowWelcomeModal(true);
         // Clear the state to prevent showing again on refresh
@@ -116,7 +143,18 @@ const Course = () => {
 
   const handleStartCourse = () => {
     setShowWelcomeModal(false);
-    // Course content is already loaded, user can start immediately
+
+    // Set to first module and chapter
+    setSelectedModule(0);
+    setSelectedChapter(0);
+
+    // Scroll to course content
+    setTimeout(() => {
+      const courseContent = document.getElementById('course-content');
+      if (courseContent) {
+        courseContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   // Function to format chapter content with proper typography and spacing
@@ -239,7 +277,7 @@ const Course = () => {
         </div>
 
         {/* Course Content */}
-        <div className="grid lg:grid-cols-4 gap-6">
+        <div id="course-content" className="grid lg:grid-cols-4 gap-6">
           {/* Fixed Sidebar - Module and Chapter Navigation */}
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-8">
@@ -304,15 +342,15 @@ const Course = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {currentChapter ? (
+            {safeCurrentChapter ? (
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-xl">{currentChapter.title}</CardTitle>
+                      <CardTitle className="text-xl">{safeCurrentChapter.title}</CardTitle>
                       <CardDescription className="flex items-center space-x-1 mt-1">
                         <Clock className="h-4 w-4" />
-                        <span>{currentChapter.duration}</span>
+                        <span>{safeCurrentChapter.duration}</span>
                       </CardDescription>
                     </div>
                     {isChapterCompleted(selectedModule, selectedChapter) && (
@@ -335,24 +373,24 @@ const Course = () => {
                       {/* Chapter Content with improved formatting and spacing */}
                       <div className="prose max-w-none">
                         <div className="space-y-1">
-                          {formatContent(currentChapter.content)}
+                          {formatContent(safeCurrentChapter.content)}
                         </div>
                       </div>
 
                       {/* Practical Task */}
-                      {currentChapter.practicalTask && (
+                      {safeCurrentChapter.practicalTask && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                           <div className="flex items-start space-x-2">
                             <Target className="h-5 w-5 text-blue-600 mt-0.5" />
                             <div className="flex-1">
-                              <h4 className="font-semibold text-blue-900 mb-2">{currentChapter.practicalTask.title}</h4>
-                              <p className="text-blue-800 text-sm mb-3">{currentChapter.practicalTask.description}</p>
+                              <h4 className="font-semibold text-blue-900 mb-2">{safeCurrentChapter.practicalTask.title}</h4>
+                              <p className="text-blue-800 text-sm mb-3">{safeCurrentChapter.practicalTask.description}</p>
 
-                              {currentChapter.practicalTask.instructions && (
+                              {safeCurrentChapter.practicalTask.instructions && (
                                 <div className="mb-3">
                                   <h5 className="font-medium text-blue-900 text-xs mb-2">Instructions:</h5>
                                   <ol className="list-decimal list-inside space-y-1 text-xs text-blue-700">
-                                    {currentChapter.practicalTask.instructions.map((instruction, index) => (
+                                    {safeCurrentChapter.practicalTask.instructions.map((instruction, index) => (
                                       <li key={index}>{instruction}</li>
                                     ))}
                                   </ol>
@@ -360,9 +398,9 @@ const Course = () => {
                               )}
 
                               <div className="flex items-center justify-between text-xs text-blue-600">
-                                <span>⏱️ {currentChapter.practicalTask.estimatedTime}</span>
-                                {currentChapter.practicalTask.points && (
-                                  <span>🏆 {currentChapter.practicalTask.points} points</span>
+                                <span>⏱️ {safeCurrentChapter.practicalTask.estimatedTime}</span>
+                                {safeCurrentChapter.practicalTask.points && (
+                                  <span>🏆 {safeCurrentChapter.practicalTask.points} points</span>
                                 )}
                               </div>
                             </div>
@@ -371,7 +409,7 @@ const Course = () => {
                       )}
 
                       {/* Trading Demo Component */}
-                      {(currentChapter as any).demoComponent === "TradingDemo" && (
+                      {(safeCurrentChapter as any).demoComponent === "TradingDemo" && (
                         <div className="mt-8">
                           <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mb-6">
                             <h4 className="text-xl font-bold text-blue-900 mb-2">🎮 Interactive Trading Demo</h4>
@@ -379,10 +417,10 @@ const Course = () => {
                               Practice your trading skills with our advanced simulator. All trades are virtual - no real money at risk!
                             </p>
                           </div>
-                          {(currentChapter as any).demoProps?.courseType === "degen" ? (
+                          {(safeCurrentChapter as any).demoProps?.courseType === "degen" ? (
                             <CrossChainTradingDemo />
                           ) : (
-                            <TradingDemo courseType={(currentChapter as any).demoProps?.courseType || "basic"} />
+                            <TradingDemo courseType={(safeCurrentChapter as any).demoProps?.courseType || "basic"} />
                           )}
                         </div>
                       )}
@@ -395,7 +433,7 @@ const Course = () => {
                           <h4 className="font-semibold text-emerald-900">Key Takeaways</h4>
                         </div>
                         <ul className="space-y-2">
-                          {currentChapter.keyTakeaways.map((takeaway, index) => (
+                          {safeCurrentChapter.keyTakeaways.map((takeaway, index) => (
                             <li key={index} className="flex items-start space-x-2 text-emerald-800">
                               <CheckCircle className="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0" />
                               <span className="text-sm">{takeaway}</span>
@@ -408,7 +446,7 @@ const Course = () => {
 
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t mt-6">
-                    {!isChapterCompleted(selectedModule, selectedChapter) && (
+                    {!isChapterCompleted(safeSelectedModule, safeSelectedChapter) && (
                       <Button
                         onClick={markChapterComplete}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -422,16 +460,16 @@ const Course = () => {
                       variant="outline"
                       onClick={() => {
                         // Navigate to next chapter logic
-                        if (selectedChapter < currentModule.chapters.length - 1) {
-                          setSelectedChapter(selectedChapter + 1);
-                        } else if (selectedModule < course.modules.length - 1) {
-                          setSelectedModule(selectedModule + 1);
+                        if (safeSelectedChapter < safeCurrentModule.chapters.length - 1) {
+                          setSelectedChapter(safeSelectedChapter + 1);
+                        } else if (safeSelectedModule < course.modules.length - 1) {
+                          setSelectedModule(safeSelectedModule + 1);
                           setSelectedChapter(0);
                         }
                       }}
                       disabled={
-                        selectedModule === course.modules.length - 1 &&
-                        selectedChapter === currentModule.chapters.length - 1
+                        safeSelectedModule === course.modules.length - 1 &&
+                        safeSelectedChapter === safeCurrentModule.chapters.length - 1
                       }
                     >
                       Next Chapter
@@ -440,10 +478,10 @@ const Course = () => {
 
                   {/* AI Q&A Component */}
                   <ChapterQA
-                    chapterTitle={currentChapter.title}
+                    chapterTitle={safeCurrentChapter.title}
                     courseId={course.id}
-                    moduleId={selectedModule}
-                    chapterId={selectedChapter}
+                    moduleId={safeSelectedModule}
+                    chapterId={safeSelectedChapter}
                   />
                 </CardContent>
               </Card>
@@ -482,6 +520,8 @@ const Course = () => {
           courseId={courseId}
         />
       )}
+
+
     </div>
   );
 };
