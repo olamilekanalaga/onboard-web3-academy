@@ -1,10 +1,13 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SocialVerificationContextType {
   isVerified: boolean;
   setVerified: (verified: boolean) => void;
   checkVerification: () => boolean;
+  loading: boolean;
 }
 
 const SocialVerificationContext = createContext<SocialVerificationContextType | undefined>(undefined);
@@ -24,35 +27,88 @@ interface SocialVerificationProviderProps {
 export const SocialVerificationProvider: React.FC<SocialVerificationProviderProps> = ({ children }) => {
   const { user } = useAuth();
   const [isVerified, setIsVerified] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Check verification status from localStorage
+  // Check verification status from database and localStorage
   useEffect(() => {
-    if (user) {
-      const verificationKey = `social_verified_${user.id}`;
-      const verified = localStorage.getItem(verificationKey) === 'true';
-      setIsVerified(verified);
-    }
+    const checkVerificationStatus = async () => {
+      if (!user) {
+        setIsVerified(false);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // First check the database for follow_flow_completed
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('follow_flow_completed')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error checking follow flow status:', error);
+          // Fallback to localStorage if database check fails
+          const verificationKey = `social_verified_${user.id}`;
+          const localVerified = localStorage.getItem(verificationKey) === 'true';
+          setIsVerified(localVerified);
+        } else {
+          // Use database value as the source of truth
+          const verified = profile?.follow_flow_completed || false;
+          setIsVerified(verified);
+          
+          // Sync with localStorage for consistency
+          const verificationKey = `social_verified_${user.id}`;
+          localStorage.setItem(verificationKey, verified.toString());
+        }
+      } catch (error) {
+        console.error('Error in verification check:', error);
+        // Fallback to localStorage
+        const verificationKey = `social_verified_${user.id}`;
+        const localVerified = localStorage.getItem(verificationKey) === 'true';
+        setIsVerified(localVerified);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkVerificationStatus();
   }, [user]);
 
-  const setVerified = (verified: boolean) => {
-    if (user) {
-      const verificationKey = `social_verified_${user.id}`;
-      localStorage.setItem(verificationKey, verified.toString());
-      setIsVerified(verified);
+  const setVerified = async (verified: boolean) => {
+    if (!user) return;
+
+    const verificationKey = `social_verified_${user.id}`;
+    localStorage.setItem(verificationKey, verified.toString());
+    setIsVerified(verified);
+
+    // Also update the database
+    try {
+      await supabase
+        .from('profiles')
+        .update({ 
+          follow_flow_completed: verified,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      console.log('Follow flow completion status updated in database');
+    } catch (error) {
+      console.error('Error updating follow flow status:', error);
     }
   };
 
   const checkVerification = () => {
     if (!user) return false;
-    const verificationKey = `social_verified_${user.id}`;
-    return localStorage.getItem(verificationKey) === 'true';
+    return isVerified;
   };
 
   return (
     <SocialVerificationContext.Provider value={{
       isVerified,
       setVerified,
-      checkVerification
+      checkVerification,
+      loading
     }}>
       {children}
     </SocialVerificationContext.Provider>

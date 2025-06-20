@@ -1,7 +1,7 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
   MessageCircle, 
@@ -24,8 +24,8 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
   const [twitterFollowed, setTwitterFollowed] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
 
-  const telegramUrl = "https://t.me/onboardweb3academy"; // Update with your actual Telegram
-  const twitterUrl = "https://x.com/onboardweb3"; // Update with your actual X/Twitter
+  const telegramUrl = "https://t.me/onboardweb3academy";
+  const twitterUrl = "https://x.com/onboardweb3";
 
   const handleTelegramFollow = () => {
     window.open(telegramUrl, '_blank');
@@ -44,15 +44,7 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
 
     setIsCompleting(true);
     try {
-      // Mark follow flow as completed in user profile
-      await supabase
-        .from('profiles')
-        .update({
-          follow_flow_completed: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
+      console.log('Completing follow flow for user:', user.id);
       onComplete();
     } catch (error) {
       console.error('Error completing follow flow:', error);
@@ -61,6 +53,12 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
     } finally {
       setIsCompleting(false);
     }
+  };
+
+  // Skip button for users who have already joined (debug purposes)
+  const handleSkip = () => {
+    console.log('Skipping follow flow (debug)');
+    onComplete();
   };
 
   return (
@@ -213,7 +211,7 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
         </div>
 
         {/* Continue Button */}
-        <div className="pt-6 pb-8">
+        <div className="pt-6 pb-8 space-y-3">
           <Button
             onClick={handleComplete}
             disabled={!canContinue || isCompleting}
@@ -235,6 +233,15 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
                 <span>Follow both accounts to continue</span>
               </>
             )}
+          </Button>
+          
+          {/* Debug skip button */}
+          <Button
+            onClick={handleSkip}
+            variant="outline"
+            className="w-full text-white border-white/20 hover:bg-white/10"
+          >
+            Skip (Already Joined)
           </Button>
           
           {!canContinue && (
