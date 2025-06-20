@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, X } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
@@ -89,35 +89,6 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
     }
   };
 
-  const handleRemoveAvatar = async () => {
-    if (!user || !currentAvatarUrl) return;
-
-    setUploading(true);
-
-    try {
-      // Extract file path from URL
-      const urlParts = currentAvatarUrl.split('/');
-      const fileName = `${user.id}/${urlParts[urlParts.length - 1]}`;
-
-      // Delete from storage
-      await supabase.storage
-        .from('avatars')
-        .remove([fileName]);
-
-      // Update profile to remove avatar URL
-      await updateProfileMutation.mutateAsync({
-        avatar_url: null
-      });
-
-      toast.success('Profile picture removed successfully!');
-    } catch (error) {
-      console.error('Error removing avatar:', error);
-      toast.error('Failed to remove profile picture');
-    } finally {
-      setUploading(false);
-    }
-  };
-
   return (
     <div className="flex flex-col items-center space-y-4">
       <div className="relative">
@@ -140,34 +111,6 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
           </Button>
         )}
       </div>
-
-      {showUploadButton && (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleFileSelect}
-            disabled={uploading}
-            className="flex items-center gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            {uploading ? 'Uploading...' : 'Upload Photo'}
-          </Button>
-
-          {currentAvatarUrl && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRemoveAvatar}
-              disabled={uploading}
-              className="flex items-center gap-2 text-red-600 hover:text-red-700"
-            >
-              <X className="h-4 w-4" />
-              Remove
-            </Button>
-          )}
-        </div>
-      )}
 
       <input
         ref={fileInputRef}
