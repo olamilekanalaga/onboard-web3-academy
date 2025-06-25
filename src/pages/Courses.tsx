@@ -75,7 +75,10 @@ const Courses = () => {
     if (a.difficulty !== b.difficulty) {
       return a.difficulty - b.difficulty;
     }
-    return a.title.localeCompare(b.title);
+    // Add safety check for undefined titles
+    const titleA = a.title || '';
+    const titleB = b.title || '';
+    return titleA.localeCompare(titleB);
   });
 
   const getCourseStats = (courseId: string) => {
@@ -93,7 +96,18 @@ const Courses = () => {
 
   const getCourseProgressPercentage = (courseId: string) => {
     const progress = getCourseProgress(courseId);
-    return progress ? progress.progressPercentage : 0;
+    if (!progress) return 0;
+
+    // Handle different data structures between DB and localStorage hooks
+    if (typeof progress.progress_percentage === 'number') {
+      // Database hook returns progress_percentage
+      return progress.progress_percentage;
+    } else if (typeof progress.progressPercentage === 'number') {
+      // localStorage hook returns progressPercentage
+      return progress.progressPercentage;
+    }
+
+    return 0;
   };
 
   const nextRecommendedCourse = getNextRecommendedCourse();

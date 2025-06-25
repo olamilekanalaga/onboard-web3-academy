@@ -30,31 +30,31 @@ export const useCourseProgressionDB = () => {
     enabled: !!user,
   });
 
-  // Get course progress from database
+  // Get all course progress from database
+  const { data: allProgressData } = useQuery({
+    queryKey: ['all-course-progress', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching course progress:', error);
+        return [];
+      }
+
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // Function to get specific course progress (no longer uses hooks)
   const getCourseProgress = (courseId: string) => {
-    const { data: progressData } = useQuery({
-      queryKey: ['course-progress', user?.id, courseId],
-      queryFn: async () => {
-        if (!user) return null;
-        
-        const { data, error } = await supabase
-          .from('user_progress')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('course_id', courseId)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching course progress:', error);
-          return null;
-        }
-        
-        return data;
-      },
-      enabled: !!user,
-    });
-
-    return progressData;
+    if (!allProgressData) return null;
+    return allProgressData.find(progress => progress.course_id === courseId) || null;
   };
 
   // Update chapter progress
@@ -185,17 +185,116 @@ export const useCourseProgressionDB = () => {
   });
 
   const courseProgression = {
-    'foundation': { totalXP: 500, prerequisites: [], level: 'Foundation', xpReward: 500, estimatedTime: '2 hours' },
-    'degen': { totalXP: 750, prerequisites: ['foundation'], level: 'Beginner', xpReward: 750, estimatedTime: '3 hours' },
-    'advanced-trading': { totalXP: 1000, prerequisites: ['degen'], level: 'Intermediate', xpReward: 1000, estimatedTime: '4 hours' },
-    'defi-fundamentals': { totalXP: 1200, prerequisites: ['advanced-trading'], level: 'Intermediate', xpReward: 1200, estimatedTime: '5 hours' },
-    'nft-creation': { totalXP: 800, prerequisites: ['foundation'], level: 'Beginner', xpReward: 800, estimatedTime: '3 hours' },
-    'dao-governance': { totalXP: 900, prerequisites: ['defi-fundamentals'], level: 'Advanced', xpReward: 900, estimatedTime: '4 hours' },
-    'web3-security': { totalXP: 1100, prerequisites: ['advanced-trading'], level: 'Advanced', xpReward: 1100, estimatedTime: '5 hours' },
-    'crypto-tax': { totalXP: 600, prerequisites: ['foundation'], level: 'Beginner', xpReward: 600, estimatedTime: '2 hours' },
-    'content-creation': { totalXP: 700, prerequisites: ['foundation'], level: 'Beginner', xpReward: 700, estimatedTime: '3 hours' },
-    'web3-gaming': { totalXP: 850, prerequisites: ['nft-creation'], level: 'Intermediate', xpReward: 850, estimatedTime: '4 hours' },
-    'web3-social': { totalXP: 650, prerequisites: ['foundation'], level: 'Beginner', xpReward: 650, estimatedTime: '3 hours' },
+    'foundation': {
+      id: 'foundation',
+      title: 'Foundation',
+      totalXP: 500,
+      prerequisites: [],
+      level: 'Foundation',
+      xpReward: 500,
+      estimatedTime: '2 hours',
+      difficulty: 1
+    },
+    'degen': {
+      id: 'degen',
+      title: 'Degen Trading',
+      totalXP: 750,
+      prerequisites: ['foundation'],
+      level: 'Beginner',
+      xpReward: 750,
+      estimatedTime: '3 hours',
+      difficulty: 2
+    },
+    'advanced-trading': {
+      id: 'advanced-trading',
+      title: 'Advanced Trading',
+      totalXP: 1000,
+      prerequisites: ['degen'],
+      level: 'Intermediate',
+      xpReward: 1000,
+      estimatedTime: '4 hours',
+      difficulty: 3
+    },
+    'defi-fundamentals': {
+      id: 'defi-fundamentals',
+      title: 'DeFi Fundamentals',
+      totalXP: 1200,
+      prerequisites: ['advanced-trading'],
+      level: 'Intermediate',
+      xpReward: 1200,
+      estimatedTime: '5 hours',
+      difficulty: 3
+    },
+    'nft-creation': {
+      id: 'nft-creation',
+      title: 'NFT Creation & Trading',
+      totalXP: 800,
+      prerequisites: ['foundation'],
+      level: 'Beginner',
+      xpReward: 800,
+      estimatedTime: '3 hours',
+      difficulty: 2
+    },
+    'dao-governance': {
+      id: 'dao-governance',
+      title: 'DAO Governance',
+      totalXP: 900,
+      prerequisites: ['defi-fundamentals'],
+      level: 'Advanced',
+      xpReward: 900,
+      estimatedTime: '4 hours',
+      difficulty: 4
+    },
+    'web3-security': {
+      id: 'web3-security',
+      title: 'Web3 Security',
+      totalXP: 1100,
+      prerequisites: ['advanced-trading'],
+      level: 'Advanced',
+      xpReward: 1100,
+      estimatedTime: '5 hours',
+      difficulty: 4
+    },
+    'crypto-tax': {
+      id: 'crypto-tax',
+      title: 'Crypto Tax & Legal Basics',
+      totalXP: 600,
+      prerequisites: ['foundation'],
+      level: 'Beginner',
+      xpReward: 600,
+      estimatedTime: '2 hours',
+      difficulty: 2
+    },
+    'content-creation': {
+      id: 'content-creation',
+      title: 'Content Creation',
+      totalXP: 700,
+      prerequisites: ['foundation'],
+      level: 'Beginner',
+      xpReward: 700,
+      estimatedTime: '3 hours',
+      difficulty: 2
+    },
+    'web3-gaming': {
+      id: 'web3-gaming',
+      title: 'Web3 Gaming & Play-to-Earn',
+      totalXP: 850,
+      prerequisites: ['nft-creation'],
+      level: 'Intermediate',
+      xpReward: 850,
+      estimatedTime: '4 hours',
+      difficulty: 3
+    },
+    'web3-social': {
+      id: 'web3-social',
+      title: 'Web3 Social Media & Community Building',
+      totalXP: 650,
+      prerequisites: ['foundation'],
+      level: 'Beginner',
+      xpReward: 650,
+      estimatedTime: '3 hours',
+      difficulty: 2
+    },
   };
 
   // Helper functions
