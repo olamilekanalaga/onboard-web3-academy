@@ -14,6 +14,8 @@ import BottomNavigation from "./BottomNavigation";
 import CourseCompletionModal from "@/components/CourseCompletionModal";
 import PWALayout from "./PWALayout";
 import PWAContentWrapper from "./PWAContentWrapper";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const MobileCourse = () => {
   const { courseId } = useParams();
@@ -155,63 +157,70 @@ const MobileCourse = () => {
     }
   };
 
-  // Format content for mobile
-  const formatContent = (content: string) => {
-    return content
-      .split('\n\n')
-      .map((paragraph, index) => {
-        if (paragraph.trim() === '') return null;
-
-        if (paragraph.startsWith('##')) {
-          return (
-            <h3 key={index} className="text-lg font-bold text-slate-900 mt-6 mb-3">
-              {paragraph.replace(/^##\s*/, '')}
-            </h3>
-          );
-        }
-
-        if (paragraph.startsWith('###')) {
-          return (
-            <h4 key={index} className="text-base font-semibold text-slate-800 mt-4 mb-2">
-              {paragraph.replace(/^###\s*/, '')}
-            </h4>
-          );
-        }
-
-        const formattedParagraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900">$1</strong>');
-
-        if (paragraph.includes('•') || paragraph.includes('-')) {
-          const lines = paragraph.split('\n').filter(line => line.trim());
-          const isBulletList = lines.every(line => line.trim().startsWith('•') || line.trim().startsWith('-'));
-
-          if (isBulletList) {
-            return (
-              <ul key={index} className="space-y-2 my-4 ml-4">
-                {lines.map((line, lineIndex) => (
-                  <li key={lineIndex} className="flex items-start space-x-2 text-slate-700 text-sm">
-                    <span className="text-blue-600 font-bold mt-1">•</span>
-                    <span
-                      className="flex-1"
-                      dangerouslySetInnerHTML={{
-                        __html: line.replace(/^[•-]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900">$1</strong>')
-                      }}
-                    />
-                  </li>
-                ))}
-              </ul>
-            );
-          }
-        }
-
-        return (
-          <p
-            key={index}
-            className="text-slate-700 text-sm leading-relaxed mb-4"
-            dangerouslySetInnerHTML={{ __html: formattedParagraph }}
-          />
-        );
-      })
-      .filter(Boolean);
+  // Mobile-optimized markdown components
+  const mobileMarkdownComponents = {
+    h1: ({ children }: any) => (
+      <h1 className="text-xl font-bold text-slate-900 mt-6 mb-4 border-b border-slate-200 pb-2">
+        {children}
+      </h1>
+    ),
+    h2: ({ children }: any) => (
+      <h2 className="text-lg font-bold text-slate-900 mt-6 mb-3">
+        {children}
+      </h2>
+    ),
+    h3: ({ children }: any) => (
+      <h3 className="text-base font-semibold text-slate-800 mt-4 mb-2">
+        {children}
+      </h3>
+    ),
+    h4: ({ children }: any) => (
+      <h4 className="text-sm font-semibold text-slate-800 mt-3 mb-2">
+        {children}
+      </h4>
+    ),
+    p: ({ children }: any) => (
+      <p className="text-slate-700 text-sm leading-relaxed mb-4">
+        {children}
+      </p>
+    ),
+    ul: ({ children }: any) => (
+      <ul className="space-y-2 my-4 ml-4">
+        {children}
+      </ul>
+    ),
+    ol: ({ children }: any) => (
+      <ol className="space-y-2 my-4 ml-4 list-decimal">
+        {children}
+      </ol>
+    ),
+    li: ({ children }: any) => (
+      <li className="flex items-start space-x-2 text-slate-700 text-sm">
+        <span className="text-blue-600 font-bold mt-1">•</span>
+        <span className="flex-1">{children}</span>
+      </li>
+    ),
+    strong: ({ children }: any) => (
+      <strong className="font-semibold text-slate-900">{children}</strong>
+    ),
+    em: ({ children }: any) => (
+      <em className="italic text-slate-800">{children}</em>
+    ),
+    code: ({ children }: any) => (
+      <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded text-xs font-mono">
+        {children}
+      </code>
+    ),
+    pre: ({ children }: any) => (
+      <pre className="bg-slate-100 text-slate-800 p-3 rounded-lg overflow-x-auto my-4 text-xs">
+        {children}
+      </pre>
+    ),
+    blockquote: ({ children }: any) => (
+      <blockquote className="border-l-4 border-blue-500 pl-3 my-4 italic text-slate-600 text-sm">
+        {children}
+      </blockquote>
+    ),
   };
 
   return (
@@ -338,7 +347,12 @@ const MobileCourse = () => {
 
                 <TabsContent value="content" className="space-y-4 mt-4">
                   <div className="prose max-w-none">
-                    {formatContent(currentChapter.content)}
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={mobileMarkdownComponents}
+                    >
+                      {currentChapter.content}
+                    </ReactMarkdown>
                   </div>
 
                   {/* Trading Demo Component */}

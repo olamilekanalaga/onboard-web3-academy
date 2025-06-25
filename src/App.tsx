@@ -72,20 +72,24 @@ const App = () => {
                         </MobileAuthGuard>
                       } />
                       <Route path="/course/:courseId" element={
-                        <MobileAuthGuard>
-                          <MobileCourse />
-                        </MobileAuthGuard>
+                        <AuthGuard>
+                          <Course />
+                        </AuthGuard>
                       } />
                       <Route path="/courses/:courseId" element={
-                        <MobileAuthGuard>
-                          <MobileCourse />
-                        </MobileAuthGuard>
+                        <AuthGuard>
+                          <Course />
+                        </AuthGuard>
                       } />
-                      <Route path="/courses" element={<Navigate to="/mobile/explore" replace />} />
+                      <Route path="/courses" element={
+                        <AuthGuard>
+                          <Courses />
+                        </AuthGuard>
+                      } />
                       <Route path="/demo" element={
-                        <MobileAuthGuard>
-                          <MobileDemo />
-                        </MobileAuthGuard>
+                        <AuthGuard>
+                          <Demo />
+                        </AuthGuard>
                       } />
                       <Route path="/mobile/progress" element={
                         <MobileAuthGuard>
@@ -98,9 +102,9 @@ const App = () => {
                         </MobileAuthGuard>
                       } />
                       <Route path="/profile" element={
-                        <MobileAuthGuard>
-                          <MobileProfile />
-                        </MobileAuthGuard>
+                        <AuthGuard>
+                          <Profile />
+                        </AuthGuard>
                       } />
                       <Route path="/mobile/settings" element={
                         <MobileAuthGuard>
@@ -108,9 +112,9 @@ const App = () => {
                         </MobileAuthGuard>
                       } />
                       <Route path="/settings" element={
-                        <MobileAuthGuard>
-                          <MobileSettings />
-                        </MobileAuthGuard>
+                        <AuthGuard>
+                          <Settings />
+                        </AuthGuard>
                       } />
                       <Route path="/mobile/gamification" element={
                         <MobileAuthGuard>
@@ -118,9 +122,9 @@ const App = () => {
                         </MobileAuthGuard>
                       } />
                       <Route path="/gamification" element={
-                        <MobileAuthGuard>
-                          <MobileGamification />
-                        </MobileAuthGuard>
+                        <AuthGuard>
+                          <Gamification />
+                        </AuthGuard>
                       } />
 
                       {/* PWA Layout Test Route (Development/Testing) */}
