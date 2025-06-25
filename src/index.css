@@ -100,8 +100,9 @@
   }
 }
 
-/* Enhanced PWA Safe Area Support for iPhone */
+/* Enhanced PWA Safe Area Support for iPhone and Android */
 @supports (padding: max(0px)) {
+  /* Basic safe area padding */
   .pb-safe {
     padding-bottom: max(1.5rem, calc(1rem + env(safe-area-inset-bottom)));
   }
@@ -118,11 +119,24 @@
     padding-right: max(1rem, env(safe-area-inset-right));
   }
 
+  /* Mobile header safe area - fixed positioning with top safe area */
+  .mobile-header-safe {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  /* Content area that accounts for fixed header */
+  .content-safe-top {
+    padding-top: max(5rem, calc(4rem + env(safe-area-inset-top)));
+  }
+
   /* Bottom navigation - extends to bottom with home indicator inside navbar */
   .bottom-nav-safe {
     padding-bottom: max(1.5rem, calc(1rem + env(safe-area-inset-bottom)));
+    padding-left: max(0rem, env(safe-area-inset-left));
+    padding-right: max(0rem, env(safe-area-inset-right));
     bottom: 0;
-    /* No margin - navbar extends to very bottom */
     margin-bottom: 0;
   }
 
@@ -131,12 +145,46 @@
     padding-bottom: max(6rem, calc(4rem + env(safe-area-inset-bottom) + 1rem));
     margin-bottom: 0;
   }
+
+  /* Combined safe area for content with both header and bottom nav */
+  .content-safe-full {
+    padding-top: max(5rem, calc(4rem + env(safe-area-inset-top)));
+    padding-bottom: max(6rem, calc(4rem + env(safe-area-inset-bottom) + 1rem));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  /* PWA standalone mode specific styles */
+  @media (display-mode: standalone) {
+    .pwa-content-safe {
+      padding-top: max(5.5rem, calc(4.5rem + env(safe-area-inset-top)));
+      padding-bottom: max(6.5rem, calc(5rem + env(safe-area-inset-bottom)));
+    }
+
+    .pwa-header-safe {
+      padding-top: max(1rem, calc(0.5rem + env(safe-area-inset-top)));
+    }
+  }
 }
 
 /* Fallback for browsers that don't support env() */
 @supports not (padding: env(safe-area-inset-bottom)) {
   .pb-safe {
     padding-bottom: 1.5rem;
+  }
+
+  .pt-safe {
+    padding-top: 1rem;
+  }
+
+  .mobile-header-safe {
+    padding-top: 0.75rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .content-safe-top {
+    padding-top: 5rem;
   }
 
   .bottom-nav-safe {
@@ -148,4 +196,60 @@
     padding-bottom: 6rem;
     margin-bottom: 0;
   }
+
+  .content-safe-full {
+    padding-top: 5rem;
+    padding-bottom: 6rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .pwa-content-safe {
+    padding-top: 5.5rem;
+    padding-bottom: 6.5rem;
+  }
+
+  .pwa-header-safe {
+    padding-top: 1rem;
+  }
+}
+
+/* PWA-specific styles for better mobile experience */
+@media (display-mode: standalone) {
+  /* Hide scrollbars in PWA mode for cleaner look */
+  ::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
+
+  /* Ensure full viewport usage */
+  html, body {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+    overflow-x: hidden;
+  }
+
+  /* Prevent overscroll bounce on iOS */
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Utility classes for PWA layout */
+.min-h-screen-safe {
+  min-height: 100vh;
+  min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+.h-screen-safe {
+  height: 100vh;
+  height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+/* Scrollable content area that respects safe areas */
+.scrollable-content {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }

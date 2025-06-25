@@ -28,6 +28,9 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import BottomNavigation from "./BottomNavigation";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
+import MobileHeader from "./MobileHeader";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 
 const MobileProfile = () => {
   const navigate = useNavigate();
@@ -109,19 +112,28 @@ const MobileProfile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center pb-20">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading profile...</p>
-        </div>
-      </div>
+      <PWALayout hasHeader={true} hasBottomNav={true} className="bg-slate-50">
+        <MobileHeader title="Profile" />
+        <PWAContentWrapper>
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-slate-600">Loading profile...</p>
+            </div>
+          </div>
+        </PWAContentWrapper>
+        <BottomNavigation />
+      </PWALayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 pt-12 pb-8">
+    <PWALayout hasHeader={true} hasBottomNav={true} className="bg-slate-50">
+      <MobileHeader title="Profile" />
+
+      <PWAContentWrapper padding="none">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 pt-4 pb-8">
         <div className="text-center text-white">
           <div className="mb-4">
             <ProfilePictureUpload
@@ -261,8 +273,10 @@ const MobileProfile = () => {
         </Card>
       </div>
 
+      </PWAContentWrapper>
+
       <BottomNavigation />
-    </div>
+    </PWALayout>
   );
 };
 

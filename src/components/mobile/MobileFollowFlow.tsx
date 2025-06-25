@@ -13,6 +13,8 @@ import {
   HelpCircle,
   Sparkles
 } from "lucide-react";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 
 interface MobileFollowFlowProps {
   onComplete: () => void;
@@ -63,7 +65,8 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 relative overflow-hidden">
+    <PWALayout hasHeader={false} hasBottomNav={false} className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 relative overflow-hidden">
+      <PWAContentWrapper padding="none">
       {/* Animated Background */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-24 h-24 bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
@@ -252,7 +255,8 @@ const MobileFollowFlow: React.FC<MobileFollowFlowProps> = ({ onComplete }) => {
           )}
         </div>
       </div>
-    </div>
+      </PWAContentWrapper>
+    </PWALayout>
   );
 };
 

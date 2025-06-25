@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import BottomNavigation from "./BottomNavigation";
 import SocialVerification from "../SocialVerification";
 import MobileHeader from "./MobileHeader";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 
 const MobileExplore = () => {
   const navigate = useNavigate();
@@ -121,11 +123,12 @@ const MobileExplore = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <PWALayout hasHeader={true} hasBottomNav={true} className="bg-slate-50">
       <MobileHeader title="Courses" />
 
-      {/* Header */}
-      <div className="bg-white px-6 pt-12 pb-6 border-b border-slate-200">
+      <PWAContentWrapper padding="none">
+        {/* Header */}
+        <div className="bg-white px-6 pt-4 pb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-900 mb-4">All Courses</h1>
 
         {/* Enhanced Search Bar */}
@@ -264,8 +267,10 @@ const MobileExplore = () => {
         )}
       </div>
 
+      </PWAContentWrapper>
+
       <BottomNavigation />
-      
+
       {/* Social Verification Modal */}
       {showSocialVerification && (
         <SocialVerification
@@ -274,7 +279,7 @@ const MobileExplore = () => {
           onCancel={handleSocialVerificationCancel}
         />
       )}
-    </div>
+    </PWALayout>
   );
 };
 

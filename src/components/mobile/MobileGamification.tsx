@@ -18,6 +18,8 @@ import {
 import { useCourseProgression } from "@/hooks/useCourseProgression";
 import BottomNavigation from "./BottomNavigation";
 import MobileHeader from "./MobileHeader";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 
 const MobileGamification = () => {
   const { userProgress } = useCourseProgression();
@@ -71,10 +73,10 @@ const MobileGamification = () => {
   const leaderboardPosition = Math.max(1, 100 - userProgress.totalXP / 50);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <PWALayout hasHeader={true} hasBottomNav={true} className="bg-gray-50">
       <MobileHeader title="Rewards" />
 
-      <div className="p-4 space-y-6">
+      <PWAContentWrapper padding="md" className="space-y-6">
         {/* Level and XP Overview */}
         <Card className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
           <CardContent className="p-6">
@@ -236,10 +238,11 @@ const MobileGamification = () => {
             View Full Leaderboard
           </Button>
         </div>
-      </div>
+
+      </PWAContentWrapper>
 
       <BottomNavigation />
-    </div>
+    </PWALayout>
   );
 };
 

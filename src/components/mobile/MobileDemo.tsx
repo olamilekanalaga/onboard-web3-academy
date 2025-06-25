@@ -23,6 +23,8 @@ import MobileHeader from "./MobileHeader";
 import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
 import RealisticTradingDemo from "@/components/RealisticTradingDemo";
 import EnhancedTradingDemo from "@/components/EnhancedTradingDemo";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 import DeFiSimulator from "@/components/DeFiSimulator";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
 
@@ -118,9 +120,10 @@ const MobileDemo = () => {
 
   if (selectedDemo && demosUnlocked) {
     return (
-      <div className="min-h-screen bg-background pb-20">
-        {/* Mobile Header */}
-        <div className="sticky top-0 bg-background border-b border-border z-40 p-4">
+      <PWALayout hasHeader={false} hasBottomNav={true} className="bg-background">
+        <PWAContentWrapper padding="none">
+          {/* Mobile Header */}
+          <div className="sticky top-0 bg-background border-b border-border z-40 p-4">
           <Button
             variant="ghost"
             onClick={() => setSelectedDemo('')}
@@ -131,19 +134,22 @@ const MobileDemo = () => {
           </Button>
         </div>
 
-        {/* Demo Content */}
-        <div className="p-4">
-          {renderDemo()}
-        </div>
+          {/* Demo Content */}
+          <div className="p-4">
+            {renderDemo()}
+          </div>
+        </PWAContentWrapper>
 
         <BottomNavigation />
-      </div>
+      </PWALayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <PWALayout hasHeader={true} hasBottomNav={true} className="bg-background">
       <MobileHeader title="Web3 Practice Labs" />
+
+      <PWAContentWrapper padding="md">
 
       <div className="p-4 space-y-6">
         {/* Lock Status Alert */}
@@ -276,8 +282,10 @@ const MobileDemo = () => {
         </Card>
       </div>
 
+      </PWAContentWrapper>
+
       <BottomNavigation />
-    </div>
+    </PWALayout>
   );
 };
 

@@ -31,6 +31,7 @@ import MobileHome from "./components/mobile/MobileHome";
 import MobileAuth from "./components/mobile/MobileAuth";
 import MobileGamification from "./components/mobile/MobileGamification";
 import MobileDemo from "./components/mobile/MobileDemo";
+import PWALayoutTest from "./components/mobile/PWALayoutTest";
 import SmartPWAPrompt from "./components/SmartPWAPrompt";
 
 const queryClient = new QueryClient();
@@ -121,6 +122,10 @@ const App = () => {
                           <MobileGamification />
                         </MobileAuthGuard>
                       } />
+
+                      {/* PWA Layout Test Route (Development/Testing) */}
+                      <Route path="/mobile/pwa-test" element={<PWALayoutTest />} />
+                      <Route path="/pwa-test" element={<PWALayoutTest />} />
 
                       {/* Root route - onboarding flow */}
                       <Route path="/" element={<MobileApp />} />

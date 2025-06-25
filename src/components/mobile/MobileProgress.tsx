@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import BottomNavigation from "./BottomNavigation";
+import MobileHeader from "./MobileHeader";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 
 const MobileProgress = () => {
   // Real user data - no achievements until courses are completed
@@ -27,7 +30,10 @@ const MobileProgress = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <PWALayout hasHeader={true} hasBottomNav={true} className="bg-slate-50">
+      <MobileHeader title="Progress" />
+
+      <PWAContentWrapper padding="md">
       {/* Header */}
       <div className="bg-white px-6 pt-12 pb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Your Progress</h1>
@@ -154,8 +160,10 @@ const MobileProgress = () => {
         )}
       </div>
 
+      </PWAContentWrapper>
+
       <BottomNavigation />
-    </div>
+    </PWALayout>
   );
 };
 

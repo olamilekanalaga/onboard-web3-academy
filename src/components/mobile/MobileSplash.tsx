@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, TrendingUp, Shield, Zap } from "lucide-react";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 
 interface MobileSplashProps {
   onComplete: () => void;
@@ -38,7 +40,8 @@ const MobileSplash = ({ onComplete }: MobileSplashProps) => {
   }, [onComplete]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-blue-900 relative overflow-hidden">
+    <PWALayout hasHeader={false} hasBottomNav={false} className="bg-gradient-to-br from-slate-900 via-purple-900 to-blue-900 relative overflow-hidden">
+      <PWAContentWrapper padding="none">
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-32 h-32 bg-purple-500/20 rounded-full blur-xl animate-pulse"></div>
@@ -147,7 +150,8 @@ const MobileSplash = ({ onComplete }: MobileSplashProps) => {
           </Button>
         </div>
       </div>
-    </div>
+      </PWAContentWrapper>
+    </PWALayout>
   );
 };
 

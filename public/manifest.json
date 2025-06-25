@@ -96,5 +96,8 @@
   "file_handlers": [],
   "launch_handler": {
     "client_mode": "navigate-existing"
-  }
+  },
+  "screenshots": [],
+  "handle_links": "preferred",
+  "capture_links": "existing-client-navigate"
 }

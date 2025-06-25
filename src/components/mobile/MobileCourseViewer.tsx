@@ -8,6 +8,8 @@ import { courses } from '@/data/courses';
 import { useCourseProgressionDB } from '@/hooks/useCourseProgressionDB';
 import CourseCompletionModal from '@/components/CourseCompletionModal';
 import BottomNavigation from './BottomNavigation';
+import PWALayout from './PWALayout';
+import PWAContentWrapper from './PWAContentWrapper';
 
 const MobileCourseViewer = () => {
   const { courseId } = useParams();
@@ -27,14 +29,19 @@ const MobileCourseViewer = () => {
 
   if (!course || !courseConfig) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-slate-900 mb-2">Course Not Found</h2>
-          <Button onClick={() => navigate('/mobile/explore')}>
-            Back to Courses
-          </Button>
-        </div>
-      </div>
+      <PWALayout hasHeader={false} hasBottomNav={true} className="bg-slate-50">
+        <PWAContentWrapper>
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-slate-900 mb-2">Course Not Found</h2>
+              <Button onClick={() => navigate('/mobile/explore')}>
+                Back to Courses
+              </Button>
+            </div>
+          </div>
+        </PWAContentWrapper>
+        <BottomNavigation />
+      </PWALayout>
     );
   }
 
@@ -94,9 +101,10 @@ const MobileCourseViewer = () => {
                        currentChapterIndex === currentModule.chapters.length - 1;
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      {/* Header */}
-      <div className="bg-white px-4 pt-12 pb-4 border-b border-slate-200">
+    <PWALayout hasHeader={false} hasBottomNav={true} className="bg-slate-50">
+      <PWAContentWrapper padding="none">
+        {/* Header */}
+        <div className="bg-white px-4 pt-4 pb-4 border-b border-slate-200">
         <div className="flex items-center space-x-3 mb-4">
           <Button 
             variant="ghost" 
@@ -198,9 +206,10 @@ const MobileCourseViewer = () => {
           }}
         />
       )}
+      </PWAContentWrapper>
 
       <BottomNavigation />
-    </div>
+    </PWALayout>
   );
 };
 

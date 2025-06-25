@@ -26,6 +26,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import BottomNavigation from "./BottomNavigation";
 import MobileHeader from "./MobileHeader";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 
 type SettingsView = 'main' | 'appearance' | 'preferences' | 'privacy';
 
@@ -440,7 +442,7 @@ const MobileSettings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <PWALayout hasHeader={true} hasBottomNav={true} className="bg-background">
       <MobileHeader
         title={currentView === 'main' ? 'Settings' :
           settingsMenuItems.find(item => item.view === currentView)?.title || 'Settings'}
@@ -449,12 +451,12 @@ const MobileSettings = () => {
       />
 
       {/* Content */}
-      <div className="px-6 py-6">
+      <PWAContentWrapper padding="md">
         {renderCurrentView()}
-      </div>
+      </PWAContentWrapper>
 
       <BottomNavigation />
-    </div>
+    </PWALayout>
   );
 };
 

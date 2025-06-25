@@ -13,6 +13,8 @@ import {
   BookOpen,
   Target
 } from "lucide-react";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 
 interface MobileOnboardingProps {
   onComplete: () => void;
@@ -90,7 +92,8 @@ const MobileOnboarding = ({ onComplete }: MobileOnboardingProps) => {
   }, [currentStep]);
 
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden">
+    <PWALayout hasHeader={false} hasBottomNav={false} className="bg-slate-50 relative overflow-hidden">
+      <PWAContentWrapper padding="none">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -215,7 +218,8 @@ const MobileOnboarding = ({ onComplete }: MobileOnboardingProps) => {
           </Button>
         </div>
       </div>
-    </div>
+      </PWAContentWrapper>
+    </PWALayout>
   );
 };
 

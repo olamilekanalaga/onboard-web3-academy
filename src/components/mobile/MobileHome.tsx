@@ -13,6 +13,8 @@ import MobileHeader from "./MobileHeader";
 import BottomNavigation from "./BottomNavigation";
 import SocialVerification from "../SocialVerification";
 import { courses } from "@/data/courses";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 
 const MobileHome = () => {
   const navigate = useNavigate();
@@ -83,11 +85,12 @@ const MobileHome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <PWALayout hasHeader={true} hasBottomNav={true} className="bg-slate-50">
       <MobileHeader />
-      
-      {/* Header */}
-      <div className="bg-gradient-to-br from-emerald-600 to-blue-700 px-6 pt-12 pb-8">
+
+      <PWAContentWrapper padding="none">
+        {/* Header */}
+        <div className="bg-gradient-to-br from-emerald-600 to-blue-700 px-6 pt-4 pb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">
@@ -114,8 +117,8 @@ const MobileHome = () => {
         </div>
       </div>
 
-      {/* Start Learning Section */}
-      <div className="px-6 py-6">
+        {/* Start Learning Section */}
+        <div className="px-6 py-6">
         <h2 className="text-xl font-bold text-slate-900 mb-4">Start Your Journey</h2>
         <Card className="border-0 shadow-sm bg-gradient-to-r from-emerald-50 to-blue-50">
           <CardContent className="p-6">
@@ -215,10 +218,11 @@ const MobileHome = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
+        </div>
+      </PWAContentWrapper>
 
       <BottomNavigation />
-    </div>
+    </PWALayout>
   );
 };
 

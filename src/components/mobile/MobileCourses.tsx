@@ -14,6 +14,8 @@ import {
 import { BookOpen, Clock, Star, Lock, CheckCircle, Trophy, Zap, ChevronDown, RotateCcw } from "lucide-react";
 import { courses } from "@/data/courses";
 import BottomNavigation from "./BottomNavigation";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 
 const MobileCourses = () => {
   const navigate = useNavigate();
@@ -91,9 +93,9 @@ const MobileCourses = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <PWALayout hasHeader={false} hasBottomNav={true} className="bg-slate-50">
       {/* Header */}
-      <div className="bg-white px-4 pt-12 pb-6 border-b border-slate-200">
+      <div className="bg-white px-4 pt-4 pb-6 border-b border-slate-200">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">My Courses</h1>
@@ -261,7 +263,7 @@ const MobileCourses = () => {
       </div>
 
       <BottomNavigation />
-    </div>
+    </PWALayout>
   );
 };
 

@@ -12,6 +12,8 @@ import TradingDemo from "@/components/TradingDemo";
 import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
 import BottomNavigation from "./BottomNavigation";
 import CourseCompletionModal from "@/components/CourseCompletionModal";
+import PWALayout from "./PWALayout";
+import PWAContentWrapper from "./PWAContentWrapper";
 
 const MobileCourse = () => {
   const { courseId } = useParams();
@@ -51,14 +53,19 @@ const MobileCourse = () => {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-xl font-bold text-slate-900 mb-4">Course Not Found</h1>
-          <Button onClick={() => navigate("/mobile/explore")}>
-            Back to Courses
-          </Button>
-        </div>
-      </div>
+      <PWALayout hasHeader={false} hasBottomNav={true} className="bg-slate-50">
+        <PWAContentWrapper>
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <h1 className="text-xl font-bold text-slate-900 mb-4">Course Not Found</h1>
+              <Button onClick={() => navigate("/mobile/explore")}>
+                Back to Courses
+              </Button>
+            </div>
+          </div>
+        </PWAContentWrapper>
+        <BottomNavigation />
+      </PWALayout>
     );
   }
 
@@ -208,9 +215,10 @@ const MobileCourse = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      {/* Header */}
-      <div className="bg-white px-4 pt-12 pb-4 border-b border-slate-200 sticky top-0 z-10">
+    <PWALayout hasHeader={false} hasBottomNav={true} className="bg-slate-50">
+      <PWAContentWrapper padding="none">
+        {/* Header */}
+        <div className="bg-white px-4 pt-4 pb-4 border-b border-slate-200 sticky top-0 z-10">
         <div className="flex items-center space-x-3 mb-4">
           <Button
             variant="ghost"
@@ -429,6 +437,8 @@ const MobileCourse = () => {
         )}
       </div>
 
+      </PWAContentWrapper>
+
       <BottomNavigation />
 
       {/* Course Completion Modal */}
@@ -441,7 +451,7 @@ const MobileCourse = () => {
           onStartNextCourse={handleStartNextCourse}
         />
       )}
-    </div>
+    </PWALayout>
   );
 };
 
