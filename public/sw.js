@@ -197,4 +197,65 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-console.log('[SW] Service worker script loaded');
+// Push event - handle incoming push notifications
+self.addEventListener('push', (event) => {
+  console.log('[SW] Push event received:', event);
+
+  let notificationData = {
+    title: 'Academia Notification',
+    body: 'You have a new notification',
+    icon: '/ACADEMIA MOBILE.PNG',
+    badge: '/ACADEMIA MOBILE.PNG',
+    data: {}
+  };
+
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      notificationData = { ...notificationData, ...data };
+    } catch (error) {
+      console.error('[SW] Error parsing push data:', error);
+      notificationData.body = event.data.text();
+    }
+  }
+
+  const notificationOptions = {
+    body: notificationData.body,
+    icon: notificationData.icon,
+    badge: notificationData.badge,
+    data: notificationData.data,
+    requireInteraction: true,
+    actions: [
+      { action: 'view', title: 'View' },
+      { action: 'dismiss', title: 'Dismiss' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, notificationOptions)
+  );
+});
+
+// Notification click event
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event);
+  event.notification.close();
+
+  if (event.action === 'dismiss') return;
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      for (let client of clientList) {
+        if (client.url.includes(location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        const targetUrl = event.notification.data?.url || '/';
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+
+console.log('[SW] Service worker script loaded with push notifications');

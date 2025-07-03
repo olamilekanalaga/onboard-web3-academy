@@ -1,12 +1,23 @@
 
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { ensureDatabaseTables, createUserStatsIfNotExists } from '@/utils/databaseSetup';
+import { courses } from '@/data/courses';
 import { toast } from 'sonner';
 
 export const useCourseProgressionDB = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Check database setup on mount
+  useEffect(() => {
+    if (user) {
+      ensureDatabaseTables();
+      createUserStatsIfNotExists(user.id);
+    }
+  }, [user]);
 
   // Get user stats and progress
   const { data: userStats, isLoading } = useQuery({
@@ -31,30 +42,61 @@ export const useCourseProgressionDB = () => {
   });
 
   // Get all course progress from database
-  const { data: allProgressData } = useQuery({
+  const { data: allProgressData, error: progressError } = useQuery({
     queryKey: ['all-course-progress', user?.id],
     queryFn: async () => {
       if (!user) return [];
 
-      const { data, error } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', user.id);
+      try {
+        const { data, error } = await supabase
+          .from('user_progress')
+          .select('*')
+          .eq('user_id', user.id);
 
-      if (error) {
-        console.error('Error fetching course progress:', error);
-        return [];
+        if (error) {
+          console.error('Supabase progress error:', error);
+          // Handle specific database errors gracefully
+          if (error.code === '42P01') {
+            console.log('user_progress table does not exist yet');
+            return [];
+          }
+          if (error.code === 'PGRST301' || error.message.includes('406')) {
+            console.log('RLS or permission issue, returning empty progress');
+            return [];
+          }
+          throw error;
+        }
+
+        console.log('Successfully fetched progress data:', data);
+        return data || [];
+      } catch (error) {
+        console.error('Error in progress query:', error);
+        return []; // Always return empty array instead of throwing
       }
-
-      return data || [];
     },
     enabled: !!user,
+    retry: false, // Don't retry failed queries
   });
 
   // Function to get specific course progress (no longer uses hooks)
   const getCourseProgress = (courseId: string) => {
     if (!allProgressData) return null;
-    return allProgressData.find(progress => progress.course_id === courseId) || null;
+    const progress = allProgressData.find(progress => progress.course_id === courseId);
+    if (!progress) return null;
+
+    // Get actual total chapters from course data
+    const course = courses[courseId];
+    const actualTotalChapters = course ? course.modules.reduce((sum: number, module: any) => sum + module.chapters.length, 0) : 0;
+
+    return {
+      courseId: progress.course_id,
+      completedChapters: progress.completed_chapters || [],
+      progressPercentage: progress.progress_percentage || 0,
+      progress_percentage: progress.progress_percentage || 0, // Add both formats for compatibility
+      xpEarned: progress.xp_earned || 0,
+      completedAt: progress.completed_at,
+      totalChapters: actualTotalChapters, // Use actual total from course data
+    };
   };
 
   // Update chapter progress
@@ -111,11 +153,15 @@ export const useCourseProgressionDB = () => {
           xp_earned: xpEarned,
           completed_at: isCompleted ? new Date().toISOString() : null,
           updated_at: new Date().toISOString(),
+          lesson_id: null, // Add this field to match database schema
         };
 
         const { data, error } = await supabase
           .from('user_progress')
-          .upsert(updateData)
+          .upsert(updateData, {
+            onConflict: 'user_id,course_id',
+            ignoreDuplicates: false
+          })
           .select()
           .single();
 
@@ -152,6 +198,9 @@ export const useCourseProgressionDB = () => {
               completed_courses: newCompletedCourses,
               level: newLevel,
               updated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'user_id',
+              ignoreDuplicates: false
             });
         }
 

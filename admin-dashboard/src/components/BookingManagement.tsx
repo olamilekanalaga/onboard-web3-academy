@@ -18,7 +18,7 @@ import {
   Download,
   Mail
 } from "lucide-react";
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 const BookingManagement = () => {
   const [bookings, setBookings] = useState<any[]>([]);

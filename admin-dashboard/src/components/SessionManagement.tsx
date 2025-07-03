@@ -15,7 +15,7 @@ import {
   CheckCircle,
   X
 } from "lucide-react";
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 const SessionManagement = () => {
   const [sessions, setSessions] = useState<any[]>([]);

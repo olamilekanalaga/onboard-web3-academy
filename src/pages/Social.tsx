@@ -1,0 +1,648 @@
+import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Users,
+  MessageSquare,
+  TrendingUp,
+  UserPlus,
+  Heart,
+  Trophy,
+  Target,
+  ThumbsUp,
+  Flame,
+  Zap,
+  Bell,
+  Send,
+  BookOpen,
+  Star,
+  Award
+} from 'lucide-react';
+import Header from '@/components/Header';
+import StudentProfile from '@/components/social/StudentProfile';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
+import { formatDistanceToNow } from 'date-fns';
+
+interface ProgressItem {
+  id: string;
+  user_id: string;
+  activity_type: string;
+  title: string;
+  description: string;
+  course_id?: string;
+  xp_earned: number;
+  reactions_count: number;
+  created_at: string;
+  user_email?: string;
+  user_reactions?: Array<{
+    reaction_type: string;
+    user_id: string;
+  }>;
+}
+
+interface StudentStats {
+  user_id: string;
+  total_xp: number;
+  level: number;
+  current_streak: number;
+  completed_courses: string[];
+}
+
+const Social: React.FC = () => {
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  const [activeTab, setActiveTab] = useState('feed');
+  const [progressItems, setProgressItems] = useState<ProgressItem[]>([]);
+  const [students, setStudents] = useState<StudentStats[]>([]);
+  const [recentCompletions, setRecentCompletions] = useState<ProgressItem[]>([]);
+  const [following, setFollowing] = useState<Set<string>>(new Set());
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    try {
+      // Load progress from users you follow + your own
+      const { data: followingData } = await supabase
+        .from('social_follows')
+        .select('following_id')
+        .eq('follower_id', user?.id);
+
+      const followingIds = followingData?.map(f => f.following_id) || [];
+      const userIds = [user?.id, ...followingIds];
+
+      // Load progress items with user info
+      const { data: progressData } = await supabase
+        .from('social_progress')
+        .select(`
+          *,
+          social_reactions(reaction_type, user_id)
+        `)
+        .in('user_id', userIds)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (progressData) {
+        const enrichedProgress = progressData.map(item => ({
+          ...item,
+          user_email: item.user_email || 'Student',
+          user_name: item.user_name || 'Academia Student',
+          user_avatar: item.user_avatar,
+          user_reactions: item.social_reactions || []
+        }));
+
+        setProgressItems(enrichedProgress);
+      }
+
+      // Load all students with stats and user info
+      const { data: studentsData } = await supabase
+        .from('user_profiles_view')
+        .select('*')
+        .neq('user_id', user?.id)
+        .order('total_xp', { ascending: false })
+        .limit(50);
+
+      setStudents(studentsData || []);
+
+      // Load recent course completions (last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const { data: recentData } = await supabase
+        .from('social_progress')
+        .select('*')
+        .eq('activity_type', 'course_completed')
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      setRecentCompletions(recentData || []);
+
+      // Load who you're following
+      setFollowing(new Set(followingIds));
+
+      // Load notifications
+      const { data: notificationsData } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      setNotifications(notificationsData || []);
+
+    } catch (error) {
+      console.error('Error loading social data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReaction = async (progressId: string, reactionType: string) => {
+    if (!user) return;
+
+    try {
+      // Check if user already reacted
+      const { data: existingReaction } = await supabase
+        .from('social_reactions')
+        .select('id')
+        .eq('progress_id', progressId)
+        .eq('user_id', user.id)
+        .maybeSingle(); // Use maybeSingle to avoid 406 error
+
+      if (existingReaction) {
+        // Remove reaction
+        await supabase
+          .from('social_reactions')
+          .delete()
+          .eq('progress_id', progressId)
+          .eq('user_id', user.id);
+      } else {
+        // Add reaction
+        await supabase
+          .from('social_reactions')
+          .insert({
+            progress_id: progressId,
+            user_id: user.id,
+            reaction_type: reactionType
+          });
+      }
+
+      // Update reactions count
+      const { data: reactionCount } = await supabase
+        .from('social_reactions')
+        .select('id')
+        .eq('progress_id', progressId);
+
+      await supabase
+        .from('social_progress')
+        .update({ reactions_count: reactionCount?.length || 0 })
+        .eq('id', progressId);
+
+      // Create notification for reaction (only when adding, not removing)
+      if (!existingReaction) {
+        const progressItem = progressItems.find(item => item.id === progressId);
+        if (progressItem && progressItem.user_id !== user.id) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: progressItem.user_id,
+              type: 'reaction',
+              title: 'New Reaction',
+              message: `${user.email} reacted to your progress: "${progressItem.title}"`,
+              data: {
+                progress_id: progressId,
+                reaction_type: reactionType,
+                reactor_id: user.id
+              }
+            });
+        }
+      }
+
+      // Reload data to show updated reactions
+      loadData();
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+    }
+  };
+
+  const handleFollow = async (studentUserId: string) => {
+    if (!user) return;
+
+    try {
+      const isFollowing = following.has(studentUserId);
+
+      if (isFollowing) {
+        // Unfollow
+        await supabase
+          .from('social_follows')
+          .delete()
+          .eq('follower_id', user.id)
+          .eq('following_id', studentUserId);
+
+        setFollowing(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(studentUserId);
+          return newSet;
+        });
+      } else {
+        // Follow
+        await supabase
+          .from('social_follows')
+          .insert({
+            follower_id: user.id,
+            following_id: studentUserId
+          });
+
+        setFollowing(prev => new Set(prev).add(studentUserId));
+
+        // Create notification
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: studentUserId,
+            type: 'follow',
+            title: 'New Follower',
+            message: `${user.email} started following you!`,
+            data: { follower_id: user.id }
+          });
+      }
+    } catch (error) {
+      console.error('Error handling follow:', error);
+    }
+  };
+
+  // If viewing a student profile, show that instead
+  if (selectedStudentId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <StudentProfile
+            studentId={selectedStudentId}
+            onBack={() => setSelectedStudentId(null)}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <Header />
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            {t('social.title')}
+          </h1>
+          <p className="text-xl text-slate-600 max-w-3xl mx-auto mb-6">
+            {t('social.subtitle')}
+          </p>
+        </div>
+
+        {/* Main Content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsTrigger value="feed" className="flex items-center space-x-2">
+              <TrendingUp className="w-4 h-4" />
+              <span>{t('social.progress_feed')}</span>
+            </TabsTrigger>
+
+            <TabsTrigger value="students" className="flex items-center space-x-2">
+              <Users className="w-4 h-4" />
+              <span>{t('social.students')}</span>
+            </TabsTrigger>
+
+            <TabsTrigger value="messages" className="flex items-center space-x-2">
+              <MessageSquare className="w-4 h-4" />
+              <span>{t('social.messages')}</span>
+              {notifications.filter(n => !n.read_at).length > 0 && (
+                <Badge variant="destructive" className="ml-1">
+                  {notifications.filter(n => !n.read_at).length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Progress Feed Tab */}
+          <TabsContent value="feed" className="space-y-6">
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <Card key={i} className="animate-pulse">
+                    <CardContent className="p-6">
+                      <div className="flex space-x-4">
+                        <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : progressItems.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No progress updates yet</h3>
+                  <p className="text-gray-600 mb-4">
+                    Follow other students to see their achievements, or complete some courses to share your progress!
+                  </p>
+                  <Button onClick={() => setActiveTab('students')}>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Find Students to Follow
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {progressItems.map((item) => (
+                  <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start space-x-4 mb-4">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={item.user_avatar} />
+                          <AvatarFallback>
+                            {item.user_name?.charAt(0).toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span
+                              className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer"
+                              onClick={() => setSelectedStudentId(item.user_id)}
+                            >
+                              {item.user_name || 'Academia Student'}
+                            </span>
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <div className="p-2 rounded-lg bg-green-500">
+                            {item.activity_type === 'course_completed' && <Trophy className="w-5 h-5 text-white" />}
+                            {item.activity_type === 'quiz_passed' && <Target className="w-5 h-5 text-white" />}
+                            {item.activity_type === 'chapter_completed' && <BookOpen className="w-5 h-5 text-white" />}
+                          </div>
+                          <h3 className="font-semibold text-gray-900">{item.title}</h3>
+                        </div>
+
+                        {item.description && (
+                          <p className="text-gray-700 ml-11">{item.description}</p>
+                        )}
+
+                        {item.xp_earned > 0 && (
+                          <Badge variant="secondary" className="ml-11 mt-2">
+                            +{item.xp_earned} XP
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="border-t pt-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleReaction(item.id, 'thumbs_up')}
+                              className={`flex items-center space-x-1 ${
+                                item.user_reactions?.some(r => r.user_id === user?.id && r.reaction_type === 'thumbs_up')
+                                  ? 'text-blue-600 bg-blue-50'
+                                  : 'text-gray-600'
+                              }`}
+                            >
+                              <ThumbsUp className="w-4 h-4" />
+                              <span className="text-sm">{item.reactions_count}</span>
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleReaction(item.id, 'heart')}
+                              className={`${
+                                item.user_reactions?.some(r => r.user_id === user?.id && r.reaction_type === 'heart')
+                                  ? 'text-red-600 bg-red-50'
+                                  : 'text-gray-600'
+                              }`}
+                            >
+                              <Heart className="w-4 h-4" />
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleReaction(item.id, 'fire')}
+                              className={`${
+                                item.user_reactions?.some(r => r.user_id === user?.id && r.reaction_type === 'fire')
+                                  ? 'text-orange-600 bg-orange-50'
+                                  : 'text-gray-600'
+                              }`}
+                            >
+                              <Flame className="w-4 h-4" />
+                            </Button>
+
+                            <span className="text-xs text-gray-500 ml-2">
+                              {item.reactions_count > 0 && `${item.reactions_count} reactions`}
+                            </span>
+                          </div>
+
+                          <Button variant="ghost" size="sm">
+                            <MessageSquare className="w-4 h-4 mr-1" />
+                            Message
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+          {/* Students Tab */}
+          <TabsContent value="students" className="space-y-6">
+            {/* Recent Completions Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Trophy className="w-5 h-5 text-yellow-600" />
+                  <span>{t('social.recent_completions')}</span>
+                  <Badge variant="secondary">{recentCompletions.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentCompletions.length === 0 ? (
+                  <p className="text-gray-600 text-center py-4">No recent completions this week</p>
+                ) : (
+                  <div className="space-y-3">
+                    {recentCompletions.map((completion) => (
+                      <div key={completion.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
+                        <div
+                          className="flex items-center space-x-3 flex-1"
+                          onClick={() => setSelectedStudentId(completion.user_id)}
+                        >
+                          <Avatar className="w-10 h-10">
+                            <AvatarImage src={completion.user_avatar} />
+                            <AvatarFallback>
+                              {completion.user_name?.charAt(0).toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {completion.user_name || 'Academia Student'}
+                            </p>
+                            <p className="text-sm text-gray-600">{completion.title}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">+{completion.xp_earned} XP</Badge>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent card click
+                              handleFollow(completion.user_id);
+                            }}
+                            variant={following.has(completion.user_id) ? "outline" : "default"}
+                            size="sm"
+                          >
+                            {following.has(completion.user_id) ? 'Following' : 'Follow'}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <Card key={i} className="animate-pulse">
+                    <CardContent className="p-6">
+                      <div className="flex items-center space-x-4 mb-4">
+                        <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {students.map((student) => (
+                  <Card key={student.user_id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardContent className="p-6" onClick={() => setSelectedStudentId(student.user_id)}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-4">
+                          <Avatar className="w-16 h-16">
+                            <AvatarImage src={student.user_avatar} />
+                            <AvatarFallback className="text-lg">
+                              {student.user_name?.charAt(0).toUpperCase() || 'S'}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              {student.user_name || `Student ${student.user_id.slice(-4)}`}
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {student.user_email || 'Academia Student'}
+                            </p>
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="secondary">
+                                Level {student.level}
+                              </Badge>
+                              <span className="text-sm text-gray-500">
+                                {student.total_xp} XP
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent card click
+                            handleFollow(student.user_id);
+                          }}
+                          variant={following.has(student.user_id) ? "outline" : "default"}
+                          size="sm"
+                        >
+                          {following.has(student.user_id) ? t('social.following') : t('social.follow')}
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4 text-center border-t pt-4">
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {student.completed_courses?.length || 0}
+                          </p>
+                          <p className="text-xs text-gray-600">Courses</p>
+                        </div>
+
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {student.current_streak || 0}
+                          </p>
+                          <p className="text-xs text-gray-600">Streak</p>
+                        </div>
+
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {Math.floor(student.total_xp / 100)}
+                          </p>
+                          <p className="text-xs text-gray-600">Achievements</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Messages Tab */}
+          <TabsContent value="messages" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Bell className="w-5 h-5" />
+                  <span>Notifications</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications yet</h3>
+                    <p className="text-gray-600">
+                      You'll see notifications here when people react to your progress or follow you.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {notifications.map((notification) => (
+                      <div key={notification.id} className="flex items-start space-x-4 p-4 rounded-lg hover:bg-gray-50">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{notification.title}</h4>
+                          <p className="text-sm text-gray-600">{notification.message}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default Social;

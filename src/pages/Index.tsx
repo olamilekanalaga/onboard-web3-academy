@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { BookOpen, Search, Users, Award, Target, Brain, Shield, TrendingUp, Globe, Zap, CheckCircle, Play, Clock, Star, Trophy, Calculator, Gamepad2, BarChart3, Flame, Coins } from "lucide-react";
 import Header from "@/components/Header";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { t } = useLanguage();
 
   const learningPaths = [
     {
@@ -179,24 +181,24 @@ const Index = () => {
             <div className="space-y-8">
               <div className="space-y-6">
                 <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-                  Master Web3.
+                  {t('hero.title')}
                   <br />
-                  <span className="text-blue-200">Build Your Future.</span>
+                  <span className="text-blue-200">{t('hero.build_future') || 'Build Your Future.'}</span>
                 </h1>
                 <p className="text-xl text-blue-100 leading-relaxed max-w-lg">
-                  Join thousands of learners mastering blockchain, DeFi, and Web3 development through hands-on courses designed by industry experts.
+                  {t('hero.subtitle')}
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/auth">
                   <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50 px-10 py-4 text-lg font-semibold">
-                    Start Learning Free
+                    {t('hero.cta')}
                   </Button>
                 </Link>
                 <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-blue-700 px-10 py-4 text-lg">
                   <Play className="mr-2 h-5 w-5" />
-                  Watch Demo
+                  {t('hero.learn_more')}
                 </Button>
               </div>
 
@@ -472,7 +474,7 @@ const Index = () => {
                     </div>
 
                     <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white group-hover:bg-blue-700 transition-colors">
-                      Start Learning
+                      {t('hero.cta')}
                     </Button>
                   </CardContent>
                 </Card>

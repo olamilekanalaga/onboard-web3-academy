@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useCourseProgression } from "@/hooks/useCourseProgression";
+import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
+import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,28 +15,82 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
 import CourseCompletionModal from "@/components/CourseCompletionModal";
+import CourseQuiz from "@/components/CourseQuiz";
+import { getQuizForCourse, calculateQuizXP } from "@/data/courseQuizzes";
+import { useQuizProgress } from "@/hooks/useQuizProgress";
 
 const Course = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { updateChapterProgress, getCourseProgress, courseProgression, unlockCourse } = useCourseProgression();
+  const { updateChapterProgress, getCourseProgress, courseProgression, unlockCourse, isUpdating } = useCourseProgressionDB();
+  const { recordQuizCompletion, hasPassedQuiz, canAccessCourse } = useQuizProgress();
   const [selectedModule, setSelectedModule] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [courseJustCompleted, setCourseJustCompleted] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [quizPassed, setQuizPassed] = useState(false);
+  const [quizScore, setQuizScore] = useState(0);
+  const [quizXP, setQuizXP] = useState(0);
 
   // Get completed chapters from progression system
   const courseProgress = getCourseProgress(courseId || '');
   const completedChapters = courseProgress?.completedChapters || [];
 
+  // Get course data first
   const course = courseId ? courses[courseId] : undefined;
   const courseConfig = courseId ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
+
+  // Watch for course completion
+  useEffect(() => {
+    const progressPercentage = courseProgress?.progressPercentage || courseProgress?.progress_percentage || 0;
+    if (progressPercentage === 100 && !courseJustCompleted && !showQuiz) {
+      console.log('🎯 Course completion detected via useEffect!');
+      console.log('Course progress:', courseProgress);
+      console.log('Progress percentage:', progressPercentage);
+      setCourseJustCompleted(true);
+      setShowQuiz(true);
+    }
+  }, [courseProgress?.progressPercentage, courseProgress?.progress_percentage, courseJustCompleted, showQuiz]);
+
+  // Check course access permissions
+  useEffect(() => {
+    if (courseId && course) {
+      // Define course prerequisites
+      const prerequisites: { [key: string]: string[] } = {
+        'foundation': [],
+        'defi-fundamentals': ['foundation'],
+        'degen': ['foundation', 'defi-fundamentals'],
+        'advanced-trading': ['foundation', 'defi-fundamentals'],
+        'development': ['foundation', 'defi-fundamentals'],
+        'nft-creation': ['foundation'],
+        'content-creation': ['foundation'],
+        'web3-security': ['foundation', 'defi-fundamentals'],
+        'dao-governance': ['foundation', 'defi-fundamentals'],
+        'web3-gaming': ['foundation'],
+        'crypto-tax': ['foundation', 'defi-fundamentals'],
+        'web3-social': ['foundation']
+      };
+
+      const coursePrereqs = prerequisites[courseId] || [];
+      const hasAccess = canAccessCourse(courseId, coursePrereqs);
+
+      if (!hasAccess) {
+        console.log('❌ Access denied to course:', courseId);
+        console.log('Missing prerequisites:', coursePrereqs.filter(prereq => !hasPassedQuiz(prereq)));
+        // Redirect to courses page with error message
+        navigate('/courses?error=quiz_required');
+      }
+    }
+  }, [courseId, course, canAccessCourse, hasPassedQuiz, navigate]);
 
   // Auto-start course on load
   useEffect(() => {
     console.log('Course useEffect triggered for courseId:', courseId);
     setCourseJustCompleted(false);
     setShowCompletionModal(false);
+    setShowQuiz(false);
+    setQuizPassed(false);
 
     if (courseId) {
       // Start with first module and chapter
@@ -80,20 +135,40 @@ const Course = () => {
     return isChapterCompleted(moduleId, chapterId - 1);
   };
 
-  const markChapterComplete = () => {
+  const markChapterComplete = async () => {
     const chapterId = getChapterId(selectedModule, selectedChapter);
-    if (!completedChapters.includes(chapterId) && courseId) {
-      const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
-      updateChapterProgress(courseId, chapterId, totalChapters);
 
-      // Check if course is now completed
-      setTimeout(() => {
-        const updatedProgress = getCourseProgress(courseId);
-        if (updatedProgress && updatedProgress.progressPercentage === 100 && !courseJustCompleted) {
-          setCourseJustCompleted(true);
-          setShowCompletionModal(true);
+    if (!completedChapters.includes(chapterId) && courseId) {
+      // Update progress first
+      const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
+
+      // Calculate if this will complete the course
+      const newCompletedCount = completedChapters.length + 1;
+      const willCompleteCourse = newCompletedCount >= totalChapters;
+
+      console.log(`📚 Marking chapter ${chapterId} complete`);
+      console.log(`Progress: ${newCompletedCount}/${totalChapters} chapters`);
+      console.log(`Will complete course: ${willCompleteCourse}`);
+
+      // Update the progress using mutation
+      updateChapterProgress.mutate(
+        { courseId, chapterId, totalChapters },
+        {
+          onSuccess: (data) => {
+            console.log('Chapter progress updated:', data);
+
+            // If this completes the course, show quiz immediately
+            if (willCompleteCourse && !courseJustCompleted) {
+              console.log('🎉 COURSE COMPLETED! Showing quiz now...');
+              setCourseJustCompleted(true);
+              setShowQuiz(true);
+            }
+          },
+          onError: (error) => {
+            console.error('Error updating chapter progress:', error);
+          }
         }
-      }, 100);
+      );
     }
   };
 
@@ -104,6 +179,77 @@ const Course = () => {
   const handleStartNextCourse = async (nextCourseId: string) => {
     await unlockCourse(nextCourseId);
     navigate(`/course/${nextCourseId}`);
+  };
+
+  const handleQuizComplete = async (passed: boolean, score: number, xpEarned: number) => {
+    setQuizPassed(passed);
+    setQuizScore(score);
+    setQuizXP(xpEarned);
+
+    // Record quiz completion
+    if (courseId) {
+      await recordQuizCompletion(courseId, score, xpEarned);
+    }
+
+    if (passed) {
+      // Award XP and show completion modal
+      setShowQuiz(false);
+      setShowCompletionModal(true);
+
+      console.log('🎉 Quiz passed! Course completed successfully');
+
+      // Create progress feed entry
+      if (course) {
+        try {
+          await supabase
+            .from('social_progress')
+            .insert({
+              user_id: user?.id,
+              activity_type: 'course_completed',
+              title: `Completed ${course.title}!`,
+              description: `Just finished the ${course.title} course with a ${score}% quiz score and earned ${xpEarned} XP! 🎉`,
+              course_id: courseId,
+              xp_earned: xpEarned
+            });
+
+          // Create notification for course completion
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: user?.id,
+              type: 'course_completed',
+              title: 'Course Completed!',
+              message: `Congratulations! You completed ${course.title} with ${score}% and earned ${xpEarned} XP!`,
+              data: {
+                course_id: courseId,
+                course_title: course.title,
+                score: score,
+                xp_earned: xpEarned
+              }
+            });
+        } catch (error) {
+          console.error('Error creating progress feed entry:', error);
+        }
+      }
+
+      // TODO: Update user stats with XP earned
+      // TODO: Update streak
+      // TODO: Unlock next course
+    } else {
+      console.log('❌ Quiz failed. Must retake course or quiz.');
+    }
+    // If failed, quiz component handles retake logic
+  };
+
+  const handleRetakeCourse = () => {
+    // Reset course progress and go back to first chapter
+    setShowQuiz(false);
+    setCourseJustCompleted(false);
+    setSelectedModule(0);
+    setSelectedChapter(0);
+    // TODO: Reset course progress in database
+    // Navigate back to the course main page, not a specific chapter
+    navigate(`/course/${courseId}`);
   };
 
   const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
@@ -329,6 +475,7 @@ const Course = () => {
                             Completed
                           </Badge>
                         )}
+
                       </div>
                     </div>
                   </div>
@@ -415,12 +562,14 @@ const Course = () => {
                     {!isChapterCompleted(selectedModule, selectedChapter) && (
                       <Button
                         onClick={markChapterComplete}
+                        disabled={isUpdating}
                         className="bg-green-600 hover:bg-green-700 text-white flex-1"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        Mark as Complete
+                        {isUpdating ? 'Updating...' : 'Mark as Complete'}
                       </Button>
                     )}
+
 
                     <Button
                       variant="outline"
@@ -448,13 +597,79 @@ const Course = () => {
         </div>
       </div>
 
+      {/* Course Quiz */}
+      {showQuiz && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <CourseQuiz
+              courseId={courseId}
+              courseName={course.title}
+              questions={getQuizForCourse(courseId).length > 0 ? getQuizForCourse(courseId) : [
+                {
+                  id: 'fallback-1',
+                  question: `What was the main topic of the ${course.title} course?`,
+                  type: 'multiple-choice',
+                  options: [
+                    'Blockchain fundamentals and cryptocurrency basics',
+                    'Advanced trading strategies and market analysis',
+                    'DeFi protocols and smart contracts',
+                    'All of the above'
+                  ],
+                  correctAnswer: 3,
+                  explanation: 'This course covered comprehensive Web3 education topics.',
+                  difficulty: 'easy' as const,
+                  points: 25,
+                  category: 'Course Review'
+                },
+                {
+                  id: 'fallback-2',
+                  question: 'What is the most important rule when investing in crypto?',
+                  type: 'multiple-choice',
+                  options: [
+                    'Always buy the dip',
+                    'Only invest what you can afford to lose',
+                    'Follow influencer advice',
+                    'Use maximum leverage'
+                  ],
+                  correctAnswer: 1,
+                  explanation: 'Never invest more than you can afford to lose completely.',
+                  difficulty: 'easy' as const,
+                  points: 25,
+                  category: 'Risk Management'
+                },
+                {
+                  id: 'fallback-3',
+                  question: 'What makes this course valuable for your Web3 journey?',
+                  type: 'multiple-choice',
+                  options: [
+                    'It provides foundational knowledge',
+                    'It teaches practical skills',
+                    'It prepares you for advanced topics',
+                    'All of the above'
+                  ],
+                  correctAnswer: 3,
+                  explanation: 'Great! You understand the value of structured Web3 education.',
+                  difficulty: 'easy' as const,
+                  points: 25,
+                  category: 'Learning'
+                }
+              ]}
+              onQuizComplete={handleQuizComplete}
+              onRetakeCourse={handleRetakeCourse}
+              onCloseQuiz={() => setShowQuiz(false)}
+              requiredScore={70}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Course Completion Modal */}
       {courseId && courseConfig && (
         <CourseCompletionModal
           isOpen={showCompletionModal}
           onClose={handleCloseCompletionModal}
           completedCourseId={courseId}
-          xpEarned={courseConfig.xpReward}
+          xpEarned={quizPassed ? quizXP : courseConfig.xpReward}
           onStartNextCourse={handleStartNextCourse}
         />
       )}
