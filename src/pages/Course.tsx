@@ -41,17 +41,49 @@ const Course = () => {
   const course = courseId ? courses[courseId] : undefined;
   const courseConfig = courseId ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
 
-  // Watch for course completion
+  // Watch for course completion - Enhanced detection
   useEffect(() => {
+    if (!course || !courseId) return;
+
     const progressPercentage = courseProgress?.progressPercentage || courseProgress?.progress_percentage || 0;
-    if (progressPercentage === 100 && !courseJustCompleted && !showQuiz) {
-      console.log('🎯 Course completion detected via useEffect!');
-      console.log('Course progress:', courseProgress);
-      console.log('Progress percentage:', progressPercentage);
+    const completedCount = completedChapters?.length || 0;
+
+    // Calculate total chapters
+    const totalChapters = course.modules?.reduce((sum, module) => {
+      return sum + (module.chapters?.length || 0);
+    }, 0) || 0;
+
+    // Check completion by both percentage and chapter count
+    const isCompleteByPercentage = progressPercentage >= 100;
+    const isCompleteByChapters = totalChapters > 0 && completedCount >= totalChapters;
+    const isCourseComplete = isCompleteByPercentage || isCompleteByChapters;
+
+    console.log('🔍 Course Completion Check:', {
+      courseId,
+      progressPercentage,
+      completedCount,
+      totalChapters,
+      isCompleteByPercentage,
+      isCompleteByChapters,
+      isCourseComplete,
+      courseJustCompleted,
+      showQuiz
+    });
+
+    if (isCourseComplete && !courseJustCompleted && !showQuiz) {
+      console.log('🎯 Course completion detected! Triggering quiz...');
       setCourseJustCompleted(true);
       setShowQuiz(true);
     }
-  }, [courseProgress?.progressPercentage, courseProgress?.progress_percentage, courseJustCompleted, showQuiz]);
+  }, [
+    courseProgress?.progressPercentage,
+    courseProgress?.progress_percentage,
+    completedChapters?.length,
+    courseJustCompleted,
+    showQuiz,
+    course,
+    courseId
+  ]);
 
   // Check course access permissions
   useEffect(() => {
@@ -206,26 +238,44 @@ const Course = () => {
   };
 
   const handleQuizComplete = async (passed: boolean, score: number, xpEarned: number) => {
+    console.log('🎯 Quiz completed:', { passed, score, xpEarned, requiredScore: 70 });
+
     setQuizPassed(passed);
     setQuizScore(score);
     setQuizXP(xpEarned);
+
+    // Ensure 70% minimum requirement
+    const meetsRequirement = score >= 70;
+    const finalPassed = passed && meetsRequirement;
+
+    console.log('📊 Quiz validation:', {
+      score,
+      meetsRequirement,
+      passed,
+      finalPassed
+    });
 
     // Record quiz completion
     if (courseId) {
       await recordQuizCompletion(courseId, score, xpEarned);
     }
 
-    if (passed) {
+    if (finalPassed) {
+      console.log('🎉 Quiz PASSED with 70%+! Processing course completion...');
+
       // Unlock next course immediately
       if (courseId) {
         try {
           const nextCourseId = getNextCourseId(courseId);
           if (nextCourseId) {
+            console.log(`🔓 Unlocking next course: ${nextCourseId}`);
             await unlockCourse(nextCourseId);
-            console.log(`✅ Next course unlocked: ${nextCourseId}`);
+            console.log(`✅ Next course successfully unlocked: ${nextCourseId}`);
+          } else {
+            console.log('🏁 No next course - this was the final course!');
           }
         } catch (error) {
-          console.error('Error unlocking next course:', error);
+          console.error('❌ Error unlocking next course:', error);
         }
       }
 
@@ -667,6 +717,45 @@ const Course = () => {
                     >
                       Next Chapter
                     </Button>
+                  </div>
+
+                  {/* Debug Quiz Controls */}
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                    <h4 className="font-semibold text-gray-900 mb-2">🧪 Debug Controls</h4>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        onClick={() => {
+                          console.log('🎯 Manual quiz trigger');
+                          setShowQuiz(true);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="bg-blue-50 hover:bg-blue-100"
+                      >
+                        🎯 Force Quiz
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          const progressPercentage = courseProgress?.progressPercentage || courseProgress?.progress_percentage || 0;
+                          const completedCount = completedChapters?.length || 0;
+                          const totalChapters = course.modules?.reduce((sum, module) => sum + (module.chapters?.length || 0), 0) || 0;
+
+                          console.log('📊 Course Status:', {
+                            progressPercentage,
+                            completedCount,
+                            totalChapters,
+                            courseJustCompleted,
+                            showQuiz,
+                            courseProgress
+                          });
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="bg-green-50 hover:bg-green-100"
+                      >
+                        📊 Check Status
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
