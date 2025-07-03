@@ -82,12 +82,27 @@ const MobileCourse = () => {
   // Watch for course completion to trigger quiz
   useEffect(() => {
     const progressPercentage = courseProgress?.progress_percentage || 0;
-    if (progressPercentage === 100 && !courseJustCompleted && !showQuiz) {
+    const totalChapters = course?.modules?.reduce((sum, module) => sum + module.chapters.length, 0) || 0;
+    const completedCount = completedChapters.length;
+
+    console.log('Mobile Course Progress Check:', {
+      progressPercentage,
+      totalChapters,
+      completedCount,
+      completedChapters,
+      courseJustCompleted,
+      showQuiz
+    });
+
+    // Check if all chapters are completed OR progress is 100%
+    const isFullyCompleted = (progressPercentage === 100) || (totalChapters > 0 && completedCount >= totalChapters);
+
+    if (isFullyCompleted && !courseJustCompleted && !showQuiz) {
       console.log('🎯 Mobile Course completion detected! Showing quiz...');
       setCourseJustCompleted(true);
       setShowQuiz(true);
     }
-  }, [courseProgress?.progress_percentage, courseJustCompleted, showQuiz]);
+  }, [courseProgress?.progress_percentage, completedChapters, course, courseJustCompleted, showQuiz]);
 
   if (!course || !courseId) {
     return (
@@ -524,6 +539,16 @@ const MobileCourse = () => {
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     {isUpdating ? 'Saving...' : 'Mark as Complete'}
+                  </Button>
+                )}
+
+                {/* Debug: Manual Quiz Button */}
+                {courseProgress?.progress_percentage === 100 && !showQuiz && (
+                  <Button
+                    onClick={() => setShowQuiz(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                  >
+                    🎯 Start Quiz (Course Complete)
                   </Button>
                 )}
 
