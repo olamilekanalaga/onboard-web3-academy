@@ -19,6 +19,12 @@ const BottomNavigation = () => {
       isActive: location.pathname === "/mobile/explore"
     },
     {
+      icon: BookOpen,
+      label: "Courses",
+      path: "/mobile/courses",
+      isActive: location.pathname === "/mobile/courses"
+    },
+    {
       icon: Users,
       label: "Social",
       path: "/mobile/social",
@@ -27,8 +33,8 @@ const BottomNavigation = () => {
     {
       icon: Zap,
       label: "Demo",
-      path: "/demo",
-      isActive: location.pathname === "/demo"
+      path: "/mobile/demo",
+      isActive: location.pathname === "/mobile/demo"
     },
     {
       icon: Trophy,
@@ -41,12 +47,18 @@ const BottomNavigation = () => {
       label: "Profile",
       path: "/mobile/profile",
       isActive: location.pathname === "/mobile/profile"
+    },
+    {
+      icon: Settings,
+      label: "Settings",
+      path: "/mobile/settings",
+      isActive: location.pathname === "/mobile/settings"
     }
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50 md:hidden bottom-nav-safe shadow-lg">
-      <div className="grid grid-cols-5 items-start pt-2" style={{ height: 'max(4rem, calc(3rem + env(safe-area-inset-bottom)))' }}>
+      <div className="grid grid-cols-7 items-start pt-2" style={{ height: 'max(4rem, calc(3rem + env(safe-area-inset-bottom)))' }}>
         {navItems.map((item) => (
           <Link
             key={item.path}

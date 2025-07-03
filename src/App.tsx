@@ -179,6 +179,22 @@ const App: React.FC = () => {
                           }
                         />
                         <Route
+                          path="/mobile/courses"
+                          element={
+                            <MobileAuthGuard>
+                              <MobileExplore />
+                            </MobileAuthGuard>
+                          }
+                        />
+                        <Route
+                          path="/mobile/demo"
+                          element={
+                            <MobileAuthGuard>
+                              <MobileDemo />
+                            </MobileAuthGuard>
+                          }
+                        />
+                        <Route
                           path="/gamification"
                           element={
                             <AuthGuard>

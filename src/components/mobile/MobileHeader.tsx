@@ -121,8 +121,10 @@ const MobileHeader = ({
           {/* Language Selector */}
           <LanguageSelector />
 
-          {/* Notification Center */}
-          <NotificationCenter />
+          {/* Notification Center - Mobile Optimized */}
+          <div className="flex items-center">
+            <NotificationCenter />
+          </div>
 
           {/* Search Button */}
           <Button variant="ghost" size="sm" className="p-2">
