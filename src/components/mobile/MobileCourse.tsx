@@ -81,9 +81,13 @@ const MobileCourse = () => {
 
   // Watch for course completion to trigger quiz
   useEffect(() => {
+    if (!course || !course.modules) return;
+
     const progressPercentage = courseProgress?.progress_percentage || 0;
-    const totalChapters = course?.modules?.reduce((sum, module) => sum + module.chapters.length, 0) || 0;
-    const completedCount = completedChapters.length;
+    const totalChapters = course.modules.reduce((sum, module) => {
+      return sum + (module.chapters?.length || 0);
+    }, 0);
+    const completedCount = completedChapters?.length || 0;
 
     console.log('Mobile Course Progress Check:', {
       progressPercentage,
@@ -91,7 +95,8 @@ const MobileCourse = () => {
       completedCount,
       completedChapters,
       courseJustCompleted,
-      showQuiz
+      showQuiz,
+      courseModules: course.modules?.length || 0
     });
 
     // Check if all chapters are completed OR progress is 100%
@@ -104,7 +109,7 @@ const MobileCourse = () => {
     }
   }, [courseProgress?.progress_percentage, completedChapters, course, courseJustCompleted, showQuiz]);
 
-  if (!course || !courseId) {
+  if (!course || !courseId || !course.modules || !Array.isArray(course.modules)) {
     return (
       <PWALayout hasHeader={false} hasBottomNav={true} className="bg-slate-50">
         <PWAContentWrapper>
@@ -128,8 +133,30 @@ const MobileCourse = () => {
     );
   }
 
-  const currentModule = course.modules[selectedModule];
-  const currentChapter = currentModule?.chapters[selectedChapter];
+  const currentModule = course.modules?.[selectedModule];
+  const currentChapter = currentModule?.chapters?.[selectedChapter];
+
+  // If no current chapter, show loading or error
+  if (!currentModule || !currentChapter) {
+    return (
+      <PWALayout hasHeader={false} hasBottomNav={true} className="bg-slate-50">
+        <PWAContentWrapper>
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <h1 className="text-xl font-bold text-slate-900 mb-4">Loading Course Content...</h1>
+              <p className="text-slate-600 mb-4">
+                Module: {selectedModule + 1}, Chapter: {selectedChapter + 1}
+              </p>
+              <Button onClick={() => navigate("/mobile/explore")}>
+                Back to Courses
+              </Button>
+            </div>
+          </div>
+        </PWAContentWrapper>
+        <BottomNavigation />
+      </PWALayout>
+    );
+  }
 
   const getChapterId = (moduleId: number, chapterId: number) => `${courseId}-${moduleId}-${chapterId}`;
 
@@ -138,9 +165,12 @@ const MobileCourse = () => {
 
   const isChapterUnlocked = (moduleId: number, chapterId: number) => {
     if (moduleId === 0 && chapterId === 0) return true;
+    if (!course?.modules || !Array.isArray(course.modules)) return false;
+
     if (chapterId === 0) {
       if (moduleId === 0) return true;
       const prevModule = course.modules[moduleId - 1];
+      if (!prevModule || !prevModule.chapters || !Array.isArray(prevModule.chapters)) return false;
       const lastChapterPrevModule = prevModule.chapters.length - 1;
       return isChapterCompleted(moduleId - 1, lastChapterPrevModule);
     }
@@ -148,12 +178,14 @@ const MobileCourse = () => {
   };
 
   const markChapterComplete = async () => {
-    if (!courseId || isUpdating) return;
+    if (!courseId || isUpdating || !course?.modules) return;
 
     const chapterId = getChapterId(selectedModule, selectedChapter);
 
     if (!completedChapters.includes(chapterId)) {
-      const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
+      const totalChapters = course.modules.reduce((sum, module) => {
+        return sum + (module.chapters?.length || 0);
+      }, 0);
 
       try {
         console.log('Marking chapter complete:', { courseId, chapterId, totalChapters });
@@ -246,9 +278,11 @@ const MobileCourse = () => {
     }
   };
 
-  const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
-  const completedCount = completedChapters.length;
-  const progressPercentage = (completedCount / totalChapters) * 100;
+  const totalChapters = course.modules?.reduce((sum, module) => {
+    return sum + (module.chapters?.length || 0);
+  }, 0) || 0;
+  const completedCount = completedChapters?.length || 0;
+  const progressPercentage = totalChapters > 0 ? (completedCount / totalChapters) * 100 : 0;
 
   const getIconForCourse = (courseId: string) => {
     switch (courseId) {
@@ -555,16 +589,19 @@ const MobileCourse = () => {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    if (selectedChapter < currentModule.chapters.length - 1) {
+                    const currentModuleChapters = currentModule?.chapters?.length || 0;
+                    const totalModules = course.modules?.length || 0;
+
+                    if (selectedChapter < currentModuleChapters - 1) {
                       setSelectedChapter(selectedChapter + 1);
-                    } else if (selectedModule < course.modules.length - 1) {
+                    } else if (selectedModule < totalModules - 1) {
                       setSelectedModule(selectedModule + 1);
                       setSelectedChapter(0);
                     }
                   }}
                   disabled={
-                    selectedModule === course.modules.length - 1 &&
-                    selectedChapter === currentModule.chapters.length - 1
+                    selectedModule === (course.modules?.length || 0) - 1 &&
+                    selectedChapter === (currentModule?.chapters?.length || 0) - 1
                   }
                   className="w-full"
                 >
