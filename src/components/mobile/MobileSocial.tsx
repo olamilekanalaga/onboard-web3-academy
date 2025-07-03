@@ -28,6 +28,7 @@ import MobileHeader from './MobileHeader';
 import BottomNavigation from './BottomNavigation';
 import PWALayout from './PWALayout';
 import PWAContentWrapper from './PWAContentWrapper';
+import StudentProfile from '@/components/social/StudentProfile';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ProgressItem {
@@ -69,6 +70,8 @@ const MobileSocial = () => {
   const [following, setFollowing] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [showStudentProfile, setShowStudentProfile] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -109,25 +112,24 @@ const MobileSocial = () => {
     try {
       console.log('Loading progress feed for mobile...');
 
-      // Use same query as desktop - load from users you follow + your own
+      // Load progress from ALL users (not just followed users)
       const { data: followingData } = await supabase
         .from('social_follows')
         .select('following_id')
         .eq('follower_id', user?.id);
 
       const followingIds = followingData?.map(f => f.following_id) || [];
-      const userIds = [user?.id, ...followingIds];
 
-      // Load progress items with user info - same as desktop
+      // Load progress items from ALL users with user info
       const { data: progressData } = await supabase
         .from('social_progress')
         .select(`
           *,
           social_reactions(reaction_type, user_id)
         `)
-        .in('user_id', userIds)
+        .eq('is_public', true)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50); // Show more users
 
       if (progressData) {
         const enrichedProgress = progressData.map(item => ({
@@ -156,7 +158,7 @@ const MobileSocial = () => {
         .select('*')
         .neq('user_id', user?.id)
         .order('total_xp', { ascending: false })
-        .limit(50);
+        .limit(100); // Show more students
 
       if (error) throw error;
       setStudents(data || []);
@@ -252,6 +254,16 @@ const MobileSocial = () => {
     }
   };
 
+  const handleUserClick = (userId: string) => {
+    setSelectedStudentId(userId);
+    setShowStudentProfile(true);
+  };
+
+  const handleCloseStudentProfile = () => {
+    setShowStudentProfile(false);
+    setSelectedStudentId(null);
+  };
+
   return (
     <PWALayout hasHeader={true} hasBottomNav={true} className="bg-slate-50">
       <MobileHeader />
@@ -328,14 +340,20 @@ const MobileSocial = () => {
                   <Card key={item.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex items-start space-x-3 mb-3">
-                        <Avatar className="w-10 h-10">
+                        <Avatar
+                          className="w-10 h-10 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                          onClick={() => handleUserClick(item.user_id)}
+                        >
                           <AvatarImage src={item.user_avatar} />
                           <AvatarFallback className="text-sm">
                             {item.user_name?.charAt(0).toUpperCase() || 'S'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-900 text-sm">
+                          <p
+                            className="font-medium text-slate-900 text-sm cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => handleUserClick(item.user_id)}
+                          >
                             {item.user_name || 'Student'}
                           </p>
                           <p className="text-xs text-slate-500">
@@ -458,7 +476,10 @@ const MobileSocial = () => {
                     <Card key={student.user_id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
+                          <div
+                            className="flex items-center space-x-3 flex-1 cursor-pointer"
+                            onClick={() => handleUserClick(student.user_id)}
+                          >
                             <Avatar className="w-12 h-12">
                               <AvatarImage src={student.user_avatar} />
                               <AvatarFallback className="text-sm">
@@ -466,7 +487,7 @@ const MobileSocial = () => {
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-slate-900 text-sm truncate">
+                              <p className="font-medium text-slate-900 text-sm truncate hover:text-blue-600 transition-colors">
                                 {student.user_name || `Student ${student.user_id.slice(-4)}`}
                               </p>
                               <div className="flex items-center space-x-2 text-xs text-slate-500">
@@ -536,6 +557,26 @@ const MobileSocial = () => {
       </PWAContentWrapper>
 
       <BottomNavigation />
+
+      {/* Student Profile Modal */}
+      {showStudentProfile && selectedStudentId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Student Profile</h3>
+              <Button variant="ghost" size="sm" onClick={handleCloseStudentProfile}>
+                ✕
+              </Button>
+            </div>
+            <div className="p-4">
+              <StudentProfile
+                studentId={selectedStudentId}
+                onClose={handleCloseStudentProfile}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </PWALayout>
   );
 };

@@ -4,7 +4,7 @@ import { useSocialVerification } from "@/contexts/SocialVerificationContext";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { useQuizProgress } from "@/hooks/useQuizProgress";
 import { courses } from "@/data/courses";
-import { Search, Filter, TrendingUp, Clock, Star, Users, Target, Code, BarChart3, Lock, CheckCircle } from "lucide-react";
+import { Search, Filter, TrendingUp, Clock, Star, Users, Target, Code, BarChart3, Lock, CheckCircle, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ const MobileExplore = () => {
   const navigate = useNavigate();
   const { isVerified, setVerified } = useSocialVerification();
   // Force database usage for mobile PWA - no localStorage fallback
-  const { isCourseUnlocked, courseProgression, userProgress, isLoading } = useCourseProgressionDB();
+  const { isCourseUnlocked, isCourseCompleted, courseProgression, userProgress, isLoading } = useCourseProgressionDB();
   const { hasPassedQuiz, canAccessCourse } = useQuizProgress();
 
   // Debug logging for mobile
@@ -27,9 +27,11 @@ const MobileExplore = () => {
     console.log('Mobile PWA - Course progression state:', {
       userProgress,
       isLoading,
-      unlockedCourses: userProgress?.unlockedCourses || []
+      unlockedCourses: userProgress?.unlockedCourses || [],
+      coursesAvailable: Object.keys(courses),
+      isVerified
     });
-  }, [userProgress, isLoading]);
+  }, [userProgress, isLoading, isVerified]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showSocialVerification, setShowSocialVerification] = useState(false);
@@ -47,6 +49,33 @@ const MobileExplore = () => {
     difficulty: course.difficulty || 1,
     skills: course.skills || [`${course.title} Fundamentals`, 'Practical Skills', 'Real Applications']
   }));
+
+  // Debug course list
+  console.log('Mobile course list:', courseList.length, 'courses available');
+
+  // Show error state if no courses are available
+  if (courseList.length === 0) {
+    return (
+      <PWALayout hasHeader={true} hasBottomNav={true} className="bg-slate-50">
+        <MobileHeader title="Courses" />
+        <PWAContentWrapper>
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No courses available</h3>
+              <p className="text-gray-600 mb-4">
+                There seems to be an issue loading the course data.
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Reload Page
+              </Button>
+            </div>
+          </div>
+        </PWAContentWrapper>
+        <BottomNavigation />
+      </PWALayout>
+    );
+  }
 
   // Create categories from course data
   const categories = [
@@ -138,6 +167,24 @@ const MobileExplore = () => {
     setShowSocialVerification(false);
     setSelectedCourse("");
   };
+
+  // Show loading state if data is still loading
+  if (isLoading) {
+    return (
+      <PWALayout hasHeader={true} hasBottomNav={true} className="bg-slate-50">
+        <MobileHeader title="Courses" />
+        <PWAContentWrapper>
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-slate-600">Loading courses...</p>
+            </div>
+          </div>
+        </PWAContentWrapper>
+        <BottomNavigation />
+      </PWALayout>
+    );
+  }
 
   return (
     <PWALayout hasHeader={true} hasBottomNav={true} className="bg-slate-50">

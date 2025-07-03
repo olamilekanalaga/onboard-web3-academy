@@ -85,25 +85,24 @@ const Social: React.FC = () => {
 
   const loadData = async () => {
     try {
-      // Load progress from users you follow + your own
+      // Load progress from ALL users (not just followed users)
       const { data: followingData } = await supabase
         .from('social_follows')
         .select('following_id')
         .eq('follower_id', user?.id);
 
       const followingIds = followingData?.map(f => f.following_id) || [];
-      const userIds = [user?.id, ...followingIds];
 
-      // Load progress items with user info
+      // Load progress items from ALL users with user info
       const { data: progressData } = await supabase
         .from('social_progress')
         .select(`
           *,
           social_reactions(reaction_type, user_id)
         `)
-        .in('user_id', userIds)
+        .eq('is_public', true)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50); // Show more users
 
       if (progressData) {
         const enrichedProgress = progressData.map(item => ({
@@ -123,7 +122,7 @@ const Social: React.FC = () => {
         .select('*')
         .neq('user_id', user?.id)
         .order('total_xp', { ascending: false })
-        .limit(50);
+        .limit(100); // Show more students
 
       setStudents(studentsData || []);
 
