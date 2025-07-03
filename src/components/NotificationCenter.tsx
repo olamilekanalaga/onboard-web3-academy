@@ -182,10 +182,10 @@ const NotificationCenter: React.FC = () => {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="sm"
-          className="relative text-white hover:text-emerald-100 hover:bg-emerald-500 p-2"
+          className="relative text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 p-2"
         >
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (

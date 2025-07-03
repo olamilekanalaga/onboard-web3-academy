@@ -121,7 +121,7 @@ const MobileSocial = () => {
       const followingIds = followingData?.map(f => f.following_id) || [];
 
       // Load progress items from ALL users with user info
-      const { data: progressData } = await supabase
+      const { data: progressData, error: progressError } = await supabase
         .from('social_progress')
         .select(`
           *,
@@ -131,7 +131,24 @@ const MobileSocial = () => {
         .order('created_at', { ascending: false })
         .limit(50); // Show more users
 
-      if (progressData) {
+      if (progressError) {
+        console.error('Progress feed query error:', progressError);
+        // Try fallback query without social_reactions
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('social_progress')
+          .select('*')
+          .eq('is_public', true)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (fallbackError) {
+          console.error('Fallback progress feed error:', fallbackError);
+          setProgressItems([]);
+        } else {
+          console.log('Fallback progress feed loaded:', fallbackData?.length || 0, 'items');
+          setProgressItems(fallbackData || []);
+        }
+      } else if (progressData) {
         const enrichedProgress = progressData.map(item => ({
           ...item,
           user_email: item.user_email || 'Student',
@@ -140,9 +157,10 @@ const MobileSocial = () => {
           user_reactions: item.social_reactions || []
         }));
 
-        console.log('Mobile progress feed loaded:', enrichedProgress);
+        console.log('Mobile progress feed loaded:', enrichedProgress.length, 'items');
         setProgressItems(enrichedProgress);
       } else {
+        console.log('No progress data returned');
         setProgressItems([]);
       }
     } catch (error) {

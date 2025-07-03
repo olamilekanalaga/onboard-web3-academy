@@ -60,9 +60,12 @@ const MobileCourse = () => {
       courseExists: !!course,
       courseConfigExists: !!courseConfig,
       availableCourses: Object.keys(courses),
-      courseData: course ? { id: course.id, title: course.title } : null
+      availableProgression: Object.keys(courseProgression),
+      courseData: course ? { id: course.id, title: course.title } : null,
+      rawCourse: course,
+      rawCourseConfig: courseConfig
     });
-  }, [courseId, course, courseConfig]);
+  }, [courseId, course, courseConfig, courseProgression]);
 
   // Auto-start course on load
   useEffect(() => {
@@ -86,7 +89,7 @@ const MobileCourse = () => {
     }
   }, [courseProgress?.progress_percentage, courseJustCompleted, showQuiz]);
 
-  if (!course) {
+  if (!course || !courseId) {
     return (
       <PWALayout hasHeader={false} hasBottomNav={true} className="bg-slate-50">
         <PWAContentWrapper>
@@ -562,12 +565,12 @@ const MobileCourse = () => {
       )}
 
       {/* Course Completion Modal */}
-      {courseId && courseConfig && (
+      {courseId && (
         <CourseCompletionModal
           isOpen={showCompletionModal}
           onClose={handleCloseCompletionModal}
           completedCourseId={courseId}
-          xpEarned={quizXP || courseConfig.xpReward}
+          xpEarned={quizXP || courseConfig?.xpReward || course?.xpReward || 500}
           onStartNextCourse={handleStartNextCourse}
         />
       )}
