@@ -4,7 +4,7 @@ import { useSocialVerification } from "@/contexts/SocialVerificationContext";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { useQuizProgress } from "@/hooks/useQuizProgress";
 import { courses } from "@/data/courses";
-import { Search, Filter, TrendingUp, Clock, Star, Users, Target, Code, BarChart3, Lock } from "lucide-react";
+import { Search, Filter, TrendingUp, Clock, Star, Users, Target, Code, BarChart3, Lock, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -206,7 +206,10 @@ const MobileExplore = () => {
             // Use proper quiz-based progression like desktop
             const prerequisites = course.prerequisites || [];
             const unlocked = canAccessCourse(course.id, prerequisites);
-            console.log(`Course ${course.id}: prerequisites=${JSON.stringify(prerequisites)}, unlocked=${unlocked}`);
+            const isCompleted = isCourseCompleted(course.id);
+            const hasQuizPassed = hasPassedQuiz(course.id);
+
+            console.log(`Course ${course.id}: prerequisites=${JSON.stringify(prerequisites)}, unlocked=${unlocked}, completed=${isCompleted}, quizPassed=${hasQuizPassed}`);
             return (
               <Card key={course.id} className={`border-0 shadow-sm ${!unlocked ? 'opacity-60' : ''}`}>
                 <CardContent className="p-4">
@@ -221,12 +224,20 @@ const MobileExplore = () => {
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="font-semibold text-slate-900 mb-1">{course.title}</h3>
-                        <Badge
-                          variant="secondary"
-                          className={`text-xs ${getDifficultyColor(course.level)}`}
-                        >
-                          {course.level}
-                        </Badge>
+                        <div className="flex flex-col space-y-1">
+                          <Badge
+                            variant="secondary"
+                            className={`text-xs ${getDifficultyColor(course.level)}`}
+                          >
+                            {course.level}
+                          </Badge>
+                          {isCompleted && (
+                            <Badge className="bg-green-100 text-green-700 text-xs">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Completed
+                            </Badge>
+                          )}
+                        </div>
                       </div>
 
                       <p className="text-sm text-slate-600 mb-3 line-clamp-2">{course.description}</p>
@@ -259,11 +270,17 @@ const MobileExplore = () => {
                         </div>
                         <Button
                           size="sm"
-                          className={unlocked ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400 cursor-not-allowed"}
+                          className={
+                            isCompleted
+                              ? "bg-green-600 hover:bg-green-700"
+                              : unlocked
+                                ? "bg-blue-600 hover:bg-blue-700"
+                                : "bg-gray-400 cursor-not-allowed"
+                          }
                           onClick={() => unlocked && handleCourseNavigation(course.id, course.title)}
                           disabled={!unlocked}
                         >
-                          {unlocked ? "Start Learning" : "Locked"}
+                          {isCompleted ? "Completed" : unlocked ? "Start Learning" : "Locked"}
                         </Button>
                       </div>
                     </div>

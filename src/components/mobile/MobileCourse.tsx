@@ -50,6 +50,17 @@ const MobileCourse = () => {
   const course = courseId ? courses[courseId] : undefined;
   const courseConfig = courseId ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
 
+  // Debug logging
+  useEffect(() => {
+    console.log('Mobile Course Debug:', {
+      courseId,
+      courseExists: !!course,
+      courseConfigExists: !!courseConfig,
+      availableCourses: Object.keys(courses),
+      courseData: course ? { id: course.id, title: course.title } : null
+    });
+  }, [courseId, course, courseConfig]);
+
   // Auto-start course on load
   useEffect(() => {
     setCourseJustCompleted(false);

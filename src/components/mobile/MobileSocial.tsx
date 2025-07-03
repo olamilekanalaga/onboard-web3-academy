@@ -90,29 +90,41 @@ const MobileSocial = () => {
 
   const loadProgressFeed = async () => {
     try {
-      // Get feed items from users you follow + your own posts
-      const { data: followingData } = await supabase
-        .from('user_follows')
-        .select('following_id')
-        .eq('follower_id', user?.id);
+      console.log('Loading progress feed for mobile...');
 
-      const followingIds = followingData?.map(f => f.following_id) || [];
-      const userIds = [user?.id, ...followingIds];
-
+      // First try to get all progress feed items (not just from followed users)
       const { data, error } = await supabase
         .from('progress_feed')
         .select(`
           *,
-          user_profile:user_profiles!inner(username, display_name, avatar_url),
-          user_reactions:progress_reactions(reaction_type, user_id)
+          profiles!inner(
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
         `)
-        .in('user_id', userIds)
         .eq('is_public', true)
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (error) throw error;
-      setProgressItems(data || []);
+      if (error) {
+        console.error('Progress feed error:', error);
+        // Try alternative query if the first one fails
+        const { data: altData, error: altError } = await supabase
+          .from('progress_feed')
+          .select('*')
+          .eq('is_public', true)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (altError) throw altError;
+        console.log('Alternative progress feed data:', altData);
+        setProgressItems(altData || []);
+      } else {
+        console.log('Progress feed data loaded:', data);
+        setProgressItems(data || []);
+      }
     } catch (error) {
       console.error('Error loading progress feed:', error);
       setProgressItems([]);
@@ -166,6 +178,13 @@ const MobileSocial = () => {
 
           {/* Progress Feed Tab */}
           <TabsContent value="feed" className="space-y-4">
+            {/* Recent Course Completions Header */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">Recent Course Completions</h3>
+              <Button variant="ghost" size="sm" onClick={loadData}>
+                <TrendingUp className="w-4 h-4" />
+              </Button>
+            </div>
             {loading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map(i => (
