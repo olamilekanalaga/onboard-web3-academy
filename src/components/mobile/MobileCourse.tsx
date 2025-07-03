@@ -109,7 +109,7 @@ const MobileCourse = () => {
     }
   }, [courseProgress?.progress_percentage, completedChapters, course, courseJustCompleted, showQuiz]);
 
-  if (!course || !courseId || !course.modules || !Array.isArray(course.modules)) {
+  if (!course || !courseId || !course.modules || !Array.isArray(course.modules) || course.modules.length === 0) {
     return (
       <PWALayout hasHeader={false} hasBottomNav={true} className="bg-slate-50">
         <PWAContentWrapper>
@@ -122,6 +122,10 @@ const MobileCourse = () => {
               <p className="text-slate-600 mb-4 text-sm">
                 Available courses: {Object.keys(courses).join(', ')}
               </p>
+              <p className="text-slate-600 mb-4 text-xs">
+                Course data: {course ? 'Found' : 'Missing'},
+                Modules: {course?.modules ? course.modules.length : 'None'}
+              </p>
               <Button onClick={() => navigate("/mobile/explore")}>
                 Back to Courses
               </Button>
@@ -133,19 +137,44 @@ const MobileCourse = () => {
     );
   }
 
-  const currentModule = course.modules?.[selectedModule];
-  const currentChapter = currentModule?.chapters?.[selectedChapter];
+  // Ensure we have valid module and chapter indices
+  const safeSelectedModule = Math.max(0, Math.min(selectedModule, course.modules.length - 1));
+  const currentModule = course.modules[safeSelectedModule];
 
-  // If no current chapter, show loading or error
-  if (!currentModule || !currentChapter) {
+  if (!currentModule || !currentModule.chapters || !Array.isArray(currentModule.chapters) || currentModule.chapters.length === 0) {
     return (
       <PWALayout hasHeader={false} hasBottomNav={true} className="bg-slate-50">
         <PWAContentWrapper>
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-center">
-              <h1 className="text-xl font-bold text-slate-900 mb-4">Loading Course Content...</h1>
+              <h1 className="text-xl font-bold text-slate-900 mb-4">Module Content Missing</h1>
               <p className="text-slate-600 mb-4">
-                Module: {selectedModule + 1}, Chapter: {selectedChapter + 1}
+                Module {safeSelectedModule + 1} has no chapters
+              </p>
+              <Button onClick={() => navigate("/mobile/explore")}>
+                Back to Courses
+              </Button>
+            </div>
+          </div>
+        </PWAContentWrapper>
+        <BottomNavigation />
+      </PWALayout>
+    );
+  }
+
+  const safeSelectedChapter = Math.max(0, Math.min(selectedChapter, currentModule.chapters.length - 1));
+  const currentChapter = currentModule.chapters[safeSelectedChapter];
+
+  // If no current chapter, show loading or error
+  if (!currentChapter) {
+    return (
+      <PWALayout hasHeader={false} hasBottomNav={true} className="bg-slate-50">
+        <PWAContentWrapper>
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <h1 className="text-xl font-bold text-slate-900 mb-4">Chapter Not Found</h1>
+              <p className="text-slate-600 mb-4">
+                Module: {safeSelectedModule + 1}, Chapter: {safeSelectedChapter + 1}
               </p>
               <Button onClick={() => navigate("/mobile/explore")}>
                 Back to Courses
@@ -161,7 +190,7 @@ const MobileCourse = () => {
   const getChapterId = (moduleId: number, chapterId: number) => `${courseId}-${moduleId}-${chapterId}`;
 
   const isChapterCompleted = (moduleId: number, chapterId: number) =>
-    completedChapters.includes(getChapterId(moduleId, chapterId));
+    (completedChapters || []).includes(getChapterId(moduleId, chapterId));
 
   const isChapterUnlocked = (moduleId: number, chapterId: number) => {
     if (moduleId === 0 && chapterId === 0) return true;
@@ -180,9 +209,9 @@ const MobileCourse = () => {
   const markChapterComplete = async () => {
     if (!courseId || isUpdating || !course?.modules) return;
 
-    const chapterId = getChapterId(selectedModule, selectedChapter);
+    const chapterId = getChapterId(safeSelectedModule, safeSelectedChapter);
 
-    if (!completedChapters.includes(chapterId)) {
+    if (!(completedChapters || []).includes(chapterId)) {
       const totalChapters = course.modules.reduce((sum, module) => {
         return sum + (module.chapters?.length || 0);
       }, 0);
@@ -424,13 +453,13 @@ const MobileCourse = () => {
           </CardHeader>
           <CardContent className="p-0">
             <div className="max-h-48 overflow-y-auto">
-              {course.modules.map((module, moduleIndex) => (
+              {(course.modules || []).map((module, moduleIndex) => (
                 <div key={module.id}>
                   <div className="px-4 py-2 bg-slate-50 border-b">
                     <h4 className="font-medium text-slate-900 text-sm">{module.title}</h4>
                     <p className="text-xs text-slate-500">{module.estimatedTime}</p>
                   </div>
-                  {module.chapters.map((chapter, chapterIndex) => (
+                  {(module.chapters || []).map((chapter, chapterIndex) => (
                     <button
                       key={chapter.id}
                       onClick={() => {
@@ -478,7 +507,7 @@ const MobileCourse = () => {
               <div className="flex items-center space-x-2 text-sm text-slate-600">
                 <Clock className="h-4 w-4" />
                 <span>{currentChapter.duration}</span>
-                {isChapterCompleted(selectedModule, selectedChapter) && (
+                {isChapterCompleted(safeSelectedModule, safeSelectedChapter) && (
                   <Badge className="bg-green-100 text-green-700 ml-2">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Completed
@@ -552,7 +581,7 @@ const MobileCourse = () => {
                       <h4 className="font-semibold text-green-900 text-sm">Key Takeaways</h4>
                     </div>
                     <ul className="space-y-2">
-                      {currentChapter.keyTakeaways.map((takeaway, index) => (
+                      {(currentChapter.keyTakeaways || []).map((takeaway, index) => (
                         <li key={index} className="flex items-start space-x-2 text-green-800">
                           <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                           <span className="text-sm">{takeaway}</span>
@@ -565,7 +594,7 @@ const MobileCourse = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-3 pt-4 border-t mt-6">
-                {!isChapterCompleted(selectedModule, selectedChapter) && (
+                {!isChapterCompleted(safeSelectedModule, safeSelectedChapter) && (
                   <Button
                     onClick={markChapterComplete}
                     disabled={isUpdating}
@@ -589,19 +618,19 @@ const MobileCourse = () => {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    const currentModuleChapters = currentModule?.chapters?.length || 0;
-                    const totalModules = course.modules?.length || 0;
+                    const currentModuleChapters = currentModule.chapters.length;
+                    const totalModules = course.modules.length;
 
-                    if (selectedChapter < currentModuleChapters - 1) {
-                      setSelectedChapter(selectedChapter + 1);
-                    } else if (selectedModule < totalModules - 1) {
-                      setSelectedModule(selectedModule + 1);
+                    if (safeSelectedChapter < currentModuleChapters - 1) {
+                      setSelectedChapter(safeSelectedChapter + 1);
+                    } else if (safeSelectedModule < totalModules - 1) {
+                      setSelectedModule(safeSelectedModule + 1);
                       setSelectedChapter(0);
                     }
                   }}
                   disabled={
-                    selectedModule === (course.modules?.length || 0) - 1 &&
-                    selectedChapter === (currentModule?.chapters?.length || 0) - 1
+                    safeSelectedModule === course.modules.length - 1 &&
+                    safeSelectedChapter === currentModule.chapters.length - 1
                   }
                   className="w-full"
                 >
