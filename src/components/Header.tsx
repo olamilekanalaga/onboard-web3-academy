@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProfile } from "@/hooks/useProfile";
@@ -26,11 +26,48 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [exploreDropdownOpen, setExploreDropdownOpen] = useState(false);
   const [searchPopupOpen, setSearchPopupOpen] = useState(false);
+  const [userCountry, setUserCountry] = useState<{code: string, name: string, flag: string} | null>(null);
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
   const { toast } = useToast();
   const { t } = useLanguage();
   const navigate = useNavigate();
+
+  // Fetch user's country
+  useEffect(() => {
+    const fetchUserCountry = async () => {
+      if (!user) return;
+
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('country_code, country_name')
+          .eq('id', user.id)
+          .single();
+
+        if (data?.country_code) {
+          // Get flag emoji
+          const flagMap: Record<string, string> = {
+            'NG': '🇳🇬', 'US': '🇺🇸', 'CA': '🇨🇦', 'GB': '🇬🇧', 'DE': '🇩🇪',
+            'FR': '🇫🇷', 'ES': '🇪🇸', 'IT': '🇮🇹', 'NL': '🇳🇱', 'AU': '🇦🇺',
+            'JP': '🇯🇵', 'KR': '🇰🇷', 'CN': '🇨🇳', 'IN': '🇮🇳', 'SG': '🇸🇬',
+            'BR': '🇧🇷', 'AR': '🇦🇷', 'MX': '🇲🇽', 'ZA': '🇿🇦', 'KE': '🇰🇪',
+            'GH': '🇬🇭', 'EG': '🇪🇬', 'AE': '🇦🇪', 'SA': '🇸🇦', 'TR': '🇹🇷'
+          };
+
+          setUserCountry({
+            code: data.country_code,
+            name: data.country_name,
+            flag: flagMap[data.country_code] || '🏳️'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user country:', error);
+      }
+    };
+
+    fetchUserCountry();
+  }, [user]);
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -190,6 +227,12 @@ const Header = () => {
                     <div className="px-3 py-2 border-b">
                       <p className="text-sm font-medium">{getDisplayName(profile, user)}</p>
                       <p className="text-xs text-gray-500">{user?.email}</p>
+                      {userCountry && (
+                        <p className="text-xs text-blue-600 flex items-center space-x-1 mt-1">
+                          <span>{userCountry.flag}</span>
+                          <span>{userCountry.name}</span>
+                        </p>
+                      )}
                     </div>
 
                     <DropdownMenuItem asChild>
@@ -224,15 +267,18 @@ const Header = () => {
 
                     <DropdownMenuSeparator />
 
-                    {/* Force show country popup by clearing onboarding status */}
+                    {/* Show country selection popup without reload */}
                     <DropdownMenuItem
                       onClick={async () => {
                         try {
+                          // Clear country data to trigger popup
                           await supabase
-                            .from('user_onboarding_status')
-                            .delete()
-                            .eq('user_id', user?.id);
-                          window.location.reload();
+                            .from('profiles')
+                            .update({ country_code: null, country_name: null })
+                            .eq('id', user?.id);
+
+                          // Trigger popup by dispatching custom event
+                          window.dispatchEvent(new CustomEvent('forceCountrySelection'));
                         } catch (error) {
                           console.error('Error resetting country selection:', error);
                         }
@@ -240,7 +286,7 @@ const Header = () => {
                       className="cursor-pointer"
                     >
                       <Globe className="w-4 h-4 mr-2" />
-                      <span>Select Country</span>
+                      <span>Change Country</span>
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />

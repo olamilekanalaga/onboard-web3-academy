@@ -1,5 +1,5 @@
 
-import { Home, User, Zap, Trophy, BookOpen, Settings } from "lucide-react";
+import { Home, User, Zap, Trophy, BookOpen, Settings, Users } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
 const BottomNavigation = () => {
@@ -19,6 +19,12 @@ const BottomNavigation = () => {
       isActive: location.pathname === "/mobile/explore"
     },
     {
+      icon: Users,
+      label: "Social",
+      path: "/mobile/social",
+      isActive: location.pathname === "/mobile/social"
+    },
+    {
       icon: Zap,
       label: "Demo",
       path: "/demo",
@@ -31,12 +37,6 @@ const BottomNavigation = () => {
       isActive: location.pathname === "/mobile/gamification"
     },
     {
-      icon: Settings,
-      label: "Settings",
-      path: "/mobile/settings",
-      isActive: location.pathname === "/mobile/settings"
-    },
-    {
       icon: User,
       label: "Profile",
       path: "/mobile/profile",
@@ -46,7 +46,7 @@ const BottomNavigation = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50 md:hidden bottom-nav-safe shadow-lg">
-      <div className="grid grid-cols-6 items-start pt-2" style={{ height: 'max(4rem, calc(3rem + env(safe-area-inset-bottom)))' }}>
+      <div className="grid grid-cols-5 items-start pt-2" style={{ height: 'max(4rem, calc(3rem + env(safe-area-inset-bottom)))' }}>
         {navItems.map((item) => (
           <Link
             key={item.path}

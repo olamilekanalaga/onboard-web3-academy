@@ -35,6 +35,7 @@ import MobileSettings from "./components/mobile/MobileSettings";
 import MobileHome from "./components/mobile/MobileHome";
 import MobileAuth from "./components/mobile/MobileAuth";
 import MobileGamification from "./components/mobile/MobileGamification";
+import MobileSocial from "./components/mobile/MobileSocial";
 import MobileDemo from "./components/mobile/MobileDemo";
 import PWALayoutTest from "./components/mobile/PWALayoutTest";
 import SmartPWAPrompt from "./components/SmartPWAPrompt";
@@ -170,6 +171,14 @@ const App: React.FC = () => {
                           }
                         />
                         <Route
+                          path="/mobile/social"
+                          element={
+                            <MobileAuthGuard>
+                              <MobileSocial />
+                            </MobileAuthGuard>
+                          }
+                        />
+                        <Route
                           path="/gamification"
                           element={
                             <AuthGuard>
@@ -195,6 +204,11 @@ const App: React.FC = () => {
                           }
                         />
                       </Routes>
+
+                      {/* Global Popups for Mobile */}
+                      <CourseReminderPopup />
+                      <SocialMediaFollowPopup />
+                      <CountrySelectionPopup />
                     </MobileUserProvider>
                   ) : (
                     <Routes>

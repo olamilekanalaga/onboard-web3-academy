@@ -1,5 +1,5 @@
 // Simple, robust service worker for Academia PWA
-const CACHE_NAME = 'academia-v2';
+const CACHE_NAME = 'academia-v4'; // Updated with mobile features: notifications, language, country, social
 const STATIC_CACHE_URLS = [
   '/',
   '/academia mobile.png',

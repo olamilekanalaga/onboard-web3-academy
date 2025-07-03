@@ -39,9 +39,21 @@ const CountrySelectionPopup: React.FC = () => {
     }
   }, [user]);
 
-  // Force show popup for testing/admin purposes
+  // Listen for force country selection event
   useEffect(() => {
-    // Always check if country selection is needed on component mount
+    const handleForceCountrySelection = () => {
+      setShowPopup(true);
+    };
+
+    window.addEventListener('forceCountrySelection', handleForceCountrySelection);
+
+    return () => {
+      window.removeEventListener('forceCountrySelection', handleForceCountrySelection);
+    };
+  }, []);
+
+  // Check country status on mount
+  useEffect(() => {
     if (user && !showPopup) {
       checkCountryStatus();
     }

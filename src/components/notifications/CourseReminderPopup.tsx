@@ -43,13 +43,15 @@ const CourseReminderPopup: React.FC = () => {
   const [unfinishedCourses, setUnfinishedCourses] = useState<UnfinishedCourse[]>([]);
   const [showPopup, setShowPopup] = useState(false);
   const [currentReminderIndex, setCurrentReminderIndex] = useState(0);
+  const [hasCheckedToday, setHasCheckedToday] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && !hasCheckedToday) {
       loadReminders();
       checkUnfinishedCourses();
+      setHasCheckedToday(true);
     }
-  }, [user]);
+  }, [user, hasCheckedToday]);
 
   const loadReminders = async () => {
     if (!user) return;
@@ -105,10 +107,58 @@ const CourseReminderPopup: React.FC = () => {
 
     if (unfinished.length > 0) {
       setUnfinishedCourses(unfinished);
-      
-      // Create reminder if none exists
-      if (reminders.length === 0) {
-        setShowPopup(true);
+
+      // Check if we should show popup (simple approach - twice a week max)
+      try {
+        const { data: onboardingData } = await supabase
+          .from('user_onboarding_status')
+          .select('last_course_reminder_shown, course_reminder_count_this_week')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const now = new Date();
+        const threeDaysAgo = new Date(now.getTime() - (3.5 * 24 * 60 * 60 * 1000));
+        const lastShown = onboardingData?.last_course_reminder_shown ?
+          new Date(onboardingData.last_course_reminder_shown) : null;
+        const weeklyCount = onboardingData?.course_reminder_count_this_week || 0;
+
+        // Get start of current week (Sunday)
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+
+        // Reset weekly count if it's a new week
+        const shouldResetCount = !lastShown || lastShown < weekStart;
+        const currentWeeklyCount = shouldResetCount ? 0 : weeklyCount;
+
+        // Show popup ONLY if:
+        // 1. Never shown before, OR
+        // 2. Last shown more than 3.5 days ago AND shown less than 2 times this week
+        const shouldShow = !lastShown ||
+          (lastShown < threeDaysAgo && currentWeeklyCount < 2);
+
+        console.log('Course reminder check:', {
+          lastShown: lastShown?.toISOString(),
+          threeDaysAgo: threeDaysAgo.toISOString(),
+          currentWeeklyCount,
+          shouldShow
+        });
+
+        if (shouldShow) {
+          setShowPopup(true);
+
+          // Update the reminder tracking immediately when showing
+          await supabase
+            .from('user_onboarding_status')
+            .upsert({
+              user_id: user.id,
+              last_course_reminder_shown: now.toISOString(),
+              course_reminder_count_this_week: currentWeeklyCount + 1
+            });
+        }
+      } catch (error) {
+        console.error('Error checking reminder frequency:', error);
+        // Don't show popup if there's an error - be conservative
       }
     }
   };
@@ -276,7 +326,23 @@ const CourseReminderPopup: React.FC = () => {
                 </Link>
                 <Button
                   variant="outline"
-                  onClick={() => setShowPopup(false)}
+                  onClick={async () => {
+                    try {
+                      // Track dismissal - update the timestamp so it won't show again soon
+                      const now = new Date();
+                      await supabase
+                        .from('user_onboarding_status')
+                        .upsert({
+                          user_id: user?.id,
+                          last_course_reminder_shown: now.toISOString()
+                        });
+
+                      console.log('Course reminder dismissed at:', now.toISOString());
+                    } catch (error) {
+                      console.error('Error tracking dismissal:', error);
+                    }
+                    setShowPopup(false);
+                  }}
                 >
                   Later
                 </Button>

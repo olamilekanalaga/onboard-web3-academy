@@ -17,13 +17,17 @@ import PWAContentWrapper from "./PWAContentWrapper";
 const MobileExplore = () => {
   const navigate = useNavigate();
   const { isVerified, setVerified } = useSocialVerification();
-  // Try database first, fallback to localStorage
-  const dbHook = useCourseProgressionDB();
-  const localHook = useCourseProgression();
+  // Force database usage for mobile PWA - no localStorage fallback
+  const { isCourseUnlocked, courseProgression, userProgress, isLoading } = useCourseProgressionDB();
 
-  // Use database hook if loading is complete and no error, otherwise use localStorage hook
-  const useDB = !dbHook.isLoading && dbHook.userProgress;
-  const { isCourseUnlocked, courseProgression } = useDB ? dbHook : localHook;
+  // Debug logging for mobile
+  useEffect(() => {
+    console.log('Mobile PWA - Course progression state:', {
+      userProgress,
+      isLoading,
+      unlockedCourses: userProgress?.unlockedCourses || []
+    });
+  }, [userProgress, isLoading]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showSocialVerification, setShowSocialVerification] = useState(false);
