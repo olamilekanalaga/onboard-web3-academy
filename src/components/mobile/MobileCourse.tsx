@@ -49,7 +49,14 @@ const MobileCourse = () => {
 
   // Get completed chapters from progression system
   const courseProgress = getCourseProgress(courseId || '');
-  const completedChapters = courseProgress?.completed_chapters || [];
+  const completedChapters = courseProgress?.completedChapters || courseProgress?.completed_chapters || [];
+
+  console.log('Mobile Course Progress Data:', {
+    courseId,
+    courseProgress,
+    completedChapters,
+    progressPercentage: courseProgress?.progressPercentage || courseProgress?.progress_percentage
+  });
 
   const course = courseId ? courses[courseId] : undefined;
   const courseConfig = courseId && courseProgression ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
@@ -90,7 +97,7 @@ const MobileCourse = () => {
   useEffect(() => {
     if (!course || !course.modules) return;
 
-    const progressPercentage = courseProgress?.progress_percentage || 0;
+    const progressPercentage = courseProgress?.progressPercentage || courseProgress?.progress_percentage || 0;
     const totalChapters = course.modules.reduce((sum, module) => {
       return sum + (module.chapters?.length || 0);
     }, 0);
@@ -199,6 +206,30 @@ const MobileCourse = () => {
   const isChapterCompleted = (moduleId: number, chapterId: number) =>
     (completedChapters || []).includes(getChapterId(moduleId, chapterId));
 
+  // Get next course ID based on course progression
+  const getNextCourseId = (currentCourseId: string): string | null => {
+    const courseOrder = [
+      'foundation',
+      'defi-fundamentals',
+      'degen',
+      'advanced-trading',
+      'development',
+      'nft-creation',
+      'content-creation',
+      'web3-security',
+      'dao-governance',
+      'web3-gaming',
+      'crypto-tax',
+      'web3-social'
+    ];
+
+    const currentIndex = courseOrder.indexOf(currentCourseId);
+    if (currentIndex >= 0 && currentIndex < courseOrder.length - 1) {
+      return courseOrder[currentIndex + 1];
+    }
+    return null;
+  };
+
   const isChapterUnlocked = (moduleId: number, chapterId: number) => {
     if (moduleId === 0 && chapterId === 0) return true;
     if (!course?.modules || !Array.isArray(course.modules)) return false;
@@ -305,6 +336,19 @@ const MobileCourse = () => {
         }
       }
 
+      // Unlock next course immediately
+      if (courseId) {
+        try {
+          const nextCourseId = getNextCourseId(courseId);
+          if (nextCourseId) {
+            await unlockCourse(nextCourseId);
+            console.log(`✅ Next course unlocked: ${nextCourseId}`);
+          }
+        } catch (error) {
+          console.error('Error unlocking next course:', error);
+        }
+      }
+
       // Award XP and show completion modal
       setShowQuiz(false);
       setShowCompletionModal(true);
@@ -318,7 +362,19 @@ const MobileCourse = () => {
     return sum + (module.chapters?.length || 0);
   }, 0) || 0;
   const completedCount = completedChapters?.length || 0;
-  const progressPercentage = totalChapters > 0 ? (completedCount / totalChapters) * 100 : 0;
+
+  // Use database progress if available, otherwise calculate locally
+  const dbProgress = courseProgress?.progressPercentage || courseProgress?.progress_percentage || 0;
+  const localProgress = totalChapters > 0 ? (completedCount / totalChapters) * 100 : 0;
+  const progressPercentage = Math.max(dbProgress, localProgress);
+
+  console.log('Mobile Progress Display:', {
+    dbProgress,
+    localProgress,
+    finalProgress: progressPercentage,
+    completedCount,
+    totalChapters
+  });
 
   const getIconForCourse = (courseId: string) => {
     switch (courseId) {
@@ -598,6 +654,46 @@ const MobileCourse = () => {
                   </div>
                 </TabsContent>
               </Tabs>
+
+              {/* Last Chapter Notification */}
+              {(() => {
+                const currentModuleChapters = currentModule.chapters.length;
+                const totalModules = course.modules.length;
+                const isLastChapter = safeSelectedModule === totalModules - 1 &&
+                                    safeSelectedChapter === currentModuleChapters - 1;
+
+                if (isLastChapter && !isChapterCompleted(safeSelectedModule, safeSelectedChapter)) {
+                  return (
+                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mt-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-purple-100 rounded-full p-2">
+                          🎯
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-purple-900 mb-2">
+                            🎉 Final Chapter!
+                          </h4>
+                          <p className="text-purple-800 text-sm mb-2">
+                            This is the last chapter of the <strong>{course.title}</strong> course.
+                            After completing this chapter, you'll take a quiz to test your knowledge.
+                          </p>
+                          <div className="bg-purple-100 rounded-lg p-3 mt-3">
+                            <p className="text-purple-900 text-xs font-medium">
+                              📝 Quiz Requirements:
+                            </p>
+                            <ul className="text-purple-800 text-xs mt-1 space-y-1">
+                              <li>• Score 70% or higher to pass</li>
+                              <li>• Unlock the next course upon passing</li>
+                              <li>• Earn XP and course completion badge</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-3 pt-4 border-t mt-6">

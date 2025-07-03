@@ -79,6 +79,21 @@ export const useEnhancedUserCountryStats = () => {
 
       if (profilesError) throw profilesError;
 
+      // Get user stats for XP calculation
+      const { data: userStats, error: statsError } = await supabaseAdmin
+        .from('user_stats')
+        .select('user_id, total_xp, completed_courses, level');
+
+      if (statsError) throw statsError;
+
+      console.log('Raw Profile Data:', allProfiles?.slice(0, 5));
+      console.log('Raw User Stats:', userStats?.slice(0, 5));
+      console.log('Nigeria profiles:', allProfiles?.filter(p => p.country_code === 'NG' || p.country_name?.includes('Nigeria')));
+      console.log('Nigeria user stats:', userStats?.filter(s => {
+        const profile = allProfiles?.find(p => p.id === s.user_id);
+        return profile?.country_code === 'NG' || profile?.country_name?.includes('Nigeria');
+      }));
+
       // Calculate active users (users created/updated in last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -87,14 +102,24 @@ export const useEnhancedUserCountryStats = () => {
         return lastActivity && new Date(lastActivity) >= thirtyDaysAgo;
       }).length || 0;
 
-      // Group users by country using allProfiles data
+      // Group users by country using allProfiles data with better Nigeria handling
       const countryGroups = allProfiles?.reduce((acc, profile) => {
-        if (profile.country_code && profile.country_name) {
-          const key = `${profile.country_code}-${profile.country_name}`;
+        // Normalize country data - handle Nigeria specifically
+        let countryCode = profile.country_code;
+        let countryName = profile.country_name;
+
+        // Handle Nigeria specifically
+        if (countryName?.toLowerCase().includes('nigeria') || countryCode === 'NG') {
+          countryCode = 'NG';
+          countryName = 'Nigeria';
+        }
+
+        if (countryCode && countryName) {
+          const key = countryCode; // Use country code as key for consistency
           if (!acc[key]) {
             acc[key] = {
-              country_code: profile.country_code,
-              country_name: profile.country_name,
+              country_code: countryCode,
+              country_name: countryName,
               users: []
             };
           }
@@ -103,6 +128,9 @@ export const useEnhancedUserCountryStats = () => {
         return acc;
       }, {} as Record<string, any>) || {};
 
+      console.log('Country Groups Keys:', Object.keys(countryGroups));
+      console.log('Nigeria Group Size:', countryGroups['NG']?.users?.length || 0);
+
       // Calculate stats for each country
       const countryStats = Object.values(countryGroups).map((group: any) => {
         const countryUsers = group.users;
@@ -110,6 +138,18 @@ export const useEnhancedUserCountryStats = () => {
           const lastActivity = user.updated_at || user.created_at;
           return lastActivity && new Date(lastActivity) >= thirtyDaysAgo;
         }).length;
+
+        // Calculate XP metrics for this country
+        const countryUserIds = countryUsers.map((user: any) => user.id);
+        const countryUserStats = userStats?.filter(stat => countryUserIds.includes(stat.user_id)) || [];
+        const totalXP = countryUserStats.reduce((sum, stat) => sum + (stat.total_xp || 0), 0);
+        const avgXP = countryUserStats.length > 0 ? totalXP / countryUserStats.length : 0;
+
+        // Calculate engagement rate (users with XP > 0)
+        const engagedUsers = countryUserStats.filter(stat => (stat.total_xp || 0) > 0).length;
+        const engagementRate = countryUsers.length > 0 ? (engagedUsers / countryUsers.length) * 100 : 0;
+
+        console.log(`${group.country_name}: ${countryUsers.length} users, ${engagedUsers} engaged, ${totalXP} total XP, ${Math.round(avgXP)} avg XP`);
 
         // Get flag emoji for country
         const flagEmoji = getFlagEmoji(group.country_code);
@@ -120,7 +160,11 @@ export const useEnhancedUserCountryStats = () => {
           flag_emoji: flagEmoji,
           user_count: countryUsers.length,
           active_users: activeCountryUsers,
-          avg_xp: 0 // We'll calculate this later if needed
+          avg_xp: totalXP, // Use total XP for main display (Nigeria with 800 users should have more than Ethiopia with 1)
+          engagement_rate: Math.round(engagementRate * 10) / 10, // Round to 1 decimal
+          total_xp: totalXP,
+          average_xp: Math.round(avgXP), // Keep average for detailed analysis
+          engaged_users: engagedUsers
         };
       });
 
@@ -146,6 +190,14 @@ export const useEnhancedUserCountryStats = () => {
           avg_xp: 0
         });
       }
+
+      console.log('Final sorted country stats (top 10):', sortedCountryStats.slice(0, 10).map(c => ({
+        country: c.country_name,
+        code: c.country_code,
+        users: c.user_count,
+        avgXP: c.avg_xp,
+        engagement: c.engagement_rate
+      })));
 
       return sortedCountryStats;
     },

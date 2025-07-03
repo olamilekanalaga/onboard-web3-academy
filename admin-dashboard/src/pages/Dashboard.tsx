@@ -37,7 +37,7 @@ import RealTimeUserActivity from "@/components/RealTimeUserActivity";
 import TodayGrowthChart from "@/components/TodayGrowthChart";
 import NotificationsPanel from "@/components/NotificationsPanel";
 import SettingsPanel from "@/components/SettingsPanel";
-import LocationDetectionService from "@/components/LocationDetectionService";
+
 import { useRealUserCount, useComprehensiveUserAnalytics } from "@/hooks/useAdminData";
 
 const Dashboard = () => {
@@ -64,8 +64,7 @@ const Dashboard = () => {
         return <UserAnalytics />;
       case 'notifications':
         return <NotificationsPanel />;
-      case 'location':
-        return <LocationDetectionService />;
+
       case 'settings':
         return <SettingsPanel />;
       default:

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Globe, 
-  Users, 
-  TrendingUp, 
+import {
+  Globe,
+  Users,
+  TrendingUp,
   Download,
   BarChart3,
-  Calendar,
-  MapPin,
-  Activity
+  BookOpen,
+  Award,
+  MapPin
 } from "lucide-react";
 import { supabaseAdmin } from '@/lib/supabase';
 
@@ -22,7 +22,7 @@ const UserAnalytics = () => {
   // Load country statistics
   const loadCountryStats = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_user_country_stats');
+      const { data, error } = await supabaseAdmin.rpc('get_user_country_stats');
       if (error) throw error;
       setCountryStats(data || []);
     } catch (error: any) {
@@ -33,7 +33,7 @@ const UserAnalytics = () => {
   // Load user growth data
   const loadUserGrowth = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('profiles')
         .select('created_at')
         .order('created_at', { ascending: true });
@@ -62,15 +62,75 @@ const UserAnalytics = () => {
     }
   };
 
-  // Load booking analytics
-  const [bookingStats, setBookingStats] = useState<any>({});
-  const loadBookingStats = async () => {
+  // Load course analytics
+  const [courseStats, setCourseStats] = useState<any>({});
+  const loadCourseStats = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_booking_stats');
-      if (error) throw error;
-      setBookingStats(data?.[0] || {});
+      console.log('Loading course stats...');
+
+      // Get all users first
+      const { data: allUsers, error: usersError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, created_at');
+
+      if (usersError) {
+        console.error('Error loading users:', usersError);
+        throw usersError;
+      }
+
+      console.log('Total users found:', allUsers?.length || 0);
+
+      // Get course completion stats
+      const { data: progressData, error: progressError } = await supabaseAdmin
+        .from('user_progress')
+        .select('course_id, progress_percentage, completed_at, user_id');
+
+      if (progressError) {
+        console.error('Error loading progress:', progressError);
+        // Don't throw, continue with user stats
+      }
+
+      console.log('Progress data found:', progressData?.length || 0);
+
+      // Get user stats for XP data
+      const { data: userStatsData, error: statsError } = await supabaseAdmin
+        .from('user_stats')
+        .select('user_id, total_xp, completed_courses, level');
+
+      if (statsError) {
+        console.error('Error loading user stats:', statsError);
+        // Don't throw, use fallback data
+      }
+
+      console.log('User stats found:', userStatsData?.length || 0);
+
+      // Calculate course completion stats
+      const completedCourses = progressData?.filter(p => p.progress_percentage === 100).length || 0;
+      const totalXP = userStatsData?.reduce((sum, user) => sum + (user.total_xp || 0), 0) || 0;
+      const avgLevel = userStatsData?.length > 0
+        ? userStatsData.reduce((sum, user) => sum + (user.level || 1), 0) / userStatsData.length
+        : 1;
+
+      const stats = {
+        total_users: allUsers?.length || 0,
+        completed_courses: completedCourses,
+        total_xp: totalXP,
+        average_level: Math.round(avgLevel * 10) / 10,
+        active_learners: userStatsData?.filter(u => u.total_xp > 0).length || 0
+      };
+
+      console.log('Final course stats:', stats);
+      setCourseStats(stats);
     } catch (error: any) {
-      console.error('Error loading booking stats:', error);
+      console.error('Error loading course stats:', error);
+      // Set fallback data
+      setCourseStats({
+        total_users: 0,
+        completed_courses: 0,
+        total_xp: 0,
+        average_level: 1,
+        active_learners: 0
+      });
     }
   };
 
@@ -80,7 +140,7 @@ const UserAnalytics = () => {
     await Promise.all([
       loadCountryStats(),
       loadUserGrowth(),
-      loadBookingStats()
+      loadCourseStats()
     ]);
     setLoading(false);
   };
@@ -137,7 +197,7 @@ const UserAnalytics = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Total Users</p>
-                <p className="text-3xl font-bold text-slate-900">{totalUsers.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-slate-900">{(courseStats.total_users || totalUsers || 0).toLocaleString()}</p>
                 <p className="text-sm text-green-600 mt-1">
                   <TrendingUp className="w-3 h-3 inline mr-1" />
                   Active platform
@@ -170,16 +230,16 @@ const UserAnalytics = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">Total Bookings</p>
+                <p className="text-sm font-medium text-slate-600">Completed Courses</p>
                 <p className="text-3xl font-bold text-slate-900">
-                  {bookingStats.total_bookings || 0}
+                  {courseStats.completed_courses || 0}
                 </p>
                 <p className="text-sm text-purple-600 mt-1">
-                  <Calendar className="w-3 h-3 inline mr-1" />
-                  Sessions booked
+                  <BookOpen className="w-3 h-3 inline mr-1" />
+                  Course completions
                 </p>
               </div>
-              <Calendar className="w-8 h-8 text-purple-600" />
+              <BookOpen className="w-8 h-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
@@ -188,16 +248,16 @@ const UserAnalytics = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">Avg Rating</p>
+                <p className="text-sm font-medium text-slate-600">Total XP Earned</p>
                 <p className="text-3xl font-bold text-slate-900">
-                  {bookingStats.avg_rating || '0.0'}
+                  {courseStats.total_xp?.toLocaleString() || '0'}
                 </p>
                 <p className="text-sm text-yellow-600 mt-1">
-                  <Activity className="w-3 h-3 inline mr-1" />
-                  User satisfaction
+                  <Award className="w-3 h-3 inline mr-1" />
+                  Experience points
                 </p>
               </div>
-              <Activity className="w-8 h-8 text-yellow-600" />
+              <Award className="w-8 h-8 text-yellow-600" />
             </div>
           </CardContent>
         </Card>

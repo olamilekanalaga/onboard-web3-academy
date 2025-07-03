@@ -181,6 +181,30 @@ const Course = () => {
     navigate(`/course/${nextCourseId}`);
   };
 
+  // Get next course ID based on course progression
+  const getNextCourseId = (currentCourseId: string): string | null => {
+    const courseOrder = [
+      'foundation',
+      'defi-fundamentals',
+      'degen',
+      'advanced-trading',
+      'development',
+      'nft-creation',
+      'content-creation',
+      'web3-security',
+      'dao-governance',
+      'web3-gaming',
+      'crypto-tax',
+      'web3-social'
+    ];
+
+    const currentIndex = courseOrder.indexOf(currentCourseId);
+    if (currentIndex >= 0 && currentIndex < courseOrder.length - 1) {
+      return courseOrder[currentIndex + 1];
+    }
+    return null;
+  };
+
   const handleQuizComplete = async (passed: boolean, score: number, xpEarned: number) => {
     setQuizPassed(passed);
     setQuizScore(score);
@@ -192,6 +216,19 @@ const Course = () => {
     }
 
     if (passed) {
+      // Unlock next course immediately
+      if (courseId) {
+        try {
+          const nextCourseId = getNextCourseId(courseId);
+          if (nextCourseId) {
+            await unlockCourse(nextCourseId);
+            console.log(`✅ Next course unlocked: ${nextCourseId}`);
+          }
+        } catch (error) {
+          console.error('Error unlocking next course:', error);
+        }
+      }
+
       // Award XP and show completion modal
       setShowQuiz(false);
       setShowCompletionModal(true);
@@ -556,6 +593,47 @@ const Course = () => {
                       </div>
                     </TabsContent>
                   </Tabs>
+
+                  {/* Last Chapter Notification */}
+                  {(() => {
+                    const currentModuleChapters = course.modules[selectedModule].chapters.length;
+                    const totalModules = course.modules.length;
+                    const isLastChapter = selectedModule === totalModules - 1 &&
+                                        selectedChapter === currentModuleChapters - 1;
+
+                    if (isLastChapter && !isChapterCompleted(selectedModule, selectedChapter)) {
+                      return (
+                        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6 mt-6">
+                          <div className="flex items-start space-x-4">
+                            <div className="bg-purple-100 rounded-full p-3">
+                              🎯
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-bold text-purple-900 text-xl mb-3">
+                                🎉 Final Chapter!
+                              </h4>
+                              <p className="text-purple-800 mb-4">
+                                This is the last chapter of the <strong>{course.title}</strong> course.
+                                After completing this chapter, you'll take a quiz to test your knowledge and unlock the next course.
+                              </p>
+                              <div className="bg-purple-100 rounded-lg p-4">
+                                <p className="text-purple-900 font-semibold mb-2">
+                                  📝 Quiz Requirements:
+                                </p>
+                                <ul className="text-purple-800 space-y-1">
+                                  <li>• Score 70% or higher to pass</li>
+                                  <li>• Unlock the next course upon passing</li>
+                                  <li>• Earn XP and course completion badge</li>
+                                  <li>• Progress will be recorded in your profile</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
 
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t mt-8">

@@ -18,8 +18,7 @@ import {
   MessageSquare,
   Bell,
   Shield,
-  Download,
-  MapPin
+  Download
 } from "lucide-react";
 // import { motion, AnimatePresence } from 'framer-motion'; // Temporarily disabled
 import { useAuth } from '@/contexts/AuthContext';
@@ -101,13 +100,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: Bell,
       badge: unreadNotifications > 0 ? unreadNotifications.toString() : null,
       description: 'Real-time notifications and alerts'
-    },
-    {
-      id: 'location',
-      label: 'Location Service',
-      icon: MapPin,
-      badge: 'New',
-      description: 'Automatic location detection for users'
     },
     {
       id: 'settings',
