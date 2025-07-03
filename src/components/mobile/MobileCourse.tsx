@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { useQuizProgress } from "@/hooks/useQuizProgress";
 import { supabase } from "@/integrations/supabase/client";
+import { getQuizForCourse } from "@/data/courseQuizzes";
 import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,14 +90,18 @@ const MobileCourse = () => {
   useEffect(() => {
     if (!course || !course.modules) return;
 
-    const progressPercentage = courseProgress?.progress_percentage || 0;
+    const dbProgress = courseProgress?.progress_percentage || courseProgress?.progressPercentage || 0;
     const totalChapters = course.modules.reduce((sum, module) => {
       return sum + (module.chapters?.length || 0);
     }, 0);
     const completedCount = completedChapters?.length || 0;
+    const localProgress = totalChapters > 0 ? (completedCount / totalChapters) * 100 : 0;
+    const finalProgress = Math.max(dbProgress, localProgress);
 
     console.log('Mobile Course Progress Check:', {
-      progressPercentage,
+      dbProgress,
+      localProgress,
+      finalProgress,
       totalChapters,
       completedCount,
       completedChapters,
@@ -106,7 +111,7 @@ const MobileCourse = () => {
     });
 
     // Check if all chapters are completed OR progress is 100%
-    const isFullyCompleted = (progressPercentage === 100) || (totalChapters > 0 && completedCount >= totalChapters);
+    const isFullyCompleted = (finalProgress >= 100) || (totalChapters > 0 && completedCount >= totalChapters);
 
     if (isFullyCompleted && !courseJustCompleted && !showQuiz) {
       console.log('🎯 Mobile Course completion detected! Showing quiz...');
@@ -317,7 +322,20 @@ const MobileCourse = () => {
     return sum + (module.chapters?.length || 0);
   }, 0) || 0;
   const completedCount = completedChapters?.length || 0;
-  const progressPercentage = totalChapters > 0 ? (completedCount / totalChapters) * 100 : 0;
+
+  // Use database progress if available, otherwise calculate locally
+  const dbProgress = courseProgress?.progress_percentage || courseProgress?.progressPercentage || 0;
+  const localProgress = totalChapters > 0 ? (completedCount / totalChapters) * 100 : 0;
+  const progressPercentage = Math.max(dbProgress, localProgress);
+
+  console.log('Progress Calculation:', {
+    dbProgress,
+    localProgress,
+    finalProgress: progressPercentage,
+    completedCount,
+    totalChapters,
+    courseProgress
+  });
 
   const getIconForCourse = (courseId: string) => {
     switch (courseId) {
@@ -612,12 +630,23 @@ const MobileCourse = () => {
                 )}
 
                 {/* Debug: Manual Quiz Button */}
-                {courseProgress?.progress_percentage === 100 && !showQuiz && (
+                {progressPercentage >= 100 && !showQuiz && (
                   <Button
                     onClick={() => setShowQuiz(true)}
                     className="bg-blue-600 hover:bg-blue-700 text-white w-full"
                   >
                     🎯 Start Quiz (Course Complete)
+                  </Button>
+                )}
+
+                {/* Debug: Force Quiz Button */}
+                {!showQuiz && (
+                  <Button
+                    onClick={() => setShowQuiz(true)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    🧪 Force Quiz (Debug)
                   </Button>
                 )}
 
@@ -653,11 +682,20 @@ const MobileCourse = () => {
       <BottomNavigation />
 
       {/* Course Quiz */}
-      {showQuiz && courseId && (
+      {showQuiz && courseId && course && (
         <CourseQuiz
           courseId={courseId}
+          courseName={course.title}
+          questions={getQuizForCourse(courseId)}
           onQuizComplete={handleQuizComplete}
-          onClose={() => setShowQuiz(false)}
+          onRetakeCourse={() => {
+            setShowQuiz(false);
+            setCourseJustCompleted(false);
+            setSelectedModule(0);
+            setSelectedChapter(0);
+          }}
+          onCloseQuiz={() => setShowQuiz(false)}
+          requiredScore={70}
         />
       )}
 
