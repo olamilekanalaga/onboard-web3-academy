@@ -20,6 +20,7 @@ import {
   Target,
   BookOpen,
   UserPlus,
+  UserMinus,
   MessageCircle,
   Star
 } from 'lucide-react';
@@ -64,12 +65,26 @@ const MobileSocial = () => {
   const [activeTab, setActiveTab] = useState('feed');
   const [progressItems, setProgressItems] = useState<ProgressItem[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [recentCompletions, setRecentCompletions] = useState<any[]>([]);
+  const [following, setFollowing] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       loadData();
+    }
+  }, [user, activeTab]);
+
+  // Auto-refresh recent completions every 30 seconds when on students tab
+  useEffect(() => {
+    if (user && activeTab === 'students') {
+      const interval = setInterval(() => {
+        console.log('Auto-refreshing mobile recent completions...');
+        loadRecentCompletions();
+      }, 30000); // 30 seconds
+
+      return () => clearInterval(interval);
     }
   }, [user, activeTab]);
 
@@ -80,7 +95,9 @@ const MobileSocial = () => {
         await loadProgressFeed();
       } else if (activeTab === 'students') {
         await loadStudents();
+        await loadRecentCompletions();
       }
+      await loadFollowing();
     } catch (error) {
       console.error('Error loading social data:', error);
     } finally {
@@ -92,38 +109,39 @@ const MobileSocial = () => {
     try {
       console.log('Loading progress feed for mobile...');
 
-      // First try to get all progress feed items (not just from followed users)
-      const { data, error } = await supabase
-        .from('progress_feed')
+      // Use same query as desktop - load from users you follow + your own
+      const { data: followingData } = await supabase
+        .from('social_follows')
+        .select('following_id')
+        .eq('follower_id', user?.id);
+
+      const followingIds = followingData?.map(f => f.following_id) || [];
+      const userIds = [user?.id, ...followingIds];
+
+      // Load progress items with user info - same as desktop
+      const { data: progressData } = await supabase
+        .from('social_progress')
         .select(`
           *,
-          profiles!inner(
-            id,
-            username,
-            full_name,
-            avatar_url
-          )
+          social_reactions(reaction_type, user_id)
         `)
-        .eq('is_public', true)
+        .in('user_id', userIds)
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (error) {
-        console.error('Progress feed error:', error);
-        // Try alternative query if the first one fails
-        const { data: altData, error: altError } = await supabase
-          .from('progress_feed')
-          .select('*')
-          .eq('is_public', true)
-          .order('created_at', { ascending: false })
-          .limit(20);
+      if (progressData) {
+        const enrichedProgress = progressData.map(item => ({
+          ...item,
+          user_email: item.user_email || 'Student',
+          user_name: item.user_name || 'Academia Student',
+          user_avatar: item.user_avatar,
+          user_reactions: item.social_reactions || []
+        }));
 
-        if (altError) throw altError;
-        console.log('Alternative progress feed data:', altData);
-        setProgressItems(altData || []);
+        console.log('Mobile progress feed loaded:', enrichedProgress);
+        setProgressItems(enrichedProgress);
       } else {
-        console.log('Progress feed data loaded:', data);
-        setProgressItems(data || []);
+        setProgressItems([]);
       }
     } catch (error) {
       console.error('Error loading progress feed:', error);
@@ -145,6 +163,92 @@ const MobileSocial = () => {
     } catch (error) {
       console.error('Error loading students:', error);
       setStudents([]);
+    }
+  };
+
+  const loadRecentCompletions = async () => {
+    try {
+      // Load recent course completions (last 30 days) - increased from 7 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { data: recentData } = await supabase
+        .from('social_progress')
+        .select('*')
+        .eq('activity_type', 'course_completed')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(50); // Increased from 10 to 50
+
+      setRecentCompletions(recentData || []);
+    } catch (error) {
+      console.error('Error loading recent completions:', error);
+      setRecentCompletions([]);
+    }
+  };
+
+  const loadFollowing = async () => {
+    try {
+      // Load who you're following - same as desktop
+      const { data: followingData } = await supabase
+        .from('social_follows')
+        .select('following_id')
+        .eq('follower_id', user?.id);
+
+      const followingIds = followingData?.map(f => f.following_id) || [];
+      setFollowing(new Set(followingIds));
+    } catch (error) {
+      console.error('Error loading following:', error);
+      setFollowing(new Set());
+    }
+  };
+
+  const handleFollow = async (studentUserId: string) => {
+    if (!user) return;
+
+    try {
+      const isFollowing = following.has(studentUserId);
+
+      if (isFollowing) {
+        // Unfollow - same as desktop
+        await supabase
+          .from('social_follows')
+          .delete()
+          .eq('follower_id', user.id)
+          .eq('following_id', studentUserId);
+
+        setFollowing(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(studentUserId);
+          return newSet;
+        });
+      } else {
+        // Follow - same as desktop
+        await supabase
+          .from('social_follows')
+          .insert({
+            follower_id: user.id,
+            following_id: studentUserId
+          });
+
+        setFollowing(prev => new Set(prev).add(studentUserId));
+
+        // Create notification - same as desktop
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: studentUserId,
+            type: 'follow',
+            title: 'New Follower',
+            message: `${user.email} started following you!`,
+            data: { follower_id: user.id }
+          });
+      }
+
+      // Reload students to update follower counts
+      await loadStudents();
+    } catch (error) {
+      console.error('Error handling follow:', error);
     }
   };
 
@@ -181,8 +285,9 @@ const MobileSocial = () => {
             {/* Recent Course Completions Header */}
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Recent Course Completions</h3>
-              <Button variant="ghost" size="sm" onClick={loadData}>
+              <Button variant="ghost" size="sm" onClick={loadRecentCompletions}>
                 <TrendingUp className="w-4 h-4" />
+                <span className="ml-1 text-xs">Refresh</span>
               </Button>
             </div>
             {loading ? (
@@ -224,14 +329,14 @@ const MobileSocial = () => {
                     <CardContent className="p-4">
                       <div className="flex items-start space-x-3 mb-3">
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src={item.user_profile?.avatar_url} />
+                          <AvatarImage src={item.user_avatar} />
                           <AvatarFallback className="text-sm">
-                            {item.user_profile?.display_name?.charAt(0).toUpperCase() || 'S'}
+                            {item.user_name?.charAt(0).toUpperCase() || 'S'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-slate-900 text-sm">
-                            {item.user_profile?.display_name || 'Student'}
+                            {item.user_name || 'Student'}
                           </p>
                           <p className="text-xs text-slate-500">
                             {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
@@ -276,6 +381,43 @@ const MobileSocial = () => {
 
           {/* Students Tab */}
           <TabsContent value="students" className="space-y-4">
+            {/* Recent Course Completions */}
+            {recentCompletions.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <Trophy className="w-5 h-5 mr-2 text-yellow-500" />
+                    Recent Course Completions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {recentCompletions.slice(0, 3).map((completion, index) => (
+                      <div key={completion.id} className="flex items-center space-x-3 p-2 bg-slate-50 rounded-lg">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={completion.user_avatar} />
+                          <AvatarFallback className="text-xs">
+                            {completion.user_name?.charAt(0).toUpperCase() || 'S'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">
+                            {completion.user_name || 'Student'}
+                          </p>
+                          <p className="text-xs text-slate-500 truncate">
+                            Completed {completion.title}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          +{completion.xp_earned} XP
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -339,9 +481,27 @@ const MobileSocial = () => {
                             </div>
                           </div>
                           <div className="flex flex-col space-y-2">
-                            <Button size="sm" variant="outline" className="text-xs px-2 py-1">
-                              <UserPlus className="w-3 h-3 mr-1" />
-                              Follow
+                            <Button
+                              size="sm"
+                              variant={following.has(student.user_id) ? "outline" : "default"}
+                              className={`text-xs px-2 py-1 ${
+                                following.has(student.user_id)
+                                  ? "text-red-600 border-red-200 hover:bg-red-50"
+                                  : ""
+                              }`}
+                              onClick={() => handleFollow(student.user_id)}
+                            >
+                              {following.has(student.user_id) ? (
+                                <>
+                                  <UserMinus className="w-3 h-3 mr-1" />
+                                  Unfollow
+                                </>
+                              ) : (
+                                <>
+                                  <UserPlus className="w-3 h-3 mr-1" />
+                                  Follow
+                                </>
+                              )}
                             </Button>
                             <Button size="sm" variant="ghost" className="text-xs px-2 py-1">
                               <MessageCircle className="w-3 h-3 mr-1" />

@@ -174,10 +174,10 @@ export const useCourseProgressionDB = () => {
 
         // Update user stats if course completed
         if (isCompleted) {
-          const currentStats = userStats || { 
-            user_id: user.id, 
-            total_xp: 0, 
-            completed_courses: [], 
+          const currentStats = userStats || {
+            user_id: user.id,
+            total_xp: 0,
+            completed_courses: [],
             unlocked_courses: ['foundation'],
             level: 1
           };
@@ -202,6 +202,26 @@ export const useCourseProgressionDB = () => {
               onConflict: 'user_id',
               ignoreDuplicates: false
             });
+
+          // Create social progress entry for course completion
+          try {
+            await supabase.from('social_progress').insert({
+              user_id: user.id,
+              activity_type: 'course_completed',
+              title: `Completed ${courseId}!`,
+              description: `Just finished the ${courseId} course and earned ${xpEarned} XP! 🎉`,
+              course_id: courseId,
+              xp_earned: xpEarned,
+              user_email: user.email,
+              user_name: user.user_metadata?.full_name || user.email,
+              user_avatar: user.user_metadata?.avatar_url,
+              is_public: true
+            });
+
+            console.log('✅ Social progress entry created for course completion');
+          } catch (error) {
+            console.error('Error creating social progress entry:', error);
+          }
         }
 
         return {

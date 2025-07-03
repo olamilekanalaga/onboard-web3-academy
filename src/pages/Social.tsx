@@ -71,6 +71,18 @@ const Social: React.FC = () => {
     }
   }, [user]);
 
+  // Auto-refresh recent completions every 30 seconds
+  useEffect(() => {
+    if (user && activeTab === 'students') {
+      const interval = setInterval(() => {
+        console.log('Auto-refreshing recent completions...');
+        loadData();
+      }, 30000); // 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [user, activeTab]);
+
   const loadData = async () => {
     try {
       // Load progress from users you follow + your own
@@ -115,17 +127,17 @@ const Social: React.FC = () => {
 
       setStudents(studentsData || []);
 
-      // Load recent course completions (last 7 days)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      // Load recent course completions (last 30 days) - increased from 7 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const { data: recentData } = await supabase
         .from('social_progress')
         .select('*')
         .eq('activity_type', 'course_completed')
-        .gte('created_at', sevenDaysAgo.toISOString())
+        .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(50); // Increased from 10 to 50
 
       setRecentCompletions(recentData || []);
 

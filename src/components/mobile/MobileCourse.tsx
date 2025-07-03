@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { useQuizProgress } from "@/hooks/useQuizProgress";
+import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +24,7 @@ import remarkGfm from 'remark-gfm';
 const MobileCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     updateChapterProgress,
     getCourseProgress,
@@ -180,6 +183,42 @@ const MobileCourse = () => {
     }
 
     if (passed) {
+      // Create social progress entry - same as desktop
+      if (course && user) {
+        try {
+          await supabase.from('social_progress').insert({
+            user_id: user.id,
+            activity_type: 'course_completed',
+            title: `Completed ${course.title}!`,
+            description: `Just finished the ${course.title} course with a ${score}% quiz score and earned ${xpEarned} XP! 🎉`,
+            course_id: courseId,
+            xp_earned: xpEarned,
+            user_email: user.email,
+            user_name: user.user_metadata?.full_name || user.email,
+            user_avatar: user.user_metadata?.avatar_url,
+            is_public: true
+          });
+
+          // Create notification for course completion
+          await supabase.from('notifications').insert({
+            user_id: user.id,
+            type: 'course_completed',
+            title: 'Course Completed!',
+            message: `Congratulations! You completed ${course.title} with ${score}% and earned ${xpEarned} XP!`,
+            data: {
+              course_id: courseId,
+              course_title: course.title,
+              score: score,
+              xp_earned: xpEarned
+            }
+          });
+
+          console.log('✅ Mobile social progress entry created');
+        } catch (error) {
+          console.error('Error creating mobile social progress entry:', error);
+        }
+      }
+
       // Award XP and show completion modal
       setShowQuiz(false);
       setShowCompletionModal(true);
