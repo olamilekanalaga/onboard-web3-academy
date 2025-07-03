@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { courses } from "@/data/courses";
+import { getQuizForCourse } from "@/data/courseQuizzes";
 import TradingDemo from "@/components/TradingDemo";
 import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
 import BottomNavigation from "./BottomNavigation";
@@ -653,13 +654,32 @@ const MobileCourse = () => {
       <BottomNavigation />
 
       {/* Course Quiz */}
-      {showQuiz && courseId && (
-        <CourseQuiz
-          courseId={courseId}
-          onQuizComplete={handleQuizComplete}
-          onClose={() => setShowQuiz(false)}
-        />
-      )}
+      {showQuiz && courseId && course && (() => {
+        const quizQuestions = getQuizForCourse(courseId);
+        console.log('Quiz Debug:', {
+          courseId,
+          questionsFound: quizQuestions.length,
+          questions: quizQuestions.slice(0, 2), // Show first 2 questions for debugging
+          getQuizForCourse: typeof getQuizForCourse
+        });
+
+        return (
+          <CourseQuiz
+            courseId={courseId}
+            courseName={course.title}
+            questions={quizQuestions}
+            onQuizComplete={handleQuizComplete}
+            onRetakeCourse={() => {
+              setShowQuiz(false);
+              setCourseJustCompleted(false);
+              setSelectedModule(0);
+              setSelectedChapter(0);
+            }}
+            onCloseQuiz={() => setShowQuiz(false)}
+            requiredScore={70}
+          />
+        );
+      })()}
 
       {/* Course Completion Modal */}
       {courseId && (

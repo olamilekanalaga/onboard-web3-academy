@@ -17,6 +17,7 @@ import {
   X
 } from "lucide-react";
 import { allCourseQuizzes } from "@/data/allCourseQuizzes";
+import { courseQuizzes } from "@/data/courseQuizzes";
 import { courses } from "@/data/courses";
 
 interface QuizQuestion {
@@ -53,8 +54,19 @@ const CourseQuiz: React.FC<CourseQuizProps> = ({
   onClose,
   requiredScore = 70
 }) => {
-  // Get questions from courseId if not provided
-  const questions = providedQuestions || allCourseQuizzes[courseId as keyof typeof allCourseQuizzes] || [];
+  // Get questions from courseId if not provided - check both quiz sources
+  const questions = providedQuestions ||
+                   courseQuizzes[courseId as keyof typeof courseQuizzes] ||
+                   allCourseQuizzes[courseId as keyof typeof allCourseQuizzes] ||
+                   [];
+
+  console.log('CourseQuiz Debug:', {
+    courseId,
+    providedQuestions: providedQuestions?.length || 0,
+    courseQuizzesHas: !!(courseQuizzes[courseId as keyof typeof courseQuizzes]),
+    allCourseQuizzesHas: !!(allCourseQuizzes[courseId as keyof typeof allCourseQuizzes]),
+    finalQuestions: questions.length
+  });
   const courseTitle = courseName || courses[courseId as keyof typeof courses]?.title || 'Course';
   
   const [currentQuestion, setCurrentQuestion] = useState(0);
