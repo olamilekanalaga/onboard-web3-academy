@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -87,13 +88,13 @@ const MobileCourse = () => {
 
   // Watch for course completion to trigger quiz
   useEffect(() => {
-    if (!course || !course.modules) return;
+    if (!course || !course.modules || !Array.isArray(course.modules)) return;
 
     const progressPercentage = courseProgress?.progress_percentage || 0;
     const totalChapters = course.modules.reduce((sum, module) => {
       return sum + (module.chapters?.length || 0);
     }, 0);
-    const completedCount = completedChapters?.length || 0;
+    const completedCount = (completedChapters && Array.isArray(completedChapters)) ? completedChapters.length : 0;
 
     console.log('Mobile Course Progress Check:', {
       progressPercentage,
@@ -196,7 +197,7 @@ const MobileCourse = () => {
   const getChapterId = (moduleId: number, chapterId: number) => `${courseId}-${moduleId}-${chapterId}`;
 
   const isChapterCompleted = (moduleId: number, chapterId: number) =>
-    (completedChapters || []).includes(getChapterId(moduleId, chapterId));
+    (completedChapters && Array.isArray(completedChapters)) ? completedChapters.includes(getChapterId(moduleId, chapterId)) : false;
 
   const isChapterUnlocked = (moduleId: number, chapterId: number) => {
     if (moduleId === 0 && chapterId === 0) return true;
@@ -217,7 +218,7 @@ const MobileCourse = () => {
 
     const chapterId = getChapterId(safeSelectedModule, safeSelectedChapter);
 
-    if (!(completedChapters || []).includes(chapterId)) {
+    if (!(completedChapters && Array.isArray(completedChapters) && completedChapters.includes(chapterId))) {
       const totalChapters = course.modules.reduce((sum, module) => {
         return sum + (module.chapters?.length || 0);
       }, 0);
@@ -316,7 +317,7 @@ const MobileCourse = () => {
   const totalChapters = course.modules?.reduce((sum, module) => {
     return sum + (module.chapters?.length || 0);
   }, 0) || 0;
-  const completedCount = completedChapters?.length || 0;
+  const completedCount = (completedChapters && Array.isArray(completedChapters)) ? completedChapters.length : 0;
   const progressPercentage = totalChapters > 0 ? (completedCount / totalChapters) * 100 : 0;
 
   const getIconForCourse = (courseId: string) => {
