@@ -112,11 +112,15 @@ const MobileExplore = () => {
   };
 
   const handleCourseNavigation = (courseId: string, courseName: string) => {
-    if (isVerified) {
-      // User is already verified, navigate directly
+    console.log('Mobile course navigation:', { courseId, courseName, isVerified });
+
+    // Foundation course should always be accessible
+    if (courseId === 'foundation' || isVerified) {
+      // User is already verified or accessing foundation course, navigate directly
+      console.log('Navigating to course:', `/mobile/course/${courseId}`);
       navigate(`/mobile/course/${courseId}`);
     } else {
-      // Show social verification modal
+      // Show social verification modal for other courses
       setSelectedCourse(courseName);
       setShowSocialVerification(true);
     }
@@ -203,22 +207,39 @@ const MobileExplore = () => {
 
         <div className="space-y-4">
           {filteredCourses.map((course, index) => {
-            // Use proper quiz-based progression like desktop
-            const prerequisites = course.prerequisites || [];
-            const unlocked = canAccessCourse(course.id, prerequisites);
+            // Use EXACT same logic as desktop - two-layer check
+            const prerequisites: { [key: string]: string[] } = {
+              'foundation': [],
+              'defi-fundamentals': ['foundation'],
+              'degen': ['foundation', 'defi-fundamentals'],
+              'advanced-trading': ['foundation', 'defi-fundamentals'],
+              'development': ['foundation', 'defi-fundamentals'],
+              'nft-creation': ['foundation'],
+              'content-creation': ['foundation'],
+              'web3-security': ['foundation', 'defi-fundamentals'],
+              'dao-governance': ['foundation', 'defi-fundamentals'],
+              'web3-gaming': ['foundation'],
+              'crypto-tax': ['foundation', 'defi-fundamentals'],
+              'web3-social': ['foundation']
+            };
+
+            const coursePrereqs = prerequisites[course.id] || [];
+            const hasQuizAccess = canAccessCourse(course.id, coursePrereqs);
+            const isUnlockedInDB = isCourseUnlocked(course.id);
+            const finalUnlocked = isUnlockedInDB && hasQuizAccess; // SAME AS DESKTOP
             const isCompleted = isCourseCompleted(course.id);
             const hasQuizPassed = hasPassedQuiz(course.id);
 
-            console.log(`Course ${course.id}: prerequisites=${JSON.stringify(prerequisites)}, unlocked=${unlocked}, completed=${isCompleted}, quizPassed=${hasQuizPassed}`);
+            console.log(`Course ${course.id}: dbUnlocked=${isUnlockedInDB}, quizAccess=${hasQuizAccess}, finalUnlocked=${finalUnlocked}, completed=${isCompleted}, quizPassed=${hasQuizPassed}`);
             return (
-              <Card key={course.id} className={`border-0 shadow-sm ${!unlocked ? 'opacity-60' : ''}`}>
+              <Card key={course.id} className={`border-0 shadow-sm ${!finalUnlocked ? 'opacity-60' : ''}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start space-x-4">
-                    <div className={`w-16 h-16 rounded-lg flex items-center justify-center text-2xl relative ${unlocked
+                    <div className={`w-16 h-16 rounded-lg flex items-center justify-center text-2xl relative ${finalUnlocked
                       ? 'bg-gradient-to-br from-emerald-500 to-blue-600'
                       : 'bg-gradient-to-br from-gray-400 to-gray-500'
                       }`}>
-                      {unlocked ? getIconForCourse(course.id) : <Lock className="h-8 w-8 text-white" />}
+                      {finalUnlocked ? getIconForCourse(course.id) : <Lock className="h-8 w-8 text-white" />}
                     </div>
 
                     <div className="flex-1">
@@ -273,14 +294,14 @@ const MobileExplore = () => {
                           className={
                             isCompleted
                               ? "bg-green-600 hover:bg-green-700"
-                              : unlocked
+                              : finalUnlocked
                                 ? "bg-blue-600 hover:bg-blue-700"
                                 : "bg-gray-400 cursor-not-allowed"
                           }
-                          onClick={() => unlocked && handleCourseNavigation(course.id, course.title)}
-                          disabled={!unlocked}
+                          onClick={() => finalUnlocked && handleCourseNavigation(course.id, course.title)}
+                          disabled={!finalUnlocked}
                         >
-                          {isCompleted ? "Completed" : unlocked ? "Start Learning" : "Locked"}
+                          {isCompleted ? "Completed" : finalUnlocked ? "Start Learning" : coursePrereqs.length > 0 ? "Quiz Required" : "Locked"}
                         </Button>
                       </div>
                     </div>

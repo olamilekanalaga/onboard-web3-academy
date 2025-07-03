@@ -37,9 +37,6 @@ import MobileAuth from "./components/mobile/MobileAuth";
 import MobileGamification from "./components/mobile/MobileGamification";
 import MobileSocial from "./components/mobile/MobileSocial";
 import MobileDemo from "./components/mobile/MobileDemo";
-import Courses from "./pages/Courses";
-import Social from "./pages/Social";
-import Demo from "./pages/Demo";
 import PWALayoutTest from "./components/mobile/PWALayoutTest";
 import SmartPWAPrompt from "./components/SmartPWAPrompt";
 

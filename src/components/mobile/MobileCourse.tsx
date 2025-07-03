@@ -90,6 +90,12 @@ const MobileCourse = () => {
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-center">
               <h1 className="text-xl font-bold text-slate-900 mb-4">Course Not Found</h1>
+              <p className="text-slate-600 mb-4">
+                Course ID: {courseId || 'undefined'}
+              </p>
+              <p className="text-slate-600 mb-4 text-sm">
+                Available courses: {Object.keys(courses).join(', ')}
+              </p>
               <Button onClick={() => navigate("/mobile/explore")}>
                 Back to Courses
               </Button>
