@@ -177,23 +177,16 @@ const App: React.FC = () => {
                           path="/mobile/social"
                           element={
                             <MobileAuthGuard>
-                              <Social />
+                              <MobileSocial />
                             </MobileAuthGuard>
                           }
                         />
-                        <Route
-                          path="/mobile/courses"
-                          element={
-                            <MobileAuthGuard>
-                              <Courses />
-                            </MobileAuthGuard>
-                          }
-                        />
+
                         <Route
                           path="/mobile/demo"
                           element={
                             <MobileAuthGuard>
-                              <Demo />
+                              <MobileDemo />
                             </MobileAuthGuard>
                           }
                         />

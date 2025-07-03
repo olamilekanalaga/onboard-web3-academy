@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSocialVerification } from "@/contexts/SocialVerificationContext";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
-import { useCourseProgression } from "@/hooks/useCourseProgression";
+import { courses } from "@/data/courses";
 import { Search, Filter, TrendingUp, Clock, Star, Users, Target, Code, BarChart3, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,20 +33,20 @@ const MobileExplore = () => {
   const [showSocialVerification, setShowSocialVerification] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
 
-  // Convert course progression data to display format
-  const courseList = Object.values(courseProgression).map(course => ({
+  // Convert course data to display format
+  const courseList = Object.values(courses).map(course => ({
     id: course.id,
-    title: course.title || course.id,
-    description: `Learn ${course.title} with ${course.xpReward} XP reward`,
-    level: course.level || 'Beginner',
+    title: course.title,
+    description: course.description,
+    level: course.level,
     category: course.category || 'fundamentals',
-    duration: course.estimatedTime || '2-4 weeks',
-    totalXP: course.xpReward,
+    duration: course.duration,
+    totalXP: course.totalXP || course.xpReward,
     difficulty: course.difficulty || 1,
-    skills: [`${course.title} Fundamentals`, 'Practical Skills', 'Real Applications']
+    skills: course.skills || [`${course.title} Fundamentals`, 'Practical Skills', 'Real Applications']
   }));
 
-  // Create categories from progression data
+  // Create categories from course data
   const categories = [
     { name: "All", key: "all", icon: "📖", count: courseList.length },
     { name: "Foundation", key: "fundamentals", icon: "🏗️", count: courseList.filter(c => c.category === "fundamentals").length },
@@ -82,12 +82,19 @@ const MobileExplore = () => {
 
   const getIconForCourse = (courseId: string) => {
     switch (courseId) {
-      case "foundation": return "🏗️";
-      case "defi": return "🏦";
-      case "degen": return "⚡";
-      case "advanced-trading": return "💹";
-      case "development": return "🔧";
-      default: return "📖";
+      case "foundation": return "🎓";
+      case "defi-fundamentals": return "💰";
+      case "degen": return "🚀";
+      case "advanced-trading": return "📈";
+      case "development": return "💻";
+      case "content-creation": return "🎨";
+      case "nft-creation": return "🖼️";
+      case "web3-security": return "🔒";
+      case "dao-governance": return "🏛️";
+      case "web3-gaming": return "🎮";
+      case "crypto-tax": return "📊";
+      case "web3-social": return "👥";
+      default: return "📚";
     }
   };
 

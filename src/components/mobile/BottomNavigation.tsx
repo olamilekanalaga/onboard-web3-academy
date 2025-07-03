@@ -15,7 +15,7 @@ const BottomNavigation = () => {
     {
       icon: BookOpen,
       label: "Courses",
-      path: "/mobile/courses",
+      path: "/mobile/explore",
       isActive: location.pathname === "/mobile/courses" || location.pathname === "/mobile/explore"
     },
     {
@@ -41,12 +41,6 @@ const BottomNavigation = () => {
       label: "Profile",
       path: "/mobile/profile",
       isActive: location.pathname === "/mobile/profile"
-    },
-    {
-      icon: Settings,
-      label: "Settings",
-      path: "/mobile/settings",
-      isActive: location.pathname === "/mobile/settings"
     }
   ];
 
