@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,8 @@ import {
   Target,
   X
 } from "lucide-react";
-// Removed framer-motion dependency - using CSS transitions instead
+import { allCourseQuizzes } from "@/data/allCourseQuizzes";
+import { courses } from "@/data/courses";
 
 interface QuizQuestion {
   id: string;
@@ -34,23 +36,27 @@ interface QuizQuestion {
 
 interface CourseQuizProps {
   courseId: string;
-  courseName: string;
-  questions: QuizQuestion[];
+  courseName?: string;
+  questions?: QuizQuestion[];
   onQuizComplete: (passed: boolean, score: number, xpEarned: number) => void;
-  onRetakeCourse: () => void;
-  onCloseQuiz?: () => void; // Optional close function
-  requiredScore: number; // Minimum percentage to pass (70%)
+  onRetakeCourse?: () => void;
+  onClose?: () => void;
+  requiredScore?: number; // Minimum percentage to pass (70%)
 }
 
 const CourseQuiz: React.FC<CourseQuizProps> = ({
   courseId,
   courseName,
-  questions,
+  questions: providedQuestions,
   onQuizComplete,
   onRetakeCourse,
-  onCloseQuiz,
+  onClose,
   requiredScore = 70
 }) => {
+  // Get questions from courseId if not provided
+  const questions = providedQuestions || allCourseQuizzes[courseId as keyof typeof allCourseQuizzes] || [];
+  const courseTitle = courseName || courses[courseId as keyof typeof courses]?.title || 'Course';
+  
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [writtenAnswers, setWrittenAnswers] = useState<string[]>(new Array(questions.length).fill(''));
@@ -59,6 +65,44 @@ const CourseQuiz: React.FC<CourseQuizProps> = ({
   const [quizStarted, setQuizStarted] = useState(false);
   const [score, setScore] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
+
+  // Early return if no questions available
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <Card className="border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50">
+          <CardHeader className="text-center relative">
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
+                title="Close Quiz"
+              >
+                <X className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+              </button>
+            )}
+            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-yellow-600" />
+            </div>
+            <CardTitle className="text-2xl text-yellow-900">
+              Quiz Not Available
+            </CardTitle>
+            <p className="text-yellow-700 mt-2">
+              No quiz questions are available for this course yet.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              onClick={onClose || (() => {})}
+              className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+            >
+              Close
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Timer effect
   useEffect(() => {
@@ -184,9 +228,9 @@ const CourseQuiz: React.FC<CourseQuizProps> = ({
       <div className="max-w-2xl mx-auto p-6">
         <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
           <CardHeader className="text-center relative">
-            {onCloseQuiz && (
+            {onClose && (
               <button
-                onClick={onCloseQuiz}
+                onClick={onClose}
                 className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
                 title="Close Quiz"
               >
@@ -197,7 +241,7 @@ const CourseQuiz: React.FC<CourseQuizProps> = ({
               <Target className="w-8 h-8 text-blue-600" />
             </div>
             <CardTitle className="text-2xl text-blue-900">
-              {courseName} Quiz
+              {courseTitle} Quiz
             </CardTitle>
             <p className="text-blue-700 mt-2">
               Test your knowledge and earn XP to unlock the next course!
@@ -305,13 +349,15 @@ const CourseQuiz: React.FC<CourseQuizProps> = ({
             <div className="flex space-x-3">
               {!passed ? (
                 <>
-                  <Button 
-                    onClick={onRetakeCourse}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Retake Course
-                  </Button>
+                  {onRetakeCourse && (
+                    <Button 
+                      onClick={onRetakeCourse}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Retake Course
+                    </Button>
+                  )}
                   <Button 
                     onClick={handleRetakeQuiz}
                     variant="outline"
@@ -464,7 +510,11 @@ const CourseQuiz: React.FC<CourseQuizProps> = ({
         
         <Button
           onClick={handleNextQuestion}
-          disabled={selectedAnswers[currentQuestion] === undefined}
+          disabled={
+            currentQ.type === 'multiple-choice' 
+              ? selectedAnswers[currentQuestion] === undefined
+              : !writtenAnswers[currentQuestion] || writtenAnswers[currentQuestion].length < 20
+          }
           className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           {currentQuestion === questions.length - 1 ? 'Submit Quiz' : 'Next Question'}
