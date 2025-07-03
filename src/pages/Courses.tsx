@@ -8,22 +8,20 @@ import { BookOpen, Clock, Users, Star, ArrowRight, Filter, Search, Coins, Target
 import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
+import { useQuizProgress } from "@/hooks/useQuizProgress";
 import { courses } from "@/data/courses";
 
 const Courses = () => {
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("all");
-  // Try database first, fallback to localStorage
-  const dbHook = useCourseProgressionDB();
-  const localHook = useCourseProgression();
-
-  // Use database hook if loading is complete and no error, otherwise use localStorage hook
-  const useDB = !dbHook.isLoading && dbHook.userProgress;
-  const { userProgress, isCourseUnlocked, isCourseCompleted, getCourseProgress, courseProgression, getNextRecommendedCourse } = useDB ? dbHook : localHook;
-  const isLoading = useDB ? dbHook.isLoading : false;
+  const { t } = useLanguage();
+  const { hasPassedQuiz, canAccessCourse } = useQuizProgress();
+  // Use ONLY Supabase database - no localStorage
+  const { userProgress, isCourseUnlocked, isCourseCompleted, getCourseProgress, courseProgression, getNextRecommendedCourse, isLoading } = useCourseProgressionDB();
 
   // Set search term from URL parameter on component mount
   useEffect(() => {
@@ -32,6 +30,15 @@ const Courses = () => {
       setSearchTerm(searchFromUrl);
     }
   }, [searchParams]);
+
+  // Check for error messages
+  const errorType = searchParams.get('error');
+  const showQuizRequiredError = errorType === 'quiz_required';
+
+  // Force refresh progress data when component mounts
+  useEffect(() => {
+    console.log('Courses page mounted, using Supabase only...');
+  }, []);
 
   const levels = ["all", "Foundation", "Beginner", "Intermediate", "Advanced", "Expert"];
 
@@ -98,6 +105,11 @@ const Courses = () => {
     const progress = getCourseProgress(courseId);
     if (!progress) return 0;
 
+    // Debug for foundation course
+    if (courseId === 'foundation') {
+      console.log('Foundation progress from Supabase:', progress);
+    }
+
     // Handle different data structures between DB and localStorage hooks
     if (typeof progress.progress_percentage === 'number') {
       // Database hook returns progress_percentage
@@ -105,6 +117,13 @@ const Courses = () => {
     } else if (typeof progress.progressPercentage === 'number') {
       // localStorage hook returns progressPercentage
       return progress.progressPercentage;
+    }
+
+    // Fallback: Calculate directly from completed chapters
+    if (progress.completed_chapters && Array.isArray(progress.completed_chapters)) {
+      // Database format uses completed_chapters (array)
+      const totalChapters = 8; // Foundation course has 8 chapters
+      return (progress.completed_chapters.length / totalChapters) * 100;
     }
 
     return 0;
@@ -120,7 +139,7 @@ const Courses = () => {
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-slate-600">Loading your course progress...</p>
+            <p className="text-slate-600">{t('common.loading')}</p>
           </div>
         </div>
       </div>
@@ -131,19 +150,34 @@ const Courses = () => {
     <div className="min-h-screen bg-slate-50">
       <Header />
 
+      {/* Error Message */}
+      {showQuizRequiredError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 mx-4 mt-4 rounded-lg">
+          <div className="flex items-center">
+            <Lock className="h-5 w-5 mr-2" />
+            <span className="font-medium">Course Access Denied</span>
+          </div>
+          <p className="mt-1 text-sm">
+            You must complete and pass the quiz for the previous course before accessing this one.
+            Each course requires a 70% score on the quiz to unlock the next course.
+          </p>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-emerald-600 to-emerald-700 text-white py-16 px-4 md:px-6">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center space-y-6">
-            <h1 className="text-4xl md:text-5xl font-bold">All Courses</h1>
+            <h1 className="text-4xl md:text-5xl font-bold">{t('courses.title')}</h1>
             <p className="text-xl text-emerald-100 max-w-2xl mx-auto">
-              Master Web3, crypto, and blockchain through comprehensive, structured courses designed for all skill levels.
+              {t('courses.subtitle')}
             </p>
+
             <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <Input
-                  placeholder="Search courses, descriptions, or levels..."
+                  placeholder={t('common.search') + '...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-10 bg-white border border-white/20 text-slate-900 placeholder:text-slate-500 focus:bg-white focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300 transition-all"
@@ -184,7 +218,7 @@ const Courses = () => {
                 </div>
                 <Link to={`/course/${nextRecommendedCourse}`}>
                   <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                    Start Course
+                    {t('courses.start_course')}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -229,12 +263,35 @@ const Courses = () => {
               const isCompleted = isCourseCompleted(course.id);
               const progressPercentage = getCourseProgressPercentage(course.id);
 
+
+
+              // Quiz-based access control
+              const prerequisites: { [key: string]: string[] } = {
+                'foundation': [],
+                'defi-fundamentals': ['foundation'],
+                'degen': ['foundation', 'defi-fundamentals'],
+                'advanced-trading': ['foundation', 'defi-fundamentals'],
+                'development': ['foundation', 'defi-fundamentals'],
+                'nft-creation': ['foundation'],
+                'content-creation': ['foundation'],
+                'web3-security': ['foundation', 'defi-fundamentals'],
+                'dao-governance': ['foundation', 'defi-fundamentals'],
+                'web3-gaming': ['foundation'],
+                'crypto-tax': ['foundation', 'defi-fundamentals'],
+                'web3-social': ['foundation']
+              };
+
+              const coursePrereqs = prerequisites[course.id] || [];
+              const hasQuizAccess = canAccessCourse(course.id, coursePrereqs);
+              const quizPassed = hasPassedQuiz(course.id);
+              const finalUnlocked = isUnlocked && hasQuizAccess;
+
               return (
-                <Card key={course.id} className={`group hover:shadow-xl transition-all duration-300 border-0 ${isUnlocked ? 'bg-white' : 'bg-gray-50 opacity-75'}`}>
+                <Card key={course.id} className={`group hover:shadow-xl transition-all duration-300 border-0 ${finalUnlocked ? 'bg-white' : 'bg-gray-50 opacity-75'}`}>
                   <CardHeader className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <div className={`p-3 rounded-lg ${course.color} ${!isUnlocked ? 'opacity-50' : ''}`}>
-                        {!isUnlocked ? (
+                      <div className={`p-3 rounded-lg ${course.color} ${!finalUnlocked ? 'opacity-50' : ''}`}>
+                        {!finalUnlocked ? (
                           <Lock className="h-6 w-6 text-white" />
                         ) : (
                           (() => {
@@ -263,22 +320,20 @@ const Courses = () => {
                       </div>
                     </div>
                     <div>
-                      <CardTitle className={`text-xl transition-colors ${isUnlocked ? 'group-hover:text-emerald-600' : 'text-gray-500'}`}>
+                      <CardTitle className={`text-xl transition-colors ${finalUnlocked ? 'group-hover:text-emerald-600' : 'text-gray-500'}`}>
                         {course.title}
-                        {!isUnlocked && <Lock className="inline-block ml-2 h-4 w-4" />}
+                        {!finalUnlocked && <Lock className="inline-block ml-2 h-4 w-4" />}
+                        {quizPassed && <span className="ml-2 text-green-600">✅</span>}
                       </CardTitle>
-                      <CardDescription className={`mt-2 ${isUnlocked ? 'text-slate-600' : 'text-gray-400'}`}>
-                        {isUnlocked ? course.description : (() => {
-                          const courseConfig = courseProgression[course.id as keyof typeof courseProgression];
-                          const prerequisites = courseConfig?.prerequisites || [];
-                          if (prerequisites.length > 0) {
-                            const prereqNames = prerequisites.map(prereqId => {
-                              const prereqConfig = courseProgression[prereqId as keyof typeof courseProgression];
-                              return prereqConfig?.title || prereqId;
-                            }).join(', ');
-                            return `Complete: ${prereqNames}`;
+                      <CardDescription className={`mt-2 ${finalUnlocked ? 'text-slate-600' : 'text-gray-400'}`}>
+                        {finalUnlocked ? course.description : (() => {
+                          if (coursePrereqs.length > 0) {
+                            const missingQuizzes = coursePrereqs.filter(prereq => !hasPassedQuiz(prereq));
+                            if (missingQuizzes.length > 0) {
+                              return `🎯 Pass quizzes for: ${missingQuizzes.join(', ')}`;
+                            }
                           }
-                          return 'Complete previous courses to unlock';
+                          return 'Complete previous courses and pass their quizzes to unlock';
                         })()}
                       </CardDescription>
                     </div>
@@ -312,17 +367,17 @@ const Courses = () => {
                       <Progress value={progressPercentage} className="h-2" />
                     </div>
 
-                    {isUnlocked ? (
+                    {finalUnlocked ? (
                       <Link to={`/course/${course.id}`} className="block">
                         <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white group-hover:bg-emerald-700">
-                          {isCompleted ? 'Review Course' : progressPercentage > 0 ? 'Continue Course' : 'Start Course'}
+                          {isCompleted ? t('courses.view_course') : progressPercentage > 0 ? t('courses.continue_course') : t('courses.start_course')}
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       </Link>
                     ) : (
                       <Button disabled className="w-full bg-gray-300 text-gray-500 cursor-not-allowed">
                         <Lock className="mr-2 h-4 w-4" />
-                        Course Locked
+                        {coursePrereqs.length > 0 ? t('courses.quiz_required') : t('courses.locked')}
                       </Button>
                     )}
                   </CardContent>

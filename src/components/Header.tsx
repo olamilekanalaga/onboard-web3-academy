@@ -1,15 +1,26 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, User, BookOpen, Menu, ChevronDown, Trophy, Zap, LogOut, Settings } from "lucide-react";
+import { Search, User, BookOpen, Menu, ChevronDown, Trophy, Zap, LogOut, Settings, Globe } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useProfile } from "@/hooks/useProfile";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import { useToast } from "@/components/ui/use-toast";
 import ThemeToggle from "./ThemeToggle";
 import SearchPopup from "./SearchPopup";
+import LanguageSelector from "./LanguageSelector";
+import NotificationCenter from "./NotificationCenter";
+import { supabase } from "@/integrations/supabase/client";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -18,6 +29,7 @@ const Header = () => {
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -161,18 +173,84 @@ const Header = () => {
                 >
                   <Search className="h-4 w-4" />
                 </Button>
-                <ThemeToggle />
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm">
-                    <span className="text-emerald-600 text-sm font-medium">
-                      {getUserInitials(profile, user)}
-                    </span>
-                  </div>
-                  <Button variant="ghost" onClick={handleSignOut} className="text-white hover:text-red-200 hover:bg-red-500">
-                    <LogOut className="h-4 w-4 mr-1" />
-                    Sign Out
-                  </Button>
-                </div>
+                {/* User Dropdown Menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center space-x-2 text-white hover:text-emerald-100 hover:bg-emerald-500 px-3 py-2">
+                      <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm">
+                        <span className="text-emerald-600 text-sm font-medium">
+                          {getUserInitials(profile, user)}
+                        </span>
+                      </div>
+                      <span className="hidden sm:inline text-sm">{getDisplayName(profile, user)}</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-3 py-2 border-b">
+                      <p className="text-sm font-medium">{getDisplayName(profile, user)}</p>
+                      <p className="text-xs text-gray-500">{user?.email}</p>
+                    </div>
+
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center space-x-2 cursor-pointer">
+                        <User className="w-4 h-4" />
+                        <span>{t('nav.profile')}</span>
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings" className="flex items-center space-x-2 cursor-pointer">
+                        <Settings className="w-4 h-4" />
+                        <span>{t('nav.settings')}</span>
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
+                    {/* Language Selector in Dropdown */}
+                    <div className="px-3 py-2">
+                      <p className="text-xs font-medium text-gray-500 mb-2">{t('profile.language')}</p>
+                      <LanguageSelector variant="dropdown" />
+                    </div>
+
+                    <DropdownMenuSeparator />
+
+                    {/* Theme Toggle in Dropdown */}
+                    <div className="px-3 py-2 flex items-center justify-between">
+                      <span className="text-sm">{t('profile.theme') || 'Theme'}</span>
+                      <ThemeToggle />
+                    </div>
+
+                    <DropdownMenuSeparator />
+
+                    {/* Force show country popup by clearing onboarding status */}
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        try {
+                          await supabase
+                            .from('user_onboarding_status')
+                            .delete()
+                            .eq('user_id', user?.id);
+                          window.location.reload();
+                        } catch (error) {
+                          console.error('Error resetting country selection:', error);
+                        }
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <Globe className="w-4 h-4 mr-2" />
+                      <span>Select Country</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      <span>{t('nav.logout')}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               /* Unauthenticated User Actions */
@@ -204,11 +282,21 @@ const Header = () => {
             )}
 
             {user && (
-              <Link to="/courses">
-                <Button className="bg-white text-emerald-600 hover:bg-emerald-50 px-6 py-2 font-semibold shadow-sm">
-                  My Courses
-                </Button>
-              </Link>
+              <>
+                {/* Notification Center */}
+                <NotificationCenter />
+
+                <Link to="/social">
+                  <Button variant="ghost" className="text-white hover:text-emerald-100 hover:bg-emerald-500 px-3 py-2 font-medium">
+                    {t('nav.community')}
+                  </Button>
+                </Link>
+                <Link to="/courses">
+                  <Button className="bg-white text-emerald-600 hover:bg-emerald-50 px-4 py-2 font-semibold shadow-sm">
+                    {t('nav.courses')}
+                  </Button>
+                </Link>
+              </>
             )}
 
             {/* Mobile Menu Button */}
@@ -226,6 +314,9 @@ const Header = () => {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-emerald-800 py-4 space-y-4 bg-emerald-600">
+            {/* Language Selector for Mobile */}
+            <LanguageSelector variant="mobile" />
+
             {user && (
               <nav className="flex flex-col space-y-3">
                 <Link
@@ -233,7 +324,14 @@ const Header = () => {
                   className="text-white hover:text-emerald-100 transition-colors px-2 py-1 font-medium"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  All Courses
+                  {t('nav.courses')}
+                </Link>
+                <Link
+                  to="/social"
+                  className="text-white hover:text-emerald-100 transition-colors px-2 py-1 font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('nav.community')}
                 </Link>
                 <Link
                   to="/gamification"

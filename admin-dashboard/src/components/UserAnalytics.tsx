@@ -11,7 +11,7 @@ import {
   MapPin,
   Activity
 } from "lucide-react";
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 const UserAnalytics = () => {
   const [countryStats, setCountryStats] = useState<any[]>([]);
