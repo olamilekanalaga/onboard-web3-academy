@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
+import { useQuizProgress } from "@/hooks/useQuizProgress";
 import { ArrowLeft, CheckCircle, Lock, PlayCircle, Clock, Target, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import TradingDemo from "@/components/TradingDemo";
 import CrossChainTradingDemo from "@/components/CrossChainTradingDemo";
 import BottomNavigation from "./BottomNavigation";
 import CourseCompletionModal from "@/components/CourseCompletionModal";
+import CourseQuiz from "@/components/CourseQuiz";
 import PWALayout from "./PWALayout";
 import PWAContentWrapper from "./PWAContentWrapper";
 import ReactMarkdown from 'react-markdown';
@@ -20,20 +22,26 @@ import remarkGfm from 'remark-gfm';
 const MobileCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { 
-    updateChapterProgress, 
-    getCourseProgress, 
-    userProgress, 
-    courseProgression, 
-    getNextRecommendedCourse, 
+  const {
+    updateChapterProgress,
+    getCourseProgress,
+    userProgress,
+    courseProgression,
+    getNextRecommendedCourse,
     isCourseCompleted,
-    isUpdating
+    isUpdating,
+    unlockCourse
   } = useCourseProgressionDB();
-  
+  const { recordQuizCompletion, hasPassedQuiz, canAccessCourse } = useQuizProgress();
+
   const [selectedModule, setSelectedModule] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [courseJustCompleted, setCourseJustCompleted] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [quizPassed, setQuizPassed] = useState(false);
+  const [quizScore, setQuizScore] = useState(0);
+  const [quizXP, setQuizXP] = useState(0);
 
   // Get completed chapters from progression system
   const courseProgress = getCourseProgress(courseId || '');
@@ -46,12 +54,23 @@ const MobileCourse = () => {
   useEffect(() => {
     setCourseJustCompleted(false);
     setShowCompletionModal(false);
+    setShowQuiz(false);
 
     if (courseId) {
       setSelectedModule(0);
       setSelectedChapter(0);
     }
   }, [courseId]);
+
+  // Watch for course completion to trigger quiz
+  useEffect(() => {
+    const progressPercentage = courseProgress?.progress_percentage || 0;
+    if (progressPercentage === 100 && !courseJustCompleted && !showQuiz) {
+      console.log('🎯 Mobile Course completion detected! Showing quiz...');
+      setCourseJustCompleted(true);
+      setShowQuiz(true);
+    }
+  }, [courseProgress?.progress_percentage, courseJustCompleted, showQuiz]);
 
   if (!course) {
     return (
@@ -92,27 +111,28 @@ const MobileCourse = () => {
 
   const markChapterComplete = async () => {
     if (!courseId || isUpdating) return;
-    
+
     const chapterId = getChapterId(selectedModule, selectedChapter);
-    
+
     if (!completedChapters.includes(chapterId)) {
       const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
-      
+
       try {
         console.log('Marking chapter complete:', { courseId, chapterId, totalChapters });
-        
+
         const result = await updateChapterProgress.mutateAsync({
           courseId,
           chapterId,
           totalChapters
         });
-        
+
         console.log('Chapter completion result:', result);
-        
-        // Check if course was completed
+
+        // Check if course was completed - trigger quiz instead of completion modal
         if (result?.completed && !courseJustCompleted) {
+          console.log('🎉 MOBILE COURSE COMPLETED! Showing quiz now...');
           setCourseJustCompleted(true);
-          setShowCompletionModal(true);
+          setShowQuiz(true);
         }
       } catch (error) {
         console.error('Error updating chapter progress:', error);
@@ -126,9 +146,30 @@ const MobileCourse = () => {
     setShowCompletionModal(false);
   };
 
-  const handleStartNextCourse = (nextCourseId: string) => {
+  const handleStartNextCourse = async (nextCourseId: string) => {
+    await unlockCourse(nextCourseId);
     setShowCompletionModal(false);
     navigate(`/mobile/course/${nextCourseId}`);
+  };
+
+  const handleQuizComplete = async (passed: boolean, score: number, xpEarned: number) => {
+    setQuizPassed(passed);
+    setQuizScore(score);
+    setQuizXP(xpEarned);
+
+    // Record quiz completion
+    if (courseId) {
+      await recordQuizCompletion(courseId, score, xpEarned);
+    }
+
+    if (passed) {
+      // Award XP and show completion modal
+      setShowQuiz(false);
+      setShowCompletionModal(true);
+      console.log('🎉 Mobile Quiz passed! Course completed successfully');
+    } else {
+      console.log('❌ Mobile Quiz failed. Must retake course or quiz.');
+    }
   };
 
   const totalChapters = course.modules.reduce((sum, module) => sum + module.chapters.length, 0);
@@ -455,13 +496,22 @@ const MobileCourse = () => {
 
       <BottomNavigation />
 
+      {/* Course Quiz */}
+      {showQuiz && courseId && (
+        <CourseQuiz
+          courseId={courseId}
+          onQuizComplete={handleQuizComplete}
+          onClose={() => setShowQuiz(false)}
+        />
+      )}
+
       {/* Course Completion Modal */}
       {courseId && courseConfig && (
         <CourseCompletionModal
           isOpen={showCompletionModal}
           onClose={handleCloseCompletionModal}
           completedCourseId={courseId}
-          xpEarned={courseConfig.xpReward}
+          xpEarned={quizXP || courseConfig.xpReward}
           onStartNextCourse={handleStartNextCourse}
         />
       )}

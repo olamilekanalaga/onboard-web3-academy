@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSocialVerification } from "@/contexts/SocialVerificationContext";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
+import { useQuizProgress } from "@/hooks/useQuizProgress";
 import { courses } from "@/data/courses";
 import { Search, Filter, TrendingUp, Clock, Star, Users, Target, Code, BarChart3, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ const MobileExplore = () => {
   const { isVerified, setVerified } = useSocialVerification();
   // Force database usage for mobile PWA - no localStorage fallback
   const { isCourseUnlocked, courseProgression, userProgress, isLoading } = useCourseProgressionDB();
+  const { hasPassedQuiz, canAccessCourse } = useQuizProgress();
 
   // Debug logging for mobile
   useEffect(() => {
@@ -201,7 +203,10 @@ const MobileExplore = () => {
 
         <div className="space-y-4">
           {filteredCourses.map((course, index) => {
-            const unlocked = isCourseUnlocked(course.id);
+            // Use proper quiz-based progression like desktop
+            const prerequisites = course.prerequisites || [];
+            const unlocked = canAccessCourse(course.id, prerequisites);
+            console.log(`Course ${course.id}: prerequisites=${JSON.stringify(prerequisites)}, unlocked=${unlocked}`);
             return (
               <Card key={course.id} className={`border-0 shadow-sm ${!unlocked ? 'opacity-60' : ''}`}>
                 <CardContent className="p-4">

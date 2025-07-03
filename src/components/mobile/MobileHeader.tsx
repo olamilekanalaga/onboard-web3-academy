@@ -112,9 +112,11 @@ const MobileHeader = ({
               }}
             />
           )}
-          <h1 className="text-lg font-bold text-slate-900">
-            {title || 'Academia'}
-          </h1>
+          {title && (
+            <h1 className="text-lg font-bold text-slate-900">
+              {title}
+            </h1>
+          )}
         </div>
         
         <div className="flex items-center space-x-2">
