@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SearchPopup from '../SearchPopup';
 import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
@@ -38,6 +39,7 @@ const MobileHeader = ({
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [userCountry, setUserCountry] = useState<{code: string, name: string, flag: string} | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
 
   // Fetch user's country
   useEffect(() => {
@@ -129,7 +131,12 @@ const MobileHeader = ({
           </div>
 
           {/* Search Button */}
-          <Button variant="ghost" size="sm" className="p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-2"
+            onClick={() => setShowSearch(true)}
+          >
             <Search className="h-5 w-5 text-slate-600" />
           </Button>
 
@@ -203,6 +210,12 @@ const MobileHeader = ({
           )}
         </div>
       </div>
+
+      {/* Search Popup */}
+      <SearchPopup
+        isOpen={showSearch}
+        onClose={() => setShowSearch(false)}
+      />
     </header>
   );
 };

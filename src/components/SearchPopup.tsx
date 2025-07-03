@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, Bot, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useCourseProgression } from '@/hooks/useCourseProgression';
+import AIOptimumSearch from './AIOptimumSearch';
 
 interface SearchPopupProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface SearchPopupProps {
 const SearchPopup: React.FC<SearchPopupProps> = ({ isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showAISearch, setShowAISearch] = useState(false);
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const { courseProgression } = useCourseProgression();
@@ -71,6 +73,14 @@ const SearchPopup: React.FC<SearchPopupProps> = ({ isOpen, onClose }) => {
     } else if (e.key === 'Enter' && searchQuery.trim()) {
       handleViewAllResults();
     }
+  };
+
+  const handleAISearch = () => {
+    setShowAISearch(true);
+  };
+
+  const handleCloseAISearch = () => {
+    setShowAISearch(false);
   };
 
   if (!isOpen) return null;
@@ -150,7 +160,26 @@ const SearchPopup: React.FC<SearchPopupProps> = ({ isOpen, onClose }) => {
               <div className="p-8 text-center text-slate-500">
                 <Search className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                 <p className="text-lg font-medium mb-1">No courses found</p>
-                <p className="text-sm">Try searching for different keywords</p>
+                <p className="text-sm mb-4">Try searching for different keywords</p>
+
+                {/* AI Search Option */}
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-200">
+                  <div className="flex items-center justify-center mb-2">
+                    <Bot className="h-5 w-5 text-purple-600 mr-2" />
+                    <span className="font-medium text-purple-900">Can't find what you're looking for?</span>
+                  </div>
+                  <p className="text-sm text-purple-700 mb-3">
+                    Try our AI Optimum Search for intelligent answers to any Web3 question
+                  </p>
+                  <Button
+                    onClick={handleAISearch}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    size="sm"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Use AI Search
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -158,12 +187,43 @@ const SearchPopup: React.FC<SearchPopupProps> = ({ isOpen, onClose }) => {
               <div className="p-8 text-center text-slate-500">
                 <Search className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                 <p className="text-lg font-medium mb-1">Search for courses</p>
-                <p className="text-sm">Find courses by title, topic, or difficulty level</p>
+                <p className="text-sm mb-6">Find courses by title, topic, or difficulty level</p>
+
+                {/* AI Search Promotion */}
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200 max-w-md mx-auto">
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="p-2 bg-purple-600 rounded-lg mr-3">
+                      <Bot className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-semibold text-purple-900">AI Optimum Search</h3>
+                      <p className="text-sm text-purple-700">Get smart answers to any question</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-purple-600 mb-4">
+                    Ask about DeFi, NFTs, trading, blockchain, or any Web3 topic not covered in our courses
+                  </p>
+                  <Button
+                    onClick={handleAISearch}
+                    className="bg-purple-600 hover:bg-purple-700 text-white w-full"
+                    size="sm"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Try AI Search
+                  </Button>
+                </div>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
+
+      {/* AI Optimum Search Modal */}
+      <AIOptimumSearch
+        isOpen={showAISearch}
+        onClose={handleCloseAISearch}
+        initialQuery={searchQuery}
+      />
     </div>
   );
 };

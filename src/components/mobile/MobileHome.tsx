@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSocialVerification } from "@/contexts/SocialVerificationContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
+import { useUserStats } from "@/hooks/useUserStats";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import MobileHeader from "./MobileHeader";
 import BottomNavigation from "./BottomNavigation";
@@ -22,30 +23,68 @@ const MobileHome = () => {
   const { data: profile } = useProfile();
   const { isVerified, setVerified } = useSocialVerification();
   const { isCourseUnlocked, userProgress } = useCourseProgression();
+  const { data: userStats } = useUserStats();
   const [showSocialVerification, setShowSocialVerification] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
 
   // Get real course data - only show the modern courses we want to feature
-  const featuredCourseIds = ["foundation", "defi", "degen"];
+  const featuredCourseIds = ["foundation", "defi-fundamentals", "degen"];
   const featuredCourses = Object.values(courses).filter(course => featuredCourseIds.includes(course.id));
+
+  // Get total course count (all 12 courses)
+  const totalCourses = Object.values(courses).length;
+
+  // Determine current learning path based on progress
+  const getCurrentLearningPath = () => {
+    const courseOrder = [
+      'foundation',
+      'defi-fundamentals',
+      'degen',
+      'advanced-trading',
+      'development',
+      'nft-creation',
+      'content-creation',
+      'web3-security',
+      'dao-governance',
+      'web3-gaming',
+      'crypto-tax',
+      'web3-social'
+    ];
+
+    // Find the first unlocked course that's not completed
+    for (const courseId of courseOrder) {
+      if (isCourseUnlocked(courseId)) {
+        const progress = userProgress?.[courseId];
+        if (!progress || progress.progressPercentage < 100) {
+          const course = courses[courseId];
+          return course?.title || courseId;
+        }
+      } else {
+        // Return the first locked course as next target
+        const course = courses[courseId];
+        return `Next: ${course?.title || courseId}`;
+      }
+    }
+    return "All Complete!";
+  };
 
   // Real user stats - no mock data
   const stats = [
     {
       label: "Courses Available",
-      value: featuredCourses.length,
+      value: totalCourses, // Show all 12 courses
       icon: BookOpen,
       color: "text-emerald-600"
     },
     {
       label: "Learning Path",
-      value: "Foundation",
+      value: getCurrentLearningPath(),
       icon: Target,
       color: "text-blue-600"
     },
     {
       label: "Total XP",
-      value: 0, // Real XP from completed courses
+      value: userStats?.total_xp || 0, // Real XP from user stats
       icon: Zap,
       color: "text-amber-600"
     }
@@ -54,10 +93,35 @@ const MobileHome = () => {
   const getIconForCourse = (courseId: string) => {
     switch (courseId) {
       case "foundation": return "🏗️";
-      case "defi": return "🏦";
+      case "defi-fundamentals": return "🏦";
       case "degen": return "⚡";
+      case "advanced-trading": return "📈";
+      case "development": return "💻";
+      case "nft-creation": return "🎨";
+      case "content-creation": return "📝";
+      case "web3-security": return "🔒";
+      case "dao-governance": return "🏛️";
+      case "web3-gaming": return "🎮";
+      case "crypto-tax": return "📊";
+      case "web3-social": return "🌐";
       default: return "📖";
     }
+  };
+
+  // Get learning path courses in order
+  const learningPathCourses = [
+    'foundation',
+    'defi-fundamentals',
+    'degen',
+    'advanced-trading',
+    'development',
+    'nft-creation'
+  ].map(id => courses[id]).filter(Boolean);
+
+  // Truncate course title to fit in frame
+  const truncateTitle = (title: string, maxLength: number = 20) => {
+    if (title.length <= maxLength) return title;
+    return title.substring(0, maxLength - 3) + '...';
   };
 
   const handleCourseNavigation = (courseId: string, courseName: string) => {
@@ -98,10 +162,18 @@ const MobileHome = () => {
             </h1>
             <p className="text-emerald-100">Start your Web3 learning journey</p>
           </div>
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-lg">
-              {getUserInitials(profile, user)}
-            </span>
+          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center overflow-hidden">
+            {profile?.profile_picture ? (
+              <img
+                src={profile.profile_picture}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-white font-bold text-lg">
+                {getUserInitials(profile, user)}
+              </span>
+            )}
           </div>
         </div>
 
@@ -158,9 +230,13 @@ const MobileHome = () => {
           </Button>
         </div>
 
-        <div className="space-y-4">
-          {featuredCourses.map((course) => {
+        <div className="space-y-3">
+          {learningPathCourses.map((course, index) => {
             const isUnlocked = isCourseUnlocked(course.id);
+            const progress = userProgress?.[course.id];
+            const progressPercentage = progress?.progressPercentage || 0;
+            const isCompleted = progressPercentage >= 100;
+
             return (
               <Card
                 key={course.id}
@@ -168,31 +244,51 @@ const MobileHome = () => {
                   }`}
                 onClick={() => isUnlocked && handleCourseNavigation(course.id, course.title)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl ${isUnlocked
-                      ? 'bg-gradient-to-br from-emerald-500 to-blue-600'
-                      : 'bg-gray-400'
+                <CardContent className="p-3">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${
+                      isCompleted
+                        ? 'bg-green-500'
+                        : isUnlocked
+                        ? 'bg-gradient-to-br from-emerald-500 to-blue-600'
+                        : 'bg-gray-400'
                       }`}>
-                      {isUnlocked ? getIconForCourse(course.id) : '🔒'}
+                      {isCompleted ? '✅' : isUnlocked ? getIconForCourse(course.id) : '🔒'}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold text-slate-900">{course.title}</h3>
-                        <Badge variant="secondary" className="text-xs">
-                          {course.level}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-slate-600 mb-2 line-clamp-2">{course.description}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-xs text-slate-500">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {course.duration}
+                        <h3 className="font-medium text-slate-900 text-sm truncate">
+                          {truncateTitle(course.title, 18)}
+                        </h3>
+                        <div className="flex items-center space-x-1">
+                          {isCompleted && (
+                            <Badge variant="default" className="text-xs bg-green-100 text-green-700">
+                              Complete
+                            </Badge>
+                          )}
+                          {isUnlocked && !isCompleted && (
+                            <Badge variant="secondary" className="text-xs">
+                              {course.level || 'Beginner'}
+                            </Badge>
+                          )}
                         </div>
-                        <span className="text-xs text-slate-500">
-                          {isUnlocked ? 'Available' : 'Locked'}
-                        </span>
                       </div>
+                      <p className="text-xs text-slate-600 mb-2 line-clamp-1">
+                        {course.description}
+                      </p>
+                      {isUnlocked && (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center text-xs text-slate-500">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span>{course.estimatedTime || '2-3 hours'}</span>
+                          </div>
+                          {progressPercentage > 0 && (
+                            <span className="text-xs text-emerald-600 font-medium">
+                              {Math.round(progressPercentage)}%
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
