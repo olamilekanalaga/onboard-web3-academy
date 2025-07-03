@@ -86,7 +86,11 @@ export const useCourseProgressionDB = () => {
 
     // Get actual total chapters from course data
     const course = courses[courseId];
-    const actualTotalChapters = course ? course.modules.reduce((sum: number, module: any) => sum + module.chapters.length, 0) : 0;
+    const actualTotalChapters = course && course.modules && Array.isArray(course.modules)
+      ? course.modules.reduce((sum: number, module: any) => {
+          return sum + (module.chapters && Array.isArray(module.chapters) ? module.chapters.length : 0);
+        }, 0)
+      : 0;
 
     return {
       courseId: progress.course_id,

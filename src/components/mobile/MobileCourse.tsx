@@ -51,7 +51,7 @@ const MobileCourse = () => {
   const completedChapters = courseProgress?.completed_chapters || [];
 
   const course = courseId ? courses[courseId] : undefined;
-  const courseConfig = courseId ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
+  const courseConfig = courseId && courseProgression ? courseProgression[courseId as keyof typeof courseProgression] : undefined;
 
   // Debug logging
   useEffect(() => {
@@ -59,11 +59,17 @@ const MobileCourse = () => {
       courseId,
       courseExists: !!course,
       courseConfigExists: !!courseConfig,
+      courseProgressionExists: !!courseProgression,
       availableCourses: Object.keys(courses),
-      availableProgression: Object.keys(courseProgression),
-      courseData: course ? { id: course.id, title: course.title } : null,
-      rawCourse: course,
-      rawCourseConfig: courseConfig
+      availableProgression: courseProgression ? Object.keys(courseProgression) : [],
+      courseData: course ? {
+        id: course.id,
+        title: course.title,
+        hasModules: !!course.modules,
+        moduleCount: course.modules?.length || 0
+      } : null,
+      courseProgressionType: typeof courseProgression,
+      courseProgressionKeys: courseProgression ? Object.keys(courseProgression) : 'undefined'
     });
   }, [courseId, course, courseConfig, courseProgression]);
 
