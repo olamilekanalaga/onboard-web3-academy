@@ -88,13 +88,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       description: 'Global user distribution'
     },
     {
-      id: 'courses',
-      label: 'Course Analytics',
-      icon: BookOpen,
-      badge: null,
-      description: 'Course completion and progress'
-    },
-    {
       id: 'notifications',
       label: 'Notifications',
       icon: Bell,

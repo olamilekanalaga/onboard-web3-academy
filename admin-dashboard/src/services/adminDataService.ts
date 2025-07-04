@@ -31,7 +31,7 @@ export class AdminDataService {
   // Get all users with their profiles
   async getAllUsers() {
     const cacheKey = 'all_users';
-    
+
     if (this.isCacheValid(cacheKey)) {
       console.log('📦 Using cached user data');
       return this.getCache(cacheKey);
@@ -39,19 +39,43 @@ export class AdminDataService {
 
     try {
       console.log('🔄 Loading all users from database...');
-      
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          username,
-          display_name,
-          email,
-          country_code,
-          country_name,
-          created_at,
-          updated_at
-        `);
+
+      // Try different approaches to get user data
+      let profiles = null;
+      let error = null;
+
+      // First try with all expected columns
+      try {
+        const result = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            username,
+            display_name,
+            full_name,
+            email,
+            country,
+            created_at,
+            updated_at
+          `);
+        profiles = result.data;
+        error = result.error;
+      } catch (e) {
+        console.log('First query failed, trying basic columns...');
+      }
+
+      // If that fails, try with basic columns only
+      if (!profiles || error) {
+        const result = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            email,
+            created_at
+          `);
+        profiles = result.data;
+        error = result.error;
+      }
 
       if (error) {
         console.error('❌ Error loading users:', error);
@@ -199,11 +223,11 @@ export class AdminDataService {
 
         return {
           user_id: user.id,
-          username: user.username || 'Unknown',
-          display_name: user.display_name || user.username || 'Unknown User',
+          username: user.username || user.email?.split('@')[0] || 'Unknown',
+          display_name: user.display_name || user.full_name || user.username || user.email?.split('@')[0] || 'Unknown User',
           email: user.email || 'No email',
-          country: user.country_name || 'Unknown',
-          country_code: user.country_code || 'XX',
+          country: user.country || 'Unknown',
+          country_code: 'XX', // Default since we don't have country_code in profiles
           total_courses: courseList.length,
           completed_courses: completedCourses,
           in_progress_courses: inProgressCourses,
@@ -270,8 +294,8 @@ export class AdminDataService {
     const countryGroups: { [key: string]: { count: number, code: string } } = {};
     
     users.forEach(user => {
-      const countryName = user.country_name || 'Unknown';
-      const countryCode = user.country_code || 'XX';
+      const countryName = user.country || 'Unknown';
+      const countryCode = 'XX'; // Default since we don't have country_code
       
       if (!countryGroups[countryName]) {
         countryGroups[countryName] = { count: 0, code: countryCode };

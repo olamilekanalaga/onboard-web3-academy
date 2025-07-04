@@ -20,7 +20,7 @@ import {
   Star,
   Zap
 } from "lucide-react";
-import { supabaseAdmin } from '@/lib/supabase';
+import { adminDataService } from '@/services/adminDataService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 
 interface CourseProgressData {
@@ -75,170 +75,27 @@ const EnhancedCourseAnalytics = () => {
 
   const loadAllData = async () => {
     setLoading(true);
+    console.log('🔄 Starting to load all course analytics data...');
+
     try {
-      await Promise.all([
-        loadCourseProgressData(),
-        loadCourseStats(),
-        loadCountryStats()
-      ]);
+      const analytics = await adminDataService.getComprehensiveUserAnalytics();
+
+      setCourseProgressData(analytics.users);
+      setCourseStats(analytics.courseStats);
+      setCountryStats(analytics.countryStats);
+
       setLastUpdated(new Date());
+      console.log('✅ All data loaded successfully from centralized service');
     } catch (error) {
-      console.error('Error loading course analytics:', error);
+      console.error('❌ Error loading course analytics:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadCourseProgressData = async () => {
-    try {
-      console.log('Loading course progress data...');
-      
-      // Get all users with their profiles
-      const { data: users, error: usersError } = await supabaseAdmin
-        .from('profiles')
-        .select(`
-          id,
-          username,
-          display_name,
-          email,
-          country,
-          created_at
-        `);
+  // Data loading is now handled by the centralized service
 
-      if (usersError) throw usersError;
-
-      // Get user progress for each user
-      const progressPromises = users?.map(async (user) => {
-        const { data: progress, error: progressError } = await supabaseAdmin
-          .from('user_progress')
-          .select('*')
-          .eq('user_id', user.id);
-
-        const { data: stats, error: statsError } = await supabaseAdmin
-          .from('user_stats')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (progressError) console.error('Progress error for user', user.id, progressError);
-        if (statsError) console.error('Stats error for user', user.id, statsError);
-
-        const courseProgress = progress || [];
-        const completedCourses = courseProgress.filter(p => p.progress_percentage >= 100).length;
-        const inProgressCourses = courseProgress.filter(p => p.progress_percentage > 0 && p.progress_percentage < 100).length;
-        const totalXP = stats?.total_xp || 0;
-        const completionRate = courseList.length > 0 ? (completedCourses / courseList.length) * 100 : 0;
-
-        // Determine user level based on completed courses
-        let level = 'Beginner';
-        if (completedCourses >= 8) level = 'Expert';
-        else if (completedCourses >= 5) level = 'Advanced';
-        else if (completedCourses >= 2) level = 'Intermediate';
-
-        return {
-          user_id: user.id,
-          username: user.username || 'Unknown',
-          display_name: user.display_name || user.username || 'Unknown User',
-          email: user.email || 'No email',
-          country: user.country || 'Unknown',
-          total_courses: courseList.length,
-          completed_courses: completedCourses,
-          in_progress_courses: inProgressCourses,
-          total_xp: totalXP,
-          completion_rate: Math.round(completionRate),
-          level,
-          last_activity: courseProgress.length > 0 
-            ? courseProgress.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0].updated_at
-            : user.created_at,
-          course_details: courseProgress
-        };
-      }) || [];
-
-      const progressData = await Promise.all(progressPromises);
-      setCourseProgressData(progressData);
-      console.log('Loaded course progress for', progressData.length, 'users');
-
-    } catch (error) {
-      console.error('Error loading course progress data:', error);
-    }
-  };
-
-  const loadCourseStats = async () => {
-    try {
-      console.log('Loading course statistics...');
-      
-      const courseStatsPromises = courseList.map(async (course) => {
-        const { data: progress, error } = await supabaseAdmin
-          .from('user_progress')
-          .select('*')
-          .eq('course_id', course.id);
-
-        if (error) {
-          console.error(`Error loading stats for ${course.id}:`, error);
-          return {
-            course_id: course.id,
-            course_name: course.name,
-            total_enrollments: 0,
-            completions: 0,
-            completion_rate: 0,
-            average_time: 0,
-            difficulty_rating: course.level === 'Beginner' ? 2 : course.level === 'Intermediate' ? 3 : 4
-          };
-        }
-
-        const enrollments = progress?.length || 0;
-        const completions = progress?.filter(p => p.progress_percentage >= 100).length || 0;
-        const completionRate = enrollments > 0 ? (completions / enrollments) * 100 : 0;
-
-        return {
-          course_id: course.id,
-          course_name: course.name,
-          total_enrollments: enrollments,
-          completions,
-          completion_rate: Math.round(completionRate),
-          average_time: Math.floor(Math.random() * 10) + 5, // Simulated for now
-          difficulty_rating: course.level === 'Beginner' ? 2 : course.level === 'Intermediate' ? 3 : 4
-        };
-      });
-
-      const stats = await Promise.all(courseStatsPromises);
-      setCourseStats(stats);
-      console.log('Loaded statistics for', stats.length, 'courses');
-
-    } catch (error) {
-      console.error('Error loading course stats:', error);
-    }
-  };
-
-  const loadCountryStats = async () => {
-    try {
-      console.log('Loading country statistics...');
-      
-      const { data: profiles, error } = await supabaseAdmin
-        .from('profiles')
-        .select('country');
-
-      if (error) throw error;
-
-      // Group by country
-      const countryGroups: { [key: string]: number } = {};
-      profiles?.forEach(profile => {
-        const country = profile.country || 'Unknown';
-        countryGroups[country] = (countryGroups[country] || 0) + 1;
-      });
-
-      const countryData = Object.entries(countryGroups)
-        .map(([country, count]) => ({ country, users: count }))
-        .sort((a, b) => b.users - a.users)
-        .slice(0, 10);
-
-      setCountryStats(countryData);
-      console.log('Loaded country stats for', countryData.length, 'countries');
-
-    } catch (error) {
-      console.error('Error loading country stats:', error);
-    }
-  };
+  // All data loading is now handled by the centralized adminDataService
 
   useEffect(() => {
     loadAllData();
@@ -251,10 +108,22 @@ const EnhancedCourseAnalytics = () => {
   // Calculate summary statistics
   const totalUsers = courseProgressData.length;
   const totalCompletions = courseProgressData.reduce((sum, user) => sum + user.completed_courses, 0);
-  const averageCompletionRate = totalUsers > 0 
+  const averageCompletionRate = totalUsers > 0
     ? Math.round(courseProgressData.reduce((sum, user) => sum + user.completion_rate, 0) / totalUsers)
     : 0;
   const totalXPAwarded = courseProgressData.reduce((sum, user) => sum + user.total_xp, 0);
+
+  // Debug logging
+  console.log('📊 Current analytics state:', {
+    totalUsers,
+    totalCompletions,
+    averageCompletionRate,
+    totalXPAwarded,
+    courseProgressDataLength: courseProgressData.length,
+    courseStatsLength: courseStats.length,
+    countryStatsLength: countryStats.length,
+    loading
+  });
 
   // Level distribution
   const levelDistribution = courseProgressData.reduce((acc, user) => {
@@ -277,6 +146,11 @@ const EnhancedCourseAnalytics = () => {
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Course Analytics</h2>
           <p className="text-gray-600">Comprehensive course progression and user analytics</p>
+          {/* Debug info */}
+          <div className="text-xs text-gray-500 mt-1">
+            Debug: {totalUsers} users loaded, {courseStats.length} courses, {countryStats.length} countries
+            {loading && " (Loading...)"}
+          </div>
         </div>
         <div className="flex items-center space-x-3">
           {lastUpdated && (
