@@ -34,6 +34,38 @@ const MobileHome = () => {
   // Get total course count (all 12 courses)
   const totalCourses = Object.values(courses).length;
 
+  // Smart course title formatting for mobile
+  const formatCourseTitle = (title: string) => {
+    // Handle specific long titles with better abbreviations
+    const titleMap: { [key: string]: string } = {
+      'Blockchain Development Mastery': 'Blockchain Dev',
+      'DeFi Fundamentals & Yield Farming': 'DeFi Fundamentals',
+      'Advanced Trading Strategies': 'Advanced Trading',
+      'Web3 Security & Best Practices': 'Web3 Security',
+      'DAO Governance & Participation': 'DAO Governance',
+      'Web3 Gaming & Metaverse': 'Web3 Gaming',
+      'Cryptocurrency Tax Planning': 'Crypto Tax',
+      'Web3 Social Media & Community Building': 'Web3 Social'
+    };
+
+    // Return mapped title if exists, otherwise truncate intelligently
+    if (titleMap[title]) return titleMap[title];
+
+    // For other titles, truncate at word boundaries
+    if (title.length <= 16) return title;
+
+    const words = title.split(' ');
+    let result = words[0];
+    for (let i = 1; i < words.length; i++) {
+      if ((result + ' ' + words[i]).length <= 16) {
+        result += ' ' + words[i];
+      } else {
+        break;
+      }
+    }
+    return result.length < title.length ? result + '...' : result;
+  };
+
   // Determine current learning path based on progress
   const getCurrentLearningPath = () => {
     if (!userProgress) return 'Foundation';
@@ -124,38 +156,6 @@ const MobileHome = () => {
     'development',
     'nft-creation'
   ].map(id => courses[id]).filter(Boolean);
-
-  // Smart course title formatting for mobile
-  const formatCourseTitle = (title: string) => {
-    // Handle specific long titles with better abbreviations
-    const titleMap: { [key: string]: string } = {
-      'Blockchain Development Mastery': 'Blockchain Dev',
-      'DeFi Fundamentals & Yield Farming': 'DeFi Fundamentals',
-      'Advanced Trading Strategies': 'Advanced Trading',
-      'Web3 Security & Best Practices': 'Web3 Security',
-      'DAO Governance & Participation': 'DAO Governance',
-      'Web3 Gaming & Metaverse': 'Web3 Gaming',
-      'Cryptocurrency Tax Planning': 'Crypto Tax',
-      'Web3 Social Media & Community Building': 'Web3 Social'
-    };
-
-    // Return mapped title if exists, otherwise truncate intelligently
-    if (titleMap[title]) return titleMap[title];
-
-    // For other titles, truncate at word boundaries
-    if (title.length <= 16) return title;
-
-    const words = title.split(' ');
-    let result = words[0];
-    for (let i = 1; i < words.length; i++) {
-      if ((result + ' ' + words[i]).length <= 16) {
-        result += ' ' + words[i];
-      } else {
-        break;
-      }
-    }
-    return result.length < title.length ? result + '...' : result;
-  };
 
   const handleCourseNavigation = (courseId: string, courseName: string) => {
     if (isVerified) {
@@ -351,25 +351,6 @@ const MobileHome = () => {
           })}
         </div>
       </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center text-xs text-slate-500">
-                            <Clock className="h-3 w-3 mr-1" />
-                            <span>{course.estimatedTime || '2-3 hours'}</span>
-                          </div>
-                          {progressPercentage > 0 && (
-                            <span className="text-xs text-emerald-600 font-medium">
-                              {Math.round(progressPercentage)}%
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
 
         {/* Call to Action */}
         <div className="mt-6">
@@ -387,7 +368,6 @@ const MobileHome = () => {
               </Button>
             </CardContent>
           </Card>
-        </div>
         </div>
       </PWAContentWrapper>
 
