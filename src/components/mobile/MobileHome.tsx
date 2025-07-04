@@ -6,8 +6,7 @@ import { BookOpen, Play, ChevronRight, Target, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
-import { useCourseProgression } from "@/hooks/useCourseProgression";
-import { useUserStats } from "@/hooks/useUserStats";
+import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import MobileHeader from "./MobileHeader";
 import BottomNavigation from "./BottomNavigation";
@@ -19,8 +18,12 @@ const MobileHome = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: profile } = useProfile();
-  const { userProgress } = useCourseProgression();
-  const { userStats } = useUserStats();
+  const { userProgress } = useCourseProgressionDB();
+
+  // Debug to see what data we're getting
+  console.log('Homepage - Profile:', profile);
+  console.log('Homepage - User:', user);
+  console.log('Homepage - UserProgress:', userProgress);
 
   // Get total course count (all 12 courses)
   const totalCourses = Object.values(courses).length;
@@ -76,12 +79,9 @@ const MobileHome = () => {
       'web3-social'
     ];
 
-    // Since all courses are unlocked, find the first incomplete course
+    // Find the first course that's not completed
     for (const courseId of courseOrder) {
-      const progress = userProgress[courseId];
-      const progressPercentage = progress?.progressPercentage || 0;
-
-      if (progressPercentage < 100) {
+      if (!userProgress.completedCourses.includes(courseId)) {
         const course = courses[courseId];
         return course ? formatCourseTitle(course.title) : 'Foundation';
       }
@@ -98,13 +98,9 @@ const MobileHome = () => {
     return xp.toString();
   };
 
-  // Get XP with better fallback
+  // Get XP from the same source as profile page
   const getUserXP = () => {
-    if (userStats?.total_xp !== undefined) {
-      return userStats.total_xp;
-    }
-    // If no user stats, show a default value
-    return 100; // Default starting XP for new users
+    return userProgress?.totalXP || 0;
   };
 
   // Real user stats - no mock data
@@ -260,9 +256,7 @@ const MobileHome = () => {
 
         <div className="space-y-4">
           {learningPathCourses.map((course) => {
-            const progress = userProgress?.[course.id];
-            const progressPercentage = progress?.progressPercentage || 0;
-            const isCompleted = progressPercentage >= 100;
+            const isCompleted = userProgress?.completedCourses.includes(course.id) || false;
 
             return (
               <Card
