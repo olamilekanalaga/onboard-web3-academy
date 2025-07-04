@@ -226,13 +226,22 @@ const Social: React.FC = () => {
       if (!existingReaction) {
         const progressItem = progressItems.find(item => item.id === progressId);
         if (progressItem && progressItem.user_id !== user.id) {
+          // Get user profile for display name
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, display_name')
+            .eq('id', user.id)
+            .single();
+
+          const senderName = profile?.display_name || profile?.username || 'Someone';
+
           await supabase
             .from('notifications')
             .insert({
               user_id: progressItem.user_id,
               type: 'reaction',
               title: 'New Reaction',
-              message: `${user.email} reacted to your progress: "${progressItem.title}"`,
+              message: `${senderName} reacted to your progress: "${progressItem.title}"`,
               data: {
                 progress_id: progressId,
                 reaction_type: reactionType,
@@ -281,14 +290,22 @@ const Social: React.FC = () => {
 
         setFollowing(prev => new Set(prev).add(studentUserId));
 
-        // Create notification
+        // Create notification with username instead of email
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username, display_name')
+          .eq('id', user.id)
+          .single();
+
+        const displayName = profile?.display_name || profile?.username || 'Someone';
+
         await supabase
           .from('notifications')
           .insert({
             user_id: studentUserId,
             type: 'follow',
             title: 'New Follower',
-            message: `${user.email} started following you!`,
+            message: `${displayName} started following you!`,
             data: { follower_id: user.id }
           });
       }

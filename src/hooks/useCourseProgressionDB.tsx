@@ -379,6 +379,16 @@ export const useCourseProgressionDB = () => {
       estimatedTime: '3 hours',
       difficulty: 2
     },
+    'development': {
+      id: 'development',
+      title: 'Blockchain Development Mastery',
+      totalXP: 2500,
+      prerequisites: ['advanced-trading'],
+      level: 'Advanced',
+      xpReward: 2500,
+      estimatedTime: '8-12 weeks',
+      difficulty: 5
+    },
   };
 
   // Helper functions

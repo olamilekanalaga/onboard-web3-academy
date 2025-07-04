@@ -147,14 +147,22 @@ const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBack }) =>
         setIsFollowing(true);
         setFollowerCount(prev => prev + 1);
 
-        // Create notification
+        // Create notification with username instead of email
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username, display_name')
+          .eq('id', user.id)
+          .single();
+
+        const displayName = profile?.display_name || profile?.username || 'Someone';
+
         await supabase
           .from('notifications')
           .insert({
             user_id: studentId,
             type: 'follow',
             title: 'New Follower',
-            message: `${user.email} started following you!`,
+            message: `${displayName} started following you!`,
             data: { follower_id: user.id }
           });
       }

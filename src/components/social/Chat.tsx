@@ -172,7 +172,8 @@ const Chat: React.FC = () => {
         .insert({
           sender_id: user.id,
           recipient_id: selectedRoom.id, // In DM context, room ID is the other user's ID
-          content: newMessage.trim(),
+          message: newMessage.trim(), // Required NOT NULL column
+          content: newMessage.trim(), // Additional content column
           message_type: 'text'
         });
 

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, User, MessageCircle } from 'lucide-react';
+import { X, Send, User, MessageCircle, MoreVertical, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
@@ -42,6 +44,9 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeleteConversationDialog, setShowDeleteConversationDialog] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -62,11 +67,14 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
             filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${user.id}))`
           },
           (payload) => {
-            console.log('New message received:', payload);
-            loadMessages(); // Reload messages when new one arrives
+            console.log('New message received via real-time:', payload);
+            // Reload messages when new one arrives
+            loadMessages();
           }
         )
         .subscribe();
+
+      console.log('Real-time subscription set up for:', `dm_${user.id}_${recipientId}`);
 
       return () => {
         subscription.unsubscribe();
@@ -145,7 +153,8 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
         .insert({
           sender_id: user.id,
           recipient_id: recipientId,
-          content: newMessage.trim(),
+          message: newMessage.trim(), // Required NOT NULL column
+          content: newMessage.trim(), // Additional content column
           message_type: 'text'
         })
         .select()
@@ -153,32 +162,16 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
 
       if (error) {
         console.error('Error sending message:', error);
-        
-        // If table doesn't exist, simulate message locally
-        const simulatedMessage: Message = {
-          id: `temp_${Date.now()}`,
-          content: newMessage.trim(),
-          sender_id: user.id,
-          recipient_id: recipientId,
-          created_at: new Date().toISOString(),
-          sender_profile: {
-            username: user.user_metadata?.username || 'You',
-            display_name: user.user_metadata?.display_name || 'You',
-            profile_picture: user.user_metadata?.avatar_url || ''
-          }
-        };
-
-        setMessages(prev => [...prev, simulatedMessage]);
-        setNewMessage('');
-        
-        // Show success message
-        console.log('✅ Message sent (simulated)');
+        setSending(false);
         return;
       }
 
       console.log('✅ Message sent successfully');
       setNewMessage('');
-      
+
+      // Reload messages to show the new message immediately
+      await loadMessages();
+
       // Create notification for recipient
       const { data: profile } = await supabase
         .from('profiles')
@@ -195,7 +188,7 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
           type: 'message',
           title: 'New Message',
           message: `${senderName} sent you a message`,
-          data: { 
+          data: {
             sender_id: user.id,
             message_preview: newMessage.trim().substring(0, 50)
           }
@@ -209,6 +202,68 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
     } finally {
       setSending(false);
     }
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('direct_messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('sender_id', user?.id); // Only allow deleting own messages
+
+      if (error) {
+        console.error('Error deleting message:', error);
+        return;
+      }
+
+      console.log('✅ Message deleted successfully');
+      // Reload messages to reflect the deletion
+      await loadMessages();
+    } catch (error) {
+      console.error('Error deleting message:', error);
+    }
+  };
+
+  const deleteConversation = async () => {
+    if (!user || !recipientId) return;
+
+    try {
+      // Delete all messages between current user and recipient
+      const { error } = await supabase
+        .from('direct_messages')
+        .delete()
+        .or(`and(sender_id.eq.${user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${user.id})`);
+
+      if (error) {
+        console.error('Error deleting conversation:', error);
+        return;
+      }
+
+      console.log('✅ Conversation deleted successfully');
+      setMessages([]);
+      onClose(); // Close the modal after deleting conversation
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+    }
+  };
+
+  const handleDeleteMessage = (messageId: string) => {
+    setMessageToDelete(messageId);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (messageToDelete) {
+      await deleteMessage(messageToDelete);
+      setMessageToDelete(null);
+    }
+    setShowDeleteDialog(false);
+  };
+
+  const confirmDeleteConversation = async () => {
+    await deleteConversation();
+    setShowDeleteConversationDialog(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -237,9 +292,31 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
                 <p className="text-sm text-gray-500">Direct Message</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose} className="hover:bg-gray-100">
-              <X className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center space-x-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 hover:bg-gray-100"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteConversationDialog(true)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Conversation
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button variant="ghost" size="sm" onClick={onClose} className="hover:bg-gray-100">
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -275,17 +352,29 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
                             </AvatarFallback>
                           </Avatar>
                         )}
-                        <div className={`rounded-2xl px-4 py-2 shadow-sm ${
-                          isOwnMessage
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-900 border border-gray-200'
-                        }`}>
-                          <p className="text-sm leading-relaxed">{message.content}</p>
-                          <p className={`text-xs mt-1 ${
-                            isOwnMessage ? 'text-blue-100' : 'text-gray-500'
+                        <div className="relative group">
+                          <div className={`rounded-2xl px-4 py-2 shadow-sm ${
+                            isOwnMessage
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white text-gray-900 border border-gray-200'
                           }`}>
-                            {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-                          </p>
+                            <p className="text-sm leading-relaxed">{message.content}</p>
+                            <p className={`text-xs mt-1 ${
+                              isOwnMessage ? 'text-blue-100' : 'text-gray-500'
+                            }`}>
+                              {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                            </p>
+                          </div>
+                          {isOwnMessage && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteMessage(message.id)}
+                              className={`absolute -top-2 ${isOwnMessage ? '-left-8' : '-right-8'} opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full`}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -325,6 +414,52 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Message Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Message</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this message? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteMessage}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Conversation Dialog */}
+      <AlertDialog open={showDeleteConversationDialog} onOpenChange={setShowDeleteConversationDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center space-x-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <span>Delete Entire Conversation</span>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this entire conversation with {recipientName}?
+              This will permanently delete all messages between you and this user. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteConversation}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete Conversation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
