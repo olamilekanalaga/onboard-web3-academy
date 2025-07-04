@@ -32,7 +32,7 @@ interface Notification {
   title: string;
   message: string;
   data: any;
-  read_at: string | null;
+  read: boolean | null;
   created_at: string;
 }
 
@@ -83,7 +83,7 @@ const NotificationCenter: React.FC = () => {
         .limit(20);
 
       setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.read_at).length || 0);
+      setUnreadCount(data?.filter(n => !n.read).length || 0);
     } catch (error) {
       console.error('Error loading notifications:', error);
     } finally {
@@ -97,7 +97,7 @@ const NotificationCenter: React.FC = () => {
 
       const { error } = await supabase
         .from('notifications')
-        .update({ read_at: new Date().toISOString() })
+        .update({ read: true })
         .eq('id', notificationId);
 
       if (error) {
@@ -109,7 +109,7 @@ const NotificationCenter: React.FC = () => {
       setNotifications(prev =>
         prev.map(n =>
           n.id === notificationId
-            ? { ...n, read_at: new Date().toISOString() }
+            ? { ...n, read: true }
             : n
         )
       );
@@ -135,12 +135,12 @@ const NotificationCenter: React.FC = () => {
     try {
       await supabase
         .from('notifications')
-        .update({ read_at: new Date().toISOString() })
+        .update({ read: true })
         .eq('user_id', user?.id)
-        .is('read_at', null);
+        .eq('read', false);
 
-      setNotifications(prev => 
-        prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, read: true }))
       );
       setUnreadCount(0);
     } catch (error) {
@@ -250,10 +250,10 @@ const NotificationCenter: React.FC = () => {
                 <div
                   key={notification.id}
                   className={`p-3 hover:bg-gray-50 transition-colors cursor-pointer ${
-                    !notification.read_at ? 'bg-blue-50' : ''
+                    !notification.read ? 'bg-blue-50' : ''
                   }`}
                   onClick={() => {
-                    if (!notification.read_at) {
+                    if (!notification.read) {
                       markAsRead(notification.id);
                     }
                   }}
@@ -278,11 +278,14 @@ const NotificationCenter: React.FC = () => {
                         </div>
                         
                         <div className="flex items-center space-x-1 ml-2">
-                          {!notification.read_at && (
+                          {!notification.read && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => markAsRead(notification.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notification.id);
+                              }}
                               className="h-6 w-6 p-0"
                             >
                               <Check className="w-3 h-3" />
@@ -291,15 +294,18 @@ const NotificationCenter: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteNotification(notification.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notification.id);
+                            }}
                             className="h-6 w-6 p-0 text-gray-400 hover:text-red-600"
                           >
                             <X className="w-3 h-3" />
                           </Button>
                         </div>
                       </div>
-                      
-                      {!notification.read_at && (
+
+                      {!notification.read && (
                         <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
                       )}
                     </div>

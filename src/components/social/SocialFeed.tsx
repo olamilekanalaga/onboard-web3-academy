@@ -181,41 +181,80 @@ const SocialFeed: React.FC = () => {
     try {
       console.log('🎯 Handling reaction:', { feedId, reactionType, userId: user.id });
 
-      // Update local state immediately for better UX
+      // Check if user already reacted with this type
+      const { data: existingReaction } = await supabase
+        .from('social_reactions')
+        .select('id')
+        .eq('progress_id', feedId)
+        .eq('user_id', user.id)
+        .eq('reaction_type', reactionType)
+        .maybeSingle();
+
       let actionTaken = '';
-      setFeedItems(prev => prev.map(item => {
-        if (item.id === feedId) {
-          const userReactions = item.user_reactions || [];
-          const existingReaction = userReactions.find(r => r.user_id === user.id && r.reaction_type === reactionType);
 
-          if (existingReaction) {
-            // Remove reaction
-            actionTaken = 'removed';
-            const newReactions = userReactions.filter(r => !(r.user_id === user.id && r.reaction_type === reactionType));
-            return {
-              ...item,
-              user_reactions: newReactions,
-              reactions_count: Math.max(0, (item.reactions_count || 0) - 1)
-            };
-          } else {
-            // Add reaction
-            actionTaken = 'added';
-            const newReaction = {
-              reaction_type: reactionType,
-              user_id: user.id,
-              created_at: new Date().toISOString()
-            };
-            return {
-              ...item,
-              user_reactions: [...userReactions, newReaction],
-              reactions_count: (item.reactions_count || 0) + 1
-            };
-          }
+      if (existingReaction) {
+        // Remove reaction
+        await supabase
+          .from('social_reactions')
+          .delete()
+          .eq('progress_id', feedId)
+          .eq('user_id', user.id)
+          .eq('reaction_type', reactionType);
+
+        actionTaken = 'removed';
+      } else {
+        // Add reaction
+        await supabase
+          .from('social_reactions')
+          .insert({
+            progress_id: feedId,
+            user_id: user.id,
+            reaction_type: reactionType
+          });
+
+        actionTaken = 'added';
+
+        // Create notification for reaction (only when adding, not removing)
+        const feedItem = feedItems.find(item => item.id === feedId);
+        if (feedItem && feedItem.user_id !== user.id) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, display_name')
+            .eq('id', user.id)
+            .single();
+
+          const senderName = profile?.display_name || profile?.username || 'Someone';
+
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: feedItem.user_id,
+              type: 'reaction',
+              title: 'New Reaction',
+              message: `${senderName} reacted to your progress: "${feedItem.title}"`,
+              data: {
+                progress_id: feedId,
+                reaction_type: reactionType,
+                reactor_id: user.id
+              }
+            });
         }
-        return item;
-      }));
+      }
 
-      // Show success feedback
+      // Update reactions count in the database
+      const { data: reactionCount } = await supabase
+        .from('social_reactions')
+        .select('id')
+        .eq('progress_id', feedId);
+
+      await supabase
+        .from('social_progress')
+        .update({ reactions_count: reactionCount?.length || 0 })
+        .eq('id', feedId);
+
+      // Reload feed data to show updated reactions
+      await loadFeed();
+
       console.log(`✅ Reaction ${reactionType} ${actionTaken} successfully!`);
 
     } catch (error) {

@@ -85,36 +85,8 @@ const Course = () => {
     courseId
   ]);
 
-  // Check course access permissions
-  useEffect(() => {
-    if (courseId && course) {
-      // Define course prerequisites
-      const prerequisites: { [key: string]: string[] } = {
-        'foundation': [],
-        'defi-fundamentals': ['foundation'],
-        'degen': ['foundation', 'defi-fundamentals'],
-        'advanced-trading': ['foundation', 'defi-fundamentals'],
-        'development': ['foundation', 'defi-fundamentals'],
-        'nft-creation': ['foundation'],
-        'content-creation': ['foundation'],
-        'web3-security': ['foundation', 'defi-fundamentals'],
-        'dao-governance': ['foundation', 'defi-fundamentals'],
-        'web3-gaming': ['foundation'],
-        'crypto-tax': ['foundation', 'defi-fundamentals'],
-        'web3-social': ['foundation']
-      };
-
-      const coursePrereqs = prerequisites[courseId] || [];
-      const hasAccess = canAccessCourse(courseId, coursePrereqs);
-
-      if (!hasAccess) {
-        console.log('❌ Access denied to course:', courseId);
-        console.log('Missing prerequisites:', coursePrereqs.filter(prereq => !hasPassedQuiz(prereq)));
-        // Redirect to courses page with error message
-        navigate('/courses?error=quiz_required');
-      }
-    }
-  }, [courseId, course, canAccessCourse, hasPassedQuiz, navigate]);
+  // DESKTOP: Remove course access restrictions - all courses unlocked
+  // Course access check removed for desktop version
 
   // Auto-start course on load
   useEffect(() => {
@@ -664,7 +636,8 @@ const Course = () => {
                               </h4>
                               <p className="text-purple-800 mb-4">
                                 This is the last chapter of the <strong>{course.title}</strong> course.
-                                After completing this chapter, you'll take a quiz to test your knowledge and unlock the next course.
+                                After completing this chapter, you'll take a quiz to test your knowledge.
+                                <strong className="text-purple-900"> It's important to complete the quiz to validate your learning!</strong>
                               </p>
                               <div className="bg-purple-100 rounded-lg p-4">
                                 <p className="text-purple-900 font-semibold mb-2">
@@ -672,9 +645,10 @@ const Course = () => {
                                 </p>
                                 <ul className="text-purple-800 space-y-1">
                                   <li>• Score 70% or higher to pass</li>
-                                  <li>• Unlock the next course upon passing</li>
+                                  <li>• If you fail, you can retake the quiz</li>
                                   <li>• Earn XP and course completion badge</li>
                                   <li>• Progress will be recorded in your profile</li>
+                                  <li>• All courses are unlocked on desktop - quiz validates your knowledge</li>
                                 </ul>
                               </div>
                             </div>
@@ -723,17 +697,7 @@ const Course = () => {
                   <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
                     <h4 className="font-semibold text-gray-900 mb-2">🧪 Debug Controls</h4>
                     <div className="flex flex-wrap gap-2">
-                      <Button
-                        onClick={() => {
-                          console.log('🎯 Manual quiz trigger');
-                          setShowQuiz(true);
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="bg-blue-50 hover:bg-blue-100"
-                      >
-                        🎯 Force Quiz
-                      </Button>
+
                       <Button
                         onClick={() => {
                           const progressPercentage = courseProgress?.progressPercentage || courseProgress?.progress_percentage || 0;

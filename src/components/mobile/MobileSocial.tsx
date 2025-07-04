@@ -31,6 +31,7 @@ import PWAContentWrapper from './PWAContentWrapper';
 import StudentProfile from '@/components/social/StudentProfile';
 import { formatDistanceToNow } from 'date-fns';
 import DirectMessageModal from '../social/DirectMessageModal';
+import ConversationList from '../social/ConversationList';
 
 interface ProgressItem {
   id: string;
@@ -74,6 +75,99 @@ const MobileSocial = () => {
   const [showStudentProfile, setShowStudentProfile] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatRecipient, setChatRecipient] = useState<{id: string, name: string, avatar?: string} | null>(null);
+
+  const handleReaction = async (progressId: string, reactionType: string) => {
+    if (!user) {
+      console.log('❌ No user logged in for reaction');
+      return;
+    }
+
+    console.log('🎯 MOBILE REACTION CLICKED:', { progressId, reactionType, userId: user.id });
+
+    try {
+      // Check if user already reacted
+      const { data: existingReaction } = await supabase
+        .from('social_reactions')
+        .select('id')
+        .eq('progress_id', progressId)
+        .eq('user_id', user.id)
+        .eq('reaction_type', reactionType)
+        .maybeSingle();
+
+      if (existingReaction) {
+        // Remove reaction
+        console.log('🗑️ Removing existing reaction');
+        await supabase
+          .from('social_reactions')
+          .delete()
+          .eq('progress_id', progressId)
+          .eq('user_id', user.id)
+          .eq('reaction_type', reactionType);
+      } else {
+        // Add reaction
+        console.log('➕ Adding new reaction');
+        const { data, error } = await supabase
+          .from('social_reactions')
+          .insert({
+            progress_id: progressId,
+            user_id: user.id,
+            reaction_type: reactionType
+          });
+
+        if (error) {
+          console.error('❌ Error inserting reaction:', error);
+          return;
+        }
+        console.log('✅ Reaction inserted:', data);
+      }
+
+      // Update reactions count
+      const { data: reactionCount } = await supabase
+        .from('social_reactions')
+        .select('id')
+        .eq('progress_id', progressId);
+
+      await supabase
+        .from('social_progress')
+        .update({ reactions_count: reactionCount?.length || 0 })
+        .eq('id', progressId);
+
+      // Create notification for reaction (only when adding, not removing)
+      if (!existingReaction) {
+        const progressItem = progressItems.find(item => item.id === progressId);
+        if (progressItem && progressItem.user_id !== user.id) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, display_name')
+            .eq('id', user.id)
+            .single();
+
+          const senderName = profile?.display_name || profile?.username || 'Someone';
+
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: progressItem.user_id,
+              type: 'reaction',
+              title: 'New Reaction',
+              message: `${senderName} reacted to your progress: "${progressItem.title}"`,
+              data: {
+                progress_id: progressId,
+                reaction_type: reactionType,
+                reactor_id: user.id
+              }
+            });
+        }
+      }
+
+      // Reload data to show updated reactions
+      console.log('🔄 Reloading mobile data to show updated reactions');
+      await loadData();
+      console.log('✅ Mobile reaction process completed successfully');
+    } catch (error) {
+      console.error('❌ Error handling mobile reaction:', error);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -399,17 +493,32 @@ const MobileSocial = () => {
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                          <Button variant="ghost" size="sm" className="p-1 h-auto">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-1 h-auto"
+                            onClick={() => handleReaction(item.id, 'heart')}
+                          >
                             <Heart className="w-4 h-4 text-red-500" />
-                            <span className="ml-1 text-xs">0</span>
+                            <span className="ml-1 text-xs">{item.user_reactions?.filter(r => r.reaction_type === 'heart').length || 0}</span>
                           </Button>
-                          <Button variant="ghost" size="sm" className="p-1 h-auto">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-1 h-auto"
+                            onClick={() => handleReaction(item.id, 'thumbs_up')}
+                          >
                             <ThumbsUp className="w-4 h-4 text-blue-500" />
-                            <span className="ml-1 text-xs">0</span>
+                            <span className="ml-1 text-xs">{item.user_reactions?.filter(r => r.reaction_type === 'thumbs_up').length || 0}</span>
                           </Button>
-                          <Button variant="ghost" size="sm" className="p-1 h-auto">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-1 h-auto"
+                            onClick={() => handleReaction(item.id, 'fire')}
+                          >
                             <Flame className="w-4 h-4 text-orange-500" />
-                            <span className="ml-1 text-xs">0</span>
+                            <span className="ml-1 text-xs">{item.user_reactions?.filter(r => r.reaction_type === 'fire').length || 0}</span>
                           </Button>
                         </div>
                         <Button variant="ghost" size="sm" className="p-1 h-auto">
@@ -577,19 +686,17 @@ const MobileSocial = () => {
 
           {/* Chat Tab */}
           <TabsContent value="chat" className="space-y-4">
-            <Card>
-              <CardContent className="p-8 text-center">
-                <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Direct Messages</h3>
-                <p className="text-gray-600 mb-4 text-sm">
-                  Start conversations with other students you follow
-                </p>
-                <Button onClick={() => setActiveTab('students')} size="sm">
-                  <Users className="w-4 h-4 mr-2" />
-                  Find Students to Chat With
-                </Button>
-              </CardContent>
-            </Card>
+            <ConversationList
+              onSelectConversation={(userId, userName, userAvatar) => {
+                setChatRecipient({
+                  id: userId,
+                  name: userName,
+                  avatar: userAvatar
+                });
+                setShowChatModal(true);
+              }}
+              selectedUserId={chatRecipient?.id}
+            />
           </TabsContent>
         </Tabs>
       </PWAContentWrapper>

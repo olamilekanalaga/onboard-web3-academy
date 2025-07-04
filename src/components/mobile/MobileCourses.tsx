@@ -34,7 +34,8 @@ const MobileCourses = () => {
   const filteredCourses = courseList.filter(course => {
     switch (filter) {
       case 'available':
-        return isCourseUnlocked(course.id) && !isCourseCompleted(course.id);
+        // MOBILE: All courses are available, show non-completed ones
+        return !isCourseCompleted(course.id);
       case 'completed':
         return isCourseCompleted(course.id);
       default:
@@ -75,16 +76,13 @@ const MobileCourses = () => {
     if (isCourseCompleted(courseId)) {
       return { text: "Completed", color: "bg-green-100 text-green-700", icon: CheckCircle };
     }
-    if (isCourseUnlocked(courseId)) {
-      return { text: "Available", color: "bg-blue-100 text-blue-700", icon: BookOpen };
-    }
-    return { text: "Locked", color: "bg-gray-100 text-gray-500", icon: Lock };
+    // MOBILE: All courses are available (unlocked)
+    return { text: "Available", color: "bg-blue-100 text-blue-700", icon: BookOpen };
   };
 
   const handleCourseClick = (courseId: string) => {
-    if (isCourseUnlocked(courseId)) {
-      navigate(`/mobile/course/${courseId}`);
-    }
+    // MOBILE: All courses are accessible
+    navigate(`/mobile/course/${courseId}`);
   };
 
   const handleRestartCourse = (courseId: string) => {

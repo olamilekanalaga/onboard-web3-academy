@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import Header from '@/components/Header';
 import StudentProfile from '@/components/social/StudentProfile';
+import DirectMessageModal from '@/components/social/DirectMessageModal';
+import ConversationList from '@/components/social/ConversationList';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,6 +66,12 @@ const Social: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatRecipient, setChatRecipient] = useState<{
+    id: string;
+    name: string;
+    avatar?: string;
+  } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -161,7 +169,12 @@ const Social: React.FC = () => {
   };
 
   const handleReaction = async (progressId: string, reactionType: string) => {
-    if (!user) return;
+    if (!user) {
+      console.log('❌ No user logged in for reaction');
+      return;
+    }
+
+    console.log('🎯 REACTION CLICKED:', { progressId, reactionType, userId: user.id });
 
     try {
       // Check if user already reacted
@@ -174,6 +187,7 @@ const Social: React.FC = () => {
 
       if (existingReaction) {
         // Remove reaction
+        console.log('🗑️ Removing existing reaction');
         await supabase
           .from('social_reactions')
           .delete()
@@ -181,13 +195,20 @@ const Social: React.FC = () => {
           .eq('user_id', user.id);
       } else {
         // Add reaction
-        await supabase
+        console.log('➕ Adding new reaction');
+        const { data, error } = await supabase
           .from('social_reactions')
           .insert({
             progress_id: progressId,
             user_id: user.id,
             reaction_type: reactionType
           });
+
+        if (error) {
+          console.error('❌ Error inserting reaction:', error);
+          return;
+        }
+        console.log('✅ Reaction inserted:', data);
       }
 
       // Update reactions count
@@ -222,9 +243,11 @@ const Social: React.FC = () => {
       }
 
       // Reload data to show updated reactions
-      loadData();
+      console.log('🔄 Reloading data to show updated reactions');
+      await loadData();
+      console.log('✅ Reaction process completed successfully');
     } catch (error) {
-      console.error('Error handling reaction:', error);
+      console.error('❌ Error handling reaction:', error);
     }
   };
 
@@ -453,7 +476,18 @@ const Social: React.FC = () => {
                             </span>
                           </div>
 
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setChatRecipient({
+                                id: item.user_id,
+                                name: item.user_name || `User ${item.user_id.slice(-4)}`,
+                                avatar: item.user_avatar
+                              });
+                              setShowChatModal(true);
+                            }}
+                          >
                             <MessageSquare className="w-4 h-4 mr-1" />
                             Message
                           </Button>
@@ -567,16 +601,38 @@ const Social: React.FC = () => {
                           </div>
                         </div>
 
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent card click
-                            handleFollow(student.user_id);
-                          }}
-                          variant={following.has(student.user_id) ? "outline" : "default"}
-                          size="sm"
-                        >
-                          {following.has(student.user_id) ? t('social.following') : t('social.follow')}
-                        </Button>
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent card click
+                              handleFollow(student.user_id);
+                            }}
+                            variant={following.has(student.user_id) ? "outline" : "default"}
+                            size="sm"
+                          >
+                            {following.has(student.user_id) ? t('social.following') : t('social.follow')}
+                          </Button>
+
+                          {student.user_id !== user?.id && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent card click
+                                setChatRecipient({
+                                  id: student.user_id,
+                                  name: student.user_name || `Student ${student.user_id.slice(-4)}`,
+                                  avatar: student.user_avatar
+                                });
+                                setShowChatModal(true);
+                              }}
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center space-x-1"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                              <span>Message</span>
+                            </Button>
+                          )}
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-3 gap-4 text-center border-t pt-4">
@@ -610,46 +666,34 @@ const Social: React.FC = () => {
 
           {/* Messages Tab */}
           <TabsContent value="messages" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <MessageSquare className="w-5 h-5" />
-                  <span>Direct Messages</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Direct Messages</h3>
-                  <p className="text-gray-600 mb-4">
-                    Start conversations with other students you follow. Click the message button on any student's profile or progress post to begin chatting.
-                  </p>
-                  <div className="space-y-3">
-                    <Button onClick={() => setActiveTab('students')} className="mr-2">
-                      <Users className="w-4 h-4 mr-2" />
-                      Find Students to Message
-                    </Button>
-                    <Button onClick={() => setActiveTab('feed')} variant="outline">
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      View Progress Feed
-                    </Button>
-                  </div>
-
-                  {/* Instructions */}
-                  <div className="mt-6 p-4 bg-blue-50 rounded-lg text-left">
-                    <h4 className="font-semibold text-blue-900 mb-2">How to start messaging:</h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• Go to the <strong>Students</strong> tab and click "Message" on any student card</li>
-                      <li>• Go to the <strong>Progress Feed</strong> and click "Message" on any post</li>
-                      <li>• Visit a student's profile and click the "Message" button</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <ConversationList
+              onSelectConversation={(userId, userName, userAvatar) => {
+                setChatRecipient({
+                  id: userId,
+                  name: userName,
+                  avatar: userAvatar
+                });
+                setShowChatModal(true);
+              }}
+              selectedUserId={chatRecipient?.id}
+            />
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Direct Message Modal */}
+      {chatRecipient && (
+        <DirectMessageModal
+          isOpen={showChatModal}
+          onClose={() => {
+            setShowChatModal(false);
+            setChatRecipient(null);
+          }}
+          recipientId={chatRecipient.id}
+          recipientName={chatRecipient.name}
+          recipientAvatar={chatRecipient.avatar}
+        />
+      )}
     </div>
   );
 };

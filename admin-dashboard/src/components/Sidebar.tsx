@@ -192,16 +192,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           {!collapsed && (
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center justify-center py-2">
               <img
-                src="/academia-mobile.png"
+                src="/academia web display.png"
                 alt="Academia Logo"
-                className="w-8 h-8 rounded-lg object-contain"
+                className="h-16 w-auto object-contain max-w-full"
               />
-              <div>
-                <h2 className="font-bold text-gray-900">Admin Panel</h2>
-                <p className="text-xs text-gray-600">Academia</p>
-              </div>
             </div>
           )}
           

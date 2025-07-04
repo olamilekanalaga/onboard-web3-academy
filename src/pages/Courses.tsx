@@ -284,7 +284,8 @@ const Courses = () => {
               const coursePrereqs = prerequisites[course.id] || [];
               const hasQuizAccess = canAccessCourse(course.id, coursePrereqs);
               const quizPassed = hasPassedQuiz(course.id);
-              const finalUnlocked = isUnlocked && hasQuizAccess;
+              // DESKTOP: Unlock all courses - remove quiz requirement for access
+              const finalUnlocked = true; // All courses unlocked on desktop
 
               return (
                 <Card key={course.id} className={`group hover:shadow-xl transition-all duration-300 border-0 ${finalUnlocked ? 'bg-white' : 'bg-gray-50 opacity-75'}`}>

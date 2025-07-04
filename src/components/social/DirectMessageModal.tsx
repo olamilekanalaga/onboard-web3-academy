@@ -43,6 +43,7 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Load messages when modal opens
   useEffect(() => {
@@ -77,6 +78,16 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Auto-focus input when modal opens
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      // Small delay to ensure modal is fully rendered
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [isOpen]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -210,31 +221,31 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 md:p-4">
-      <Card className="w-full max-w-2xl h-[90vh] md:h-[600px] flex flex-col">
-        <CardHeader className="flex-shrink-0 border-b p-3 md:p-6">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 md:p-4 overflow-hidden">
+      <Card className="w-full max-w-2xl h-[95vh] md:h-[80vh] max-h-[700px] flex flex-col shadow-2xl">
+        <CardHeader className="flex-shrink-0 border-b p-4 md:p-6 bg-white">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 md:space-x-3">
-              <Avatar className="w-8 h-8 md:w-10 md:h-10">
+            <div className="flex items-center space-x-3">
+              <Avatar className="w-10 h-10 md:w-12 md:h-12">
                 <AvatarImage src={recipientAvatar} />
-                <AvatarFallback>
+                <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
                   {recipientName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <CardTitle className="text-base md:text-lg">{recipientName}</CardTitle>
-                <p className="text-xs md:text-sm text-gray-500">Direct Message</p>
+                <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">{recipientName}</CardTitle>
+                <p className="text-sm text-gray-500">Direct Message</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
+            <Button variant="ghost" size="sm" onClick={onClose} className="hover:bg-gray-100">
+              <X className="h-5 w-5" />
             </Button>
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col p-0">
+        <CardContent className="flex-1 flex flex-col p-0 bg-gray-50 min-h-0">
           {/* Messages Area */}
-          <ScrollArea className="flex-1 p-2 md:p-4">
+          <ScrollArea className="flex-1 p-4 min-h-0">
             {loading ? (
               <div className="flex items-center justify-center h-32">
                 <div className="text-gray-500">Loading messages...</div>
@@ -242,34 +253,34 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-gray-500">
                 <MessageCircle className="w-12 h-12 mb-2 text-gray-300" />
-                <p>No messages yet</p>
+                <p className="font-medium">No messages yet</p>
                 <p className="text-sm">Start the conversation!</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {messages.map((message) => {
                   const isOwnMessage = message.sender_id === user?.id;
-                  
+
                   return (
                     <div
                       key={message.id}
                       className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className={`flex space-x-2 max-w-[80%] ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                      <div className={`flex space-x-2 max-w-[85%] ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
                         {!isOwnMessage && (
-                          <Avatar className="w-8 h-8">
+                          <Avatar className="w-8 h-8 flex-shrink-0">
                             <AvatarImage src={recipientAvatar} />
-                            <AvatarFallback>
+                            <AvatarFallback className="bg-gray-200 text-gray-600">
                               {recipientName.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                         )}
-                        <div className={`rounded-lg px-2 py-1 md:px-3 md:py-2 ${
+                        <div className={`rounded-2xl px-4 py-2 shadow-sm ${
                           isOwnMessage
                             ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-900'
+                            : 'bg-white text-gray-900 border border-gray-200'
                         }`}>
-                          <p className="text-xs md:text-sm">{message.content}</p>
+                          <p className="text-sm leading-relaxed">{message.content}</p>
                           <p className={`text-xs mt-1 ${
                             isOwnMessage ? 'text-blue-100' : 'text-gray-500'
                           }`}>
@@ -286,26 +297,28 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
           </ScrollArea>
 
           {/* Message Input */}
-          <div className="border-t p-2 md:p-4">
-            <div className="flex space-x-2">
+          <div className="border-t bg-white p-4 flex-shrink-0">
+            <div className="flex space-x-3">
               <Input
+                ref={inputRef}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={`Message ${recipientName}...`}
                 disabled={sending}
-                className="flex-1 text-sm md:text-base"
+                className="flex-1 text-base border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-full px-4 py-2"
+                autoFocus
               />
               <Button
                 onClick={sendMessage}
                 disabled={!newMessage.trim() || sending}
                 size="sm"
-                className="px-2 md:px-3"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-full"
               >
                 {sending ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <Send className="h-3 w-3 md:h-4 md:w-4" />
+                  <Send className="h-4 w-4" />
                 )}
               </Button>
             </div>

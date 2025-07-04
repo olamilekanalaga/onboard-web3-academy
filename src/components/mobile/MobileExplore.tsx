@@ -273,7 +273,8 @@ const MobileExplore = () => {
             const coursePrereqs = prerequisites[course.id] || [];
             const hasQuizAccess = canAccessCourse(course.id, coursePrereqs);
             const isUnlockedInDB = isCourseUnlocked(course.id);
-            const finalUnlocked = isUnlockedInDB && hasQuizAccess; // SAME AS DESKTOP
+            // MOBILE: Unlock all courses - remove quiz requirement for access
+            const finalUnlocked = true; // All courses unlocked on mobile
             const isCompleted = isCourseCompleted(course.id);
             const hasQuizPassed = hasPassedQuiz(course.id);
 
