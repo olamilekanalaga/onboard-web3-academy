@@ -2,17 +2,15 @@ import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Clock, Award, TrendingUp, Play, ChevronRight, Target, Zap } from "lucide-react";
+import { BookOpen, Play, ChevronRight, Target, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSocialVerification } from "@/contexts/SocialVerificationContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useCourseProgression } from "@/hooks/useCourseProgression";
 import { useUserStats } from "@/hooks/useUserStats";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import MobileHeader from "./MobileHeader";
 import BottomNavigation from "./BottomNavigation";
-import SocialVerification from "../SocialVerification";
 import { courses } from "@/data/courses";
 import PWALayout from "./PWALayout";
 import PWAContentWrapper from "./PWAContentWrapper";
@@ -21,15 +19,8 @@ const MobileHome = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: profile } = useProfile();
-  const { isVerified, setVerified } = useSocialVerification();
-  const { isCourseUnlocked, userProgress } = useCourseProgression();
-  const { data: userStats } = useUserStats();
-  const [showSocialVerification, setShowSocialVerification] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<string>("");
-
-  // Get real course data - only show the modern courses we want to feature
-  const featuredCourseIds = ["foundation", "defi-fundamentals", "degen"];
-  const featuredCourses = Object.values(courses).filter(course => featuredCourseIds.includes(course.id));
+  const { userProgress } = useCourseProgression();
+  const { userStats } = useUserStats();
 
   // Get total course count (all 12 courses)
   const totalCourses = Object.values(courses).length;
@@ -107,6 +98,15 @@ const MobileHome = () => {
     return xp.toString();
   };
 
+  // Get XP with better fallback
+  const getUserXP = () => {
+    if (userStats?.total_xp !== undefined) {
+      return userStats.total_xp;
+    }
+    // If no user stats, show a default value
+    return 100; // Default starting XP for new users
+  };
+
   // Real user stats - no mock data
   const stats = [
     {
@@ -123,7 +123,7 @@ const MobileHome = () => {
     },
     {
       label: "Total XP",
-      value: formatXP(userStats?.total_xp || 0), // Real XP from user stats
+      value: formatXP(getUserXP()), // Real XP from user stats with better fallback
       icon: Zap,
       color: "text-amber-600"
     }
@@ -157,28 +157,9 @@ const MobileHome = () => {
     'nft-creation'
   ].map(id => courses[id]).filter(Boolean);
 
-  const handleCourseNavigation = (courseId: string, courseName: string) => {
-    if (isVerified) {
-      // User is already verified, navigate directly
-      navigate(`/mobile/course/${courseId}`);
-    } else {
-      // Show social verification modal
-      setSelectedCourse(courseName);
-      setShowSocialVerification(true);
-    }
-  };
-
-  const handleSocialVerificationComplete = () => {
-    setVerified(true);
-    setShowSocialVerification(false);
-    // Navigate to the selected course
-    const courseId = featuredCourses.find(c => c.title === selectedCourse)?.id || "foundation";
+  const handleCourseNavigation = (courseId: string) => {
+    // Navigate directly to course
     navigate(`/mobile/course/${courseId}`);
-  };
-
-  const handleSocialVerificationCancel = () => {
-    setShowSocialVerification(false);
-    setSelectedCourse("");
   };
 
   return (
@@ -196,11 +177,11 @@ const MobileHome = () => {
               <p className="text-gray-600">Continue your Web3 learning journey</p>
             </div>
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden shadow-lg">
-              {profile?.profile_picture ? (
+              {(profile?.avatar_url || user?.user_metadata?.avatar_url) ? (
                 <img
-                  src={profile.profile_picture}
+                  src={profile?.avatar_url || user?.user_metadata?.avatar_url}
                   alt="Profile"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-full"
                 />
               ) : (
                 <span className="text-white font-bold text-xl">
@@ -251,7 +232,7 @@ const MobileHome = () => {
                   </p>
                   <Button
                     className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md"
-                    onClick={() => handleCourseNavigation('foundation', 'Foundation Course')}
+                    onClick={() => handleCourseNavigation('foundation')}
                   >
                     <Play className="h-4 w-4 mr-2" />
                     Start Learning
@@ -278,8 +259,7 @@ const MobileHome = () => {
         </div>
 
         <div className="space-y-4">
-          {learningPathCourses.map((course, index) => {
-            const isUnlocked = true; // All courses unlocked now
+          {learningPathCourses.map((course) => {
             const progress = userProgress?.[course.id];
             const progressPercentage = progress?.progressPercentage || 0;
             const isCompleted = progressPercentage >= 100;
@@ -288,7 +268,7 @@ const MobileHome = () => {
               <Card
                 key={course.id}
                 className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-white"
-                onClick={() => handleCourseNavigation(course.id, course.title)}
+                onClick={() => handleCourseNavigation(course.id)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start space-x-4">
@@ -319,28 +299,6 @@ const MobileHome = () => {
                               {course.level || 'Beginner'}
                             </Badge>
                           )}
-                        </div>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium text-gray-600">
-                            Progress
-                          </span>
-                          <span className="text-xs font-medium text-gray-900">
-                            {Math.round(progressPercentage)}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full transition-all duration-300 ${
-                              isCompleted
-                                ? 'bg-gradient-to-r from-green-500 to-green-600'
-                                : 'bg-gradient-to-r from-blue-500 to-purple-600'
-                            }`}
-                            style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-                          />
                         </div>
                       </div>
                     </div>
