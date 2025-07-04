@@ -37,8 +37,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
     if (user) {
       loadConversations();
       
-      // Set up real-time subscription for new conversations
-      const subscription = supabase
+      // Set up real-time subscription for conversation changes
+      const conversationSubscription = supabase
         .channel('conversations')
         .on(
           'postgres_changes',
@@ -46,16 +46,45 @@ const ConversationList: React.FC<ConversationListProps> = ({
             event: '*',
             schema: 'public',
             table: 'conversations',
-            filter: `user1_id=eq.${user.id},user2_id=eq.${user.id}`
+            filter: `or(user1_id.eq.${user.id},user2_id.eq.${user.id})`
           },
-          () => {
+          (payload) => {
+            console.log('Conversation change detected:', payload);
             loadConversations();
           }
         )
         .subscribe();
 
+      // Also listen for direct message changes to update conversation list
+      const messageSubscription = supabase
+        .channel('direct_messages_for_conversations')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'direct_messages',
+            filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`
+          },
+          (payload) => {
+            console.log('Message change detected, refreshing conversations:', payload);
+            loadConversations();
+          }
+        )
+        .subscribe();
+
+      // Listen for custom conversation deletion events
+      const handleConversationDeleted = () => {
+        console.log('Conversation deleted event received, refreshing list');
+        loadConversations();
+      };
+
+      window.addEventListener('conversationDeleted', handleConversationDeleted);
+
       return () => {
-        subscription.unsubscribe();
+        conversationSubscription.unsubscribe();
+        messageSubscription.unsubscribe();
+        window.removeEventListener('conversationDeleted', handleConversationDeleted);
       };
     }
   }, [user]);

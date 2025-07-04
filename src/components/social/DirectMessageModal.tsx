@@ -47,6 +47,7 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteConversationDialog, setShowDeleteConversationDialog] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -230,18 +231,35 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
 
     try {
       // Delete all messages between current user and recipient
-      const { error } = await supabase
+      const { error: messagesError } = await supabase
         .from('direct_messages')
         .delete()
         .or(`and(sender_id.eq.${user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${user.id})`);
 
-      if (error) {
-        console.error('Error deleting conversation:', error);
+      if (messagesError) {
+        console.error('Error deleting messages:', messagesError);
         return;
       }
 
-      console.log('✅ Conversation deleted successfully');
+      // Delete the conversation entry from conversations table
+      const { error: conversationError } = await supabase
+        .from('conversations')
+        .delete()
+        .or(`and(user1_id.eq.${user.id},user2_id.eq.${recipientId}),and(user1_id.eq.${recipientId},user2_id.eq.${user.id})`);
+
+      if (conversationError) {
+        console.error('Error deleting conversation entry:', conversationError);
+        // Don't return here - messages are already deleted
+      }
+
+      console.log('✅ Conversation and messages deleted successfully');
       setMessages([]);
+
+      // Trigger a refresh of the conversation list by emitting a custom event
+      window.dispatchEvent(new CustomEvent('conversationDeleted', {
+        detail: { userId: recipientId }
+      }));
+
       onClose(); // Close the modal after deleting conversation
     } catch (error) {
       console.error('Error deleting conversation:', error);
@@ -251,6 +269,20 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
   const handleDeleteMessage = (messageId: string) => {
     setMessageToDelete(messageId);
     setShowDeleteDialog(true);
+  };
+
+  const handleLongPressStart = (messageId: string) => {
+    const timer = setTimeout(() => {
+      handleDeleteMessage(messageId);
+    }, 800); // 800ms long press
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
   };
 
   const confirmDeleteMessage = async () => {
@@ -298,23 +330,23 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 hover:bg-gray-100"
+                    className="h-10 w-10 md:h-8 md:w-8 p-0 hover:bg-gray-100 touch-manipulation"
                   >
-                    <MoreVertical className="h-4 w-4" />
+                    <MoreVertical className="h-5 w-5 md:h-4 md:w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="min-w-[180px]">
                   <DropdownMenuItem
                     onClick={() => setShowDeleteConversationDialog(true)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 py-3 px-4 text-base md:text-sm md:py-2 md:px-3"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="h-5 w-5 md:h-4 md:w-4 mr-3 md:mr-2" />
                     Delete Conversation
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="ghost" size="sm" onClick={onClose} className="hover:bg-gray-100">
-                <X className="h-5 w-5" />
+              <Button variant="ghost" size="sm" onClick={onClose} className="h-10 w-10 md:h-8 md:w-8 p-0 hover:bg-gray-100 touch-manipulation">
+                <X className="h-6 w-6 md:h-5 md:w-5" />
               </Button>
             </div>
           </div>
@@ -332,6 +364,9 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
                 <MessageCircle className="w-12 h-12 mb-2 text-gray-300" />
                 <p className="font-medium">No messages yet</p>
                 <p className="text-sm">Start the conversation!</p>
+                <p className="text-xs mt-2 text-gray-400 md:hidden">
+                  Tip: Long press your messages to delete them
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -353,11 +388,19 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
                           </Avatar>
                         )}
                         <div className="relative group">
-                          <div className={`rounded-2xl px-4 py-2 shadow-sm ${
-                            isOwnMessage
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-white text-gray-900 border border-gray-200'
-                          }`}>
+                          <div
+                            className={`rounded-2xl px-4 py-2 shadow-sm ${
+                              isOwnMessage
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white text-gray-900 border border-gray-200'
+                            }`}
+                            onTouchStart={isOwnMessage ? () => handleLongPressStart(message.id) : undefined}
+                            onTouchEnd={isOwnMessage ? handleLongPressEnd : undefined}
+                            onTouchCancel={isOwnMessage ? handleLongPressEnd : undefined}
+                            onMouseDown={isOwnMessage ? () => handleLongPressStart(message.id) : undefined}
+                            onMouseUp={isOwnMessage ? handleLongPressEnd : undefined}
+                            onMouseLeave={isOwnMessage ? handleLongPressEnd : undefined}
+                          >
                             <p className="text-sm leading-relaxed">{message.content}</p>
                             <p className={`text-xs mt-1 ${
                               isOwnMessage ? 'text-blue-100' : 'text-gray-500'
@@ -370,9 +413,9 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDeleteMessage(message.id)}
-                              className={`absolute -top-2 ${isOwnMessage ? '-left-8' : '-right-8'} opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full`}
+                              className={`absolute -top-2 ${isOwnMessage ? '-left-10 md:-left-8' : '-right-10 md:-right-8'} opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-active:opacity-100 transition-opacity h-8 w-8 md:h-6 md:w-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full touch-manipulation`}
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <Trash2 className="h-4 w-4 md:h-3 md:w-3" />
                             </Button>
                           )}
                         </div>
@@ -417,18 +460,18 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
 
       {/* Delete Message Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="mx-4 max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Message</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-lg">Delete Message</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
               Are you sure you want to delete this message? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+            <AlertDialogCancel className="w-full sm:w-auto h-12 sm:h-10 text-base sm:text-sm">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteMessage}
-              className="bg-red-600 hover:bg-red-700"
+              className="w-full sm:w-auto h-12 sm:h-10 text-base sm:text-sm bg-red-600 hover:bg-red-700"
             >
               Delete
             </AlertDialogAction>
@@ -438,22 +481,22 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
 
       {/* Delete Conversation Dialog */}
       <AlertDialog open={showDeleteConversationDialog} onOpenChange={setShowDeleteConversationDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="mx-4 max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+            <AlertDialogTitle className="flex items-center space-x-2 text-lg">
+              <AlertTriangle className="h-6 w-6 md:h-5 md:w-5 text-red-600" />
               <span>Delete Entire Conversation</span>
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-base">
               Are you sure you want to delete this entire conversation with {recipientName}?
               This will permanently delete all messages between you and this user. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+            <AlertDialogCancel className="w-full sm:w-auto h-12 sm:h-10 text-base sm:text-sm">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteConversation}
-              className="bg-red-600 hover:bg-red-700"
+              className="w-full sm:w-auto h-12 sm:h-10 text-base sm:text-sm bg-red-600 hover:bg-red-700"
             >
               Delete Conversation
             </AlertDialogAction>

@@ -36,6 +36,8 @@ const MobileHome = () => {
 
   // Determine current learning path based on progress
   const getCurrentLearningPath = () => {
+    if (!userProgress) return 'Foundation';
+
     const courseOrder = [
       'foundation',
       'defi-fundamentals',
@@ -51,21 +53,26 @@ const MobileHome = () => {
       'web3-social'
     ];
 
-    // Find the first unlocked course that's not completed
+    // Since all courses are unlocked, find the first incomplete course
     for (const courseId of courseOrder) {
-      if (isCourseUnlocked(courseId)) {
-        const progress = userProgress?.[courseId];
-        if (!progress || progress.progressPercentage < 100) {
-          const course = courses[courseId];
-          return course?.title || courseId;
-        }
-      } else {
-        // Return the first locked course as next target
+      const progress = userProgress[courseId];
+      const progressPercentage = progress?.progressPercentage || 0;
+
+      if (progressPercentage < 100) {
         const course = courses[courseId];
-        return `Next: ${course?.title || courseId}`;
+        return course ? formatCourseTitle(course.title) : 'Foundation';
       }
     }
-    return "All Complete!";
+
+    return "All Complete! 🎉";
+  };
+
+  // Format XP for better display
+  const formatXP = (xp: number) => {
+    if (xp >= 1000) {
+      return `${(xp / 1000).toFixed(1)}k`;
+    }
+    return xp.toString();
   };
 
   // Real user stats - no mock data
@@ -74,17 +81,17 @@ const MobileHome = () => {
       label: "Courses Available",
       value: totalCourses, // Show all 12 courses
       icon: BookOpen,
-      color: "text-emerald-600"
-    },
-    {
-      label: "Learning Path",
-      value: getCurrentLearningPath(),
-      icon: Target,
       color: "text-blue-600"
     },
     {
+      label: "Current Path",
+      value: getCurrentLearningPath(),
+      icon: Target,
+      color: "text-purple-600"
+    },
+    {
       label: "Total XP",
-      value: userStats?.total_xp || 0, // Real XP from user stats
+      value: formatXP(userStats?.total_xp || 0), // Real XP from user stats
       icon: Zap,
       color: "text-amber-600"
     }
@@ -118,10 +125,36 @@ const MobileHome = () => {
     'nft-creation'
   ].map(id => courses[id]).filter(Boolean);
 
-  // Truncate course title to fit in frame
-  const truncateTitle = (title: string, maxLength: number = 20) => {
-    if (title.length <= maxLength) return title;
-    return title.substring(0, maxLength - 3) + '...';
+  // Smart course title formatting for mobile
+  const formatCourseTitle = (title: string) => {
+    // Handle specific long titles with better abbreviations
+    const titleMap: { [key: string]: string } = {
+      'Blockchain Development Mastery': 'Blockchain Dev',
+      'DeFi Fundamentals & Yield Farming': 'DeFi Fundamentals',
+      'Advanced Trading Strategies': 'Advanced Trading',
+      'Web3 Security & Best Practices': 'Web3 Security',
+      'DAO Governance & Participation': 'DAO Governance',
+      'Web3 Gaming & Metaverse': 'Web3 Gaming',
+      'Cryptocurrency Tax Planning': 'Crypto Tax',
+      'Web3 Social Media & Community Building': 'Web3 Social'
+    };
+
+    // Return mapped title if exists, otherwise truncate intelligently
+    if (titleMap[title]) return titleMap[title];
+
+    // For other titles, truncate at word boundaries
+    if (title.length <= 16) return title;
+
+    const words = title.split(' ');
+    let result = words[0];
+    for (let i = 1; i < words.length; i++) {
+      if ((result + ' ' + words[i]).length <= 16) {
+        result += ' ' + words[i];
+      } else {
+        break;
+      }
+    }
+    return result.length < title.length ? result + '...' : result;
   };
 
   const handleCourseNavigation = (courseId: string, courseName: string) => {
@@ -153,86 +186,100 @@ const MobileHome = () => {
       <MobileHeader />
 
       <PWAContentWrapper padding="none">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-emerald-600 to-blue-700 px-6 pt-4 pb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white mb-1">
-              Welcome back, {getDisplayName(profile, user)}!
-            </h1>
-            <p className="text-emerald-100">Start your Web3 learning journey</p>
-          </div>
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center overflow-hidden">
-            {profile?.profile_picture ? (
-              <img
-                src={profile.profile_picture}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-white font-bold text-lg">
-                {getUserInitials(profile, user)}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-white/15 rounded-xl p-4 text-center backdrop-blur-sm">
-              <stat.icon className="h-6 w-6 text-white mx-auto mb-2" />
-              <div className="text-lg font-bold text-white">{stat.value}</div>
-              <div className="text-xs text-emerald-100">{stat.label}</div>
+        {/* Welcome Header - Redesigned */}
+        <div className="bg-white px-6 pt-6 pb-8 border-b border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                Welcome back, {getDisplayName(profile, user)}!
+              </h1>
+              <p className="text-gray-600">Continue your Web3 learning journey</p>
             </div>
-          ))}
-        </div>
-      </div>
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden shadow-lg">
+              {profile?.profile_picture ? (
+                <img
+                  src={profile.profile_picture}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-white font-bold text-xl">
+                  {getUserInitials(profile, user)}
+                </span>
+              )}
+            </div>
+          </div>
 
-        {/* Start Learning Section */}
+          {/* Enhanced Stats Cards */}
+          <div className="grid grid-cols-3 gap-3">
+            {stats.map((stat, index) => (
+              <div key={index} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 text-center border border-gray-200 shadow-sm">
+                <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center ${
+                  index === 0 ? 'bg-blue-100' :
+                  index === 1 ? 'bg-purple-100' : 'bg-amber-100'
+                }`}>
+                  <stat.icon className={`h-5 w-5 ${
+                    index === 0 ? 'text-blue-600' :
+                    index === 1 ? 'text-purple-600' : 'text-amber-600'
+                  }`} />
+                </div>
+                <div className={`text-xl font-bold ${
+                  index === 0 ? 'text-blue-600' :
+                  index === 1 ? 'text-purple-600' : 'text-amber-600'
+                }`}>
+                  {stat.value}
+                </div>
+                <div className="text-xs text-gray-600 font-medium">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Start Learning Section - Redesigned */}
         <div className="px-6 py-6">
-        <h2 className="text-xl font-bold text-slate-900 mb-4">Start Your Journey</h2>
-        <Card className="border-0 shadow-sm bg-gradient-to-r from-emerald-50 to-blue-50">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-xl flex items-center justify-center text-2xl">
-                🏗️
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Start Your Journey</h2>
+          <Card className="border border-gray-200 shadow-lg bg-gradient-to-br from-blue-50 via-white to-purple-50">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg">
+                  🏗️
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-gray-900 mb-1 text-lg">Foundation Course</h3>
+                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                    Start with the basics - understand what money is and how crypto works
+                  </p>
+                  <Button
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md"
+                    onClick={() => handleCourseNavigation('foundation', 'Foundation Course')}
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Start Learning
+                  </Button>
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-slate-900 mb-1">Foundation Course</h3>
-                <p className="text-sm text-slate-600 mb-3">
-                  Start with the basics - understand what money is and how crypto works
-                </p>
-                <Button
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={() => handleCourseNavigation('foundation', 'Foundation Course')}
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  Start Learning
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Learning Path */}
+      {/* Learning Path - Redesigned */}
       <div className="px-6 py-6 content-safe-bottom">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-slate-900">Your Learning Path</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Your Learning Path</h2>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/mobile/explore')}
+            className="text-blue-600 hover:text-blue-700"
           >
             View All
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {learningPathCourses.map((course, index) => {
-            const isUnlocked = isCourseUnlocked(course.id);
+            const isUnlocked = true; // All courses unlocked now
             const progress = userProgress?.[course.id];
             const progressPercentage = progress?.progressPercentage || 0;
             const isCompleted = progressPercentage >= 100;
@@ -240,43 +287,70 @@ const MobileHome = () => {
             return (
               <Card
                 key={course.id}
-                className={`border-0 shadow-sm transition-shadow ${isUnlocked ? 'cursor-pointer hover:shadow-md' : 'opacity-60'
-                  }`}
-                onClick={() => isUnlocked && handleCourseNavigation(course.id, course.title)}
+                className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-white"
+                onClick={() => handleCourseNavigation(course.id, course.title)}
               >
-                <CardContent className="p-3">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${
+                <CardContent className="p-4">
+                  <div className="flex items-start space-x-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-sm ${
                       isCompleted
-                        ? 'bg-green-500'
-                        : isUnlocked
-                        ? 'bg-gradient-to-br from-emerald-500 to-blue-600'
-                        : 'bg-gray-400'
+                        ? 'bg-gradient-to-br from-green-500 to-green-600'
+                        : 'bg-gradient-to-br from-blue-500 to-purple-600'
                       }`}>
-                      {isCompleted ? '✅' : isUnlocked ? getIconForCourse(course.id) : '🔒'}
+                      {isCompleted ? '✅' : getIconForCourse(course.id)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-medium text-slate-900 text-sm truncate">
-                          {truncateTitle(course.title, 18)}
-                        </h3>
-                        <div className="flex items-center space-x-1">
-                          {isCompleted && (
-                            <Badge variant="default" className="text-xs bg-green-100 text-green-700">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <h3 className="font-semibold text-gray-900 text-base leading-tight">
+                            {formatCourseTitle(course.title)}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                            {course.description}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end space-y-1">
+                          {isCompleted ? (
+                            <Badge className="bg-green-100 text-green-700 border-green-200">
                               Complete
                             </Badge>
-                          )}
-                          {isUnlocked && !isCompleted && (
-                            <Badge variant="secondary" className="text-xs">
+                          ) : (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
                               {course.level || 'Beginner'}
                             </Badge>
                           )}
                         </div>
                       </div>
-                      <p className="text-xs text-slate-600 mb-2 line-clamp-1">
-                        {course.description}
-                      </p>
-                      {isUnlocked && (
+
+                      {/* Progress Bar */}
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-gray-600">
+                            Progress
+                          </span>
+                          <span className="text-xs font-medium text-gray-900">
+                            {Math.round(progressPercentage)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full transition-all duration-300 ${
+                              isCompleted
+                                ? 'bg-gradient-to-r from-green-500 to-green-600'
+                                : 'bg-gradient-to-r from-blue-500 to-purple-600'
+                            }`}
+                            style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center text-xs text-slate-500">
                             <Clock className="h-3 w-3 mr-1" />
