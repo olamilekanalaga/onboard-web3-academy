@@ -112,7 +112,7 @@ const UserProfileDetail: React.FC<UserProfileDetailProps> = ({ user, onBack }) =
             <h1 className="text-2xl font-bold text-gray-900">
               {user.full_name || 'Anonymous User'}
             </h1>
-            <p className="text-gray-600">{user.email}</p>
+            <p className="text-gray-600">@{user.username || 'user'}</p>
           </div>
         </div>
         <div className="flex space-x-2">

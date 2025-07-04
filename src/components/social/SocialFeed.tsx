@@ -12,6 +12,7 @@ import {
   Rocket, 
   Brain,
   MessageCircle,
+  MessageSquare,
   Share2,
   MoreHorizontal,
   Trophy,
@@ -22,6 +23,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
+import DirectMessageModal from './DirectMessageModal';
 
 interface ProgressFeedItem {
   id: string;
@@ -69,6 +71,8 @@ const SocialFeed: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showComments, setShowComments] = useState<{ [key: string]: boolean }>({});
   const [newComment, setNewComment] = useState<{ [key: string]: string }>({});
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatRecipient, setChatRecipient] = useState<{id: string, name: string, avatar?: string} | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -78,66 +82,142 @@ const SocialFeed: React.FC = () => {
 
   const loadFeed = async () => {
     try {
-      // Get feed items from users you follow + your own posts
-      const { data: followingData } = await supabase
-        .from('user_follows')
-        .select('following_id')
-        .eq('follower_id', user?.id);
+      console.log('🔄 Loading social feed...');
 
-      const followingIds = followingData?.map(f => f.following_id) || [];
-      const userIds = [user?.id, ...followingIds];
-
+      // For now, let's load all user progress to show activity
+      // Later we can add following functionality
       const { data, error } = await supabase
-        .from('progress_feed')
+        .from('user_progress')
         .select(`
           *,
-          user_profile:user_profiles!inner(username, display_name, avatar_url),
-          user_reactions:progress_reactions(reaction_type, user_id)
+          profiles!inner(id, username, display_name, profile_picture)
         `)
-        .in('user_id', userIds)
-        .eq('is_public', true)
-        .order('created_at', { ascending: false })
+        .eq('progress_percentage', 100)
+        .order('updated_at', { ascending: false })
         .limit(20);
 
-      if (error) throw error;
-      setFeedItems(data || []);
+      console.log('Raw progress data:', data);
+
+      if (error) {
+        console.error('Error loading user progress:', error);
+        setFeedItems([]);
+      } else {
+        console.log('Loaded progress items:', data?.length || 0);
+
+        // Transform progress data to feed format
+        const transformedData = (data || []).map(item => ({
+          id: item.id,
+          user_id: item.user_id,
+          activity_type: 'course_completed',
+          title: `Completed ${item.course_id?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
+          description: `Just finished the ${item.course_id} course with ${item.progress_percentage}% completion!`,
+          course_id: item.course_id,
+          metadata: { progress: item.progress_percentage },
+          reactions_count: 0,
+          comments_count: 0,
+          created_at: item.updated_at,
+          user_profile: {
+            username: item.profiles?.username || item.profiles?.display_name || 'Unknown User',
+            display_name: item.profiles?.display_name || item.profiles?.username || 'Unknown User',
+            avatar_url: item.profiles?.profile_picture
+          },
+          user_reactions: []
+        }));
+
+        setFeedItems(transformedData);
+        console.log('Transformed feed items:', transformedData);
+
+        // Load reactions for each feed item
+        if (transformedData.length > 0) {
+          loadReactions(transformedData.map(item => item.id));
+        }
+      }
     } catch (error) {
       console.error('Error loading feed:', error);
+      setFeedItems([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Load reactions for feed items
+  const loadReactions = async (feedIds: string[]) => {
+    try {
+      console.log('Loading reactions for feed items:', feedIds);
+
+      // Create a simple reactions table structure if it doesn't exist
+      // For now, we'll simulate reactions with local state
+      // In production, you'd create a proper reactions table
+
+      // For demo purposes, let's add some sample reactions
+      const sampleReactions = feedIds.map(id => ({
+        id: `reaction_${id}`,
+        progress_id: id,
+        user_id: user?.id,
+        reaction_type: 'thumbs_up',
+        created_at: new Date().toISOString()
+      }));
+
+      console.log('Sample reactions:', sampleReactions);
+
+      // Update feed items with empty reactions for now
+      setFeedItems(prev => prev.map(item => ({
+        ...item,
+        user_reactions: [],
+        reactions_count: 0
+      })));
+
+    } catch (error) {
+      console.error('Error loading reactions:', error);
+    }
+  };
+
   const handleReaction = async (feedId: string, reactionType: string) => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user logged in for reaction');
+      return;
+    }
 
     try {
-      // Check if user already reacted with this type
-      const existingReaction = feedItems
-        .find(item => item.id === feedId)
-        ?.user_reactions?.find(r => r.user_id === user.id && r.reaction_type === reactionType);
+      console.log('🎯 Handling reaction:', { feedId, reactionType, userId: user.id });
 
-      if (existingReaction) {
-        // Remove reaction
-        await supabase
-          .from('progress_reactions')
-          .delete()
-          .eq('progress_feed_id', feedId)
-          .eq('user_id', user.id)
-          .eq('reaction_type', reactionType);
-      } else {
-        // Add reaction
-        await supabase
-          .from('progress_reactions')
-          .insert({
-            progress_feed_id: feedId,
-            user_id: user.id,
-            reaction_type: reactionType
-          });
-      }
+      // Update local state immediately for better UX
+      let actionTaken = '';
+      setFeedItems(prev => prev.map(item => {
+        if (item.id === feedId) {
+          const userReactions = item.user_reactions || [];
+          const existingReaction = userReactions.find(r => r.user_id === user.id && r.reaction_type === reactionType);
 
-      // Reload feed to update counts
-      loadFeed();
+          if (existingReaction) {
+            // Remove reaction
+            actionTaken = 'removed';
+            const newReactions = userReactions.filter(r => !(r.user_id === user.id && r.reaction_type === reactionType));
+            return {
+              ...item,
+              user_reactions: newReactions,
+              reactions_count: Math.max(0, (item.reactions_count || 0) - 1)
+            };
+          } else {
+            // Add reaction
+            actionTaken = 'added';
+            const newReaction = {
+              reaction_type: reactionType,
+              user_id: user.id,
+              created_at: new Date().toISOString()
+            };
+            return {
+              ...item,
+              user_reactions: [...userReactions, newReaction],
+              reactions_count: (item.reactions_count || 0) + 1
+            };
+          }
+        }
+        return item;
+      }));
+
+      // Show success feedback
+      console.log(`✅ Reaction ${reactionType} ${actionTaken} successfully!`);
+
     } catch (error) {
       console.error('Error handling reaction:', error);
     }
@@ -311,6 +391,22 @@ const SocialFeed: React.FC = () => {
                       <Button variant="ghost" size="sm">
                         <Share2 className="w-4 h-4" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setChatRecipient({
+                            id: item.user_id,
+                            name: item.user_profile?.display_name || item.user_profile?.username || 'User',
+                            avatar: item.user_profile?.avatar_url
+                          });
+                          setShowChatModal(true);
+                        }}
+                        className="flex items-center space-x-1"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        <span className="text-sm">Message</span>
+                      </Button>
                     </div>
                   </div>
 
@@ -320,7 +416,7 @@ const SocialFeed: React.FC = () => {
                       <div className="flex space-x-3">
                         <Avatar className="w-8 h-8">
                           <AvatarFallback>
-                            {user?.email?.charAt(0).toUpperCase() || 'U'}
+                            {user?.user_metadata?.username?.charAt(0).toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 flex space-x-2">
@@ -349,6 +445,20 @@ const SocialFeed: React.FC = () => {
             </Card>
           );
         })
+      )}
+
+      {/* Direct Message Modal */}
+      {chatRecipient && (
+        <DirectMessageModal
+          isOpen={showChatModal}
+          onClose={() => {
+            setShowChatModal(false);
+            setChatRecipient(null);
+          }}
+          recipientId={chatRecipient.id}
+          recipientName={chatRecipient.name}
+          recipientAvatar={chatRecipient.avatar}
+        />
       )}
     </div>
   );

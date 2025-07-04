@@ -320,11 +320,6 @@ const Social: React.FC = () => {
             <TabsTrigger value="messages" className="flex items-center space-x-2">
               <MessageSquare className="w-4 h-4" />
               <span>{t('social.messages')}</span>
-              {notifications.filter(n => !n.read_at).length > 0 && (
-                <Badge variant="destructive" className="ml-1">
-                  {notifications.filter(n => !n.read_at).length}
-                </Badge>
-              )}
             </TabsTrigger>
           </TabsList>
 
@@ -618,35 +613,38 @@ const Social: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Bell className="w-5 h-5" />
-                  <span>Notifications</span>
+                  <MessageSquare className="w-5 h-5" />
+                  <span>Direct Messages</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {notifications.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications yet</h3>
-                    <p className="text-gray-600">
-                      You'll see notifications here when people react to your progress or follow you.
-                    </p>
+                <div className="text-center py-8">
+                  <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Direct Messages</h3>
+                  <p className="text-gray-600 mb-4">
+                    Start conversations with other students you follow. Click the message button on any student's profile or progress post to begin chatting.
+                  </p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setActiveTab('students')} className="mr-2">
+                      <Users className="w-4 h-4 mr-2" />
+                      Find Students to Message
+                    </Button>
+                    <Button onClick={() => setActiveTab('feed')} variant="outline">
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      View Progress Feed
+                    </Button>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {notifications.map((notification) => (
-                      <div key={notification.id} className="flex items-start space-x-4 p-4 rounded-lg hover:bg-gray-50">
-                        <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">{notification.title}</h4>
-                          <p className="text-sm text-gray-600">{notification.message}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+
+                  {/* Instructions */}
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg text-left">
+                    <h4 className="font-semibold text-blue-900 mb-2">How to start messaging:</h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• Go to the <strong>Students</strong> tab and click "Message" on any student card</li>
+                      <li>• Go to the <strong>Progress Feed</strong> and click "Message" on any post</li>
+                      <li>• Visit a student's profile and click the "Message" button</li>
+                    </ul>
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

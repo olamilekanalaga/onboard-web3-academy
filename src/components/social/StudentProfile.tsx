@@ -23,6 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
+import DirectMessageModal from './DirectMessageModal';
 
 interface StudentProfileProps {
   studentId: string;
@@ -60,6 +61,7 @@ const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBack }) =>
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showChatModal, setShowChatModal] = useState(false);
 
   useEffect(() => {
     loadStudentData();
@@ -228,10 +230,10 @@ const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBack }) =>
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 p-2 md:p-0">
       {/* Header */}
       <div className="flex items-center space-x-4">
-        <Button variant="ghost" onClick={onBack}>
+        <Button variant="ghost" onClick={onBack} size="sm">
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t('social.back_to_students')}
         </Button>
@@ -239,22 +241,22 @@ const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBack }) =>
 
       {/* Profile Card */}
       <Card>
-        <CardContent className="p-8">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-6">
-              <Avatar className="w-24 h-24">
+        <CardContent className="p-4 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between space-y-4 md:space-y-0">
+            <div className="flex flex-col md:flex-row items-center md:items-center space-y-4 md:space-y-0 md:space-x-6">
+              <Avatar className="w-16 h-16 md:w-24 md:h-24">
                 <AvatarImage src={studentData.user_avatar} />
-                <AvatarFallback className="text-2xl">
+                <AvatarFallback className="text-lg md:text-2xl">
                   {studentData.user_name?.charAt(0).toUpperCase() || 'S'}
                 </AvatarFallback>
               </Avatar>
-              
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+
+              <div className="text-center md:text-left">
+                <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-2">
                   {studentData.user_name || `Student ${studentData.user_id.slice(-4)}`}
                 </h1>
                 <p className="text-gray-600 mb-4">
-                  {studentData.user_email || 'Academia Student'}
+                  @{studentData.user_name?.toLowerCase().replace(/\s+/g, '') || 'student'}
                 </p>
                 
                 <div className="flex items-center space-x-6 mb-4">
@@ -286,29 +288,38 @@ const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBack }) =>
               </div>
             </div>
 
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col md:flex-col space-y-2 md:space-y-3 w-full md:w-auto">
               {studentId !== user?.id && (
                 <>
                   <Button
                     onClick={handleFollow}
                     variant={isFollowing ? "outline" : "default"}
-                    className={isFollowing ? "text-red-600 border-red-200 hover:bg-red-50" : ""}
+                    className={`w-full md:w-auto text-sm ${isFollowing ? "text-red-600 border-red-200 hover:bg-red-50" : ""}`}
+                    size="sm"
                   >
                     {isFollowing ? (
                       <>
-                        <UserMinus className="w-4 h-4 mr-2" />
+                        <UserMinus className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                         Unfollow
                       </>
                     ) : (
                       <>
-                        <UserPlus className="w-4 h-4 mr-2" />
+                        <UserPlus className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                         Follow
                       </>
                     )}
                   </Button>
-                  
-                  <Button variant="outline">
-                    <MessageSquare className="w-4 h-4 mr-2" />
+
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      console.log('Opening chat with:', studentData.user_name);
+                      setShowChatModal(true);
+                    }}
+                    className="w-full md:w-auto text-sm"
+                    size="sm"
+                  >
+                    <MessageSquare className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                     Message
                   </Button>
                 </>
@@ -360,6 +371,17 @@ const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBack }) =>
           )}
         </CardContent>
       </Card>
+
+      {/* Direct Message Modal */}
+      {studentData && (
+        <DirectMessageModal
+          isOpen={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          recipientId={studentId}
+          recipientName={studentData.user_name || `Student ${studentId.slice(-4)}`}
+          recipientAvatar={studentData.user_avatar}
+        />
+      )}
     </div>
   );
 };

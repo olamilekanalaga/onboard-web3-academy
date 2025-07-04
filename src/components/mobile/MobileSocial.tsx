@@ -30,6 +30,7 @@ import PWALayout from './PWALayout';
 import PWAContentWrapper from './PWAContentWrapper';
 import StudentProfile from '@/components/social/StudentProfile';
 import { formatDistanceToNow } from 'date-fns';
+import DirectMessageModal from '../social/DirectMessageModal';
 
 interface ProgressItem {
   id: string;
@@ -53,7 +54,6 @@ interface ProgressItem {
 interface Student {
   user_id: string;
   user_name: string;
-  user_email: string;
   user_avatar: string;
   total_xp: number;
   completed_courses: number;
@@ -72,6 +72,8 @@ const MobileSocial = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [showStudentProfile, setShowStudentProfile] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatRecipient, setChatRecipient] = useState<{id: string, name: string, avatar?: string} | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -151,7 +153,6 @@ const MobileSocial = () => {
       } else if (progressData) {
         const enrichedProgress = progressData.map(item => ({
           ...item,
-          user_email: item.user_email || 'Student',
           user_name: item.user_name || 'Academia Student',
           user_avatar: item.user_avatar,
           user_reactions: item.social_reactions || []
@@ -253,14 +254,22 @@ const MobileSocial = () => {
 
         setFollowing(prev => new Set(prev).add(studentUserId));
 
-        // Create notification - same as desktop
+        // Create notification - use username instead of email
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username, display_name')
+          .eq('id', user.id)
+          .single();
+
+        const displayName = profile?.display_name || profile?.username || 'Someone';
+
         await supabase
           .from('notifications')
           .insert({
             user_id: studentUserId,
             type: 'follow',
             title: 'New Follower',
-            message: `${user.email} started following you!`,
+            message: `${displayName} started following you!`,
             data: { follower_id: user.id }
           });
       }
@@ -487,8 +496,7 @@ const MobileSocial = () => {
                 {students
                   .filter(student =>
                     !searchQuery ||
-                    student.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    student.user_email?.toLowerCase().includes(searchQuery.toLowerCase())
+                    student.user_name?.toLowerCase().includes(searchQuery.toLowerCase())
                   )
                   .map((student) => (
                     <Card key={student.user_id} className="hover:shadow-md transition-shadow">
@@ -542,7 +550,19 @@ const MobileSocial = () => {
                                 </>
                               )}
                             </Button>
-                            <Button size="sm" variant="ghost" className="text-xs px-2 py-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-xs px-2 py-1"
+                              onClick={() => {
+                                setChatRecipient({
+                                  id: student.user_id,
+                                  name: student.user_name,
+                                  avatar: student.user_avatar
+                                });
+                                setShowChatModal(true);
+                              }}
+                            >
                               <MessageCircle className="w-3 h-3 mr-1" />
                               Chat
                             </Button>
@@ -594,6 +614,20 @@ const MobileSocial = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Direct Message Modal */}
+      {chatRecipient && (
+        <DirectMessageModal
+          isOpen={showChatModal}
+          onClose={() => {
+            setShowChatModal(false);
+            setChatRecipient(null);
+          }}
+          recipientId={chatRecipient.id}
+          recipientName={chatRecipient.name}
+          recipientAvatar={chatRecipient.avatar}
+        />
       )}
     </PWALayout>
   );

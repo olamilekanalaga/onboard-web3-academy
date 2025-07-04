@@ -174,7 +174,7 @@ const MobileProfile = () => {
             />
           </div>
           <h1 className="text-xl font-bold">{profile?.full_name || profile?.username || 'User'}</h1>
-          <p className="text-blue-100 text-sm">{profile?.email}</p>
+          <p className="text-blue-100 text-sm">@{profile?.username || 'user'}</p>
           
           {/* Level Badge */}
           <div className="flex items-center justify-center mt-3">

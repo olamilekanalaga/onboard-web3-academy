@@ -93,19 +93,39 @@ const NotificationCenter: React.FC = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      await supabase
+      console.log('Marking notification as read:', notificationId);
+
+      const { error } = await supabase
         .from('notifications')
         .update({ read_at: new Date().toISOString() })
         .eq('id', notificationId);
 
-      setNotifications(prev => 
-        prev.map(n => 
-          n.id === notificationId 
+      if (error) {
+        console.error('Error updating notification:', error);
+        return;
+      }
+
+      // Update local state immediately
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId
             ? { ...n, read_at: new Date().toISOString() }
             : n
         )
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+
+      // Update unread count
+      setUnreadCount(prev => {
+        const newCount = Math.max(0, prev - 1);
+        console.log('Updated unread count:', newCount);
+        return newCount;
+      });
+
+      // Force reload to ensure persistence
+      setTimeout(() => {
+        loadNotifications();
+      }, 500);
+
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -229,9 +249,14 @@ const NotificationCenter: React.FC = () => {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-3 hover:bg-gray-50 transition-colors ${
+                  className={`p-3 hover:bg-gray-50 transition-colors cursor-pointer ${
                     !notification.read_at ? 'bg-blue-50' : ''
                   }`}
+                  onClick={() => {
+                    if (!notification.read_at) {
+                      markAsRead(notification.id);
+                    }
+                  }}
                 >
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0 mt-1">

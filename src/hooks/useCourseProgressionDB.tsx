@@ -239,14 +239,25 @@ export const useCourseProgressionDB = () => {
       }
     },
     onSuccess: (data, variables) => {
-      // Invalidate and refetch course progress
-      queryClient.invalidateQueries({ 
-        queryKey: ['course-progress', user?.id, variables.courseId] 
+      console.log('🔄 Progress update successful, syncing across devices...');
+
+      // Invalidate and refetch course progress for real-time sync
+      queryClient.invalidateQueries({
+        queryKey: ['course-progress', user?.id, variables.courseId]
       });
-      
+
+      // Invalidate all user progress to sync across mobile/desktop
+      queryClient.invalidateQueries({ queryKey: ['userProgress'] });
+      queryClient.invalidateQueries({ queryKey: ['user-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['courseProgression'] });
+
+      // Force immediate refetch for instant sync
+      queryClient.refetchQueries({ queryKey: ['userProgress'] });
+
       // Also invalidate user stats if course completed
       if (data.completed) {
         queryClient.invalidateQueries({ queryKey: ['user-stats'] });
+        console.log('🎉 Course completed! Syncing completion status...');
       }
 
       toast.success('Progress updated successfully!');

@@ -115,7 +115,7 @@ const Profile = () => {
           <h1 className="text-3xl font-bold text-foreground mb-2">
             {profile?.full_name || profile?.username || 'User'}
           </h1>
-          <p className="text-muted-foreground mb-4">{user?.email}</p>
+          <p className="text-muted-foreground mb-4">@{profile?.username || 'user'}</p>
           <Badge className="bg-emerald-600 text-white">Level {stats.level}</Badge>
         </div>
 

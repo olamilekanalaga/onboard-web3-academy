@@ -27,8 +27,17 @@ const CourseCompletionModal = ({ isOpen, onClose, completedCourseId, xpEarned, o
   const handleContinueToNext = async () => {
     if (nextRecommendedCourse) {
       onClose();
-      // Navigate to next course
-      navigate(`/mobile/course/${nextRecommendedCourse.id}`);
+      // Detect if we're on mobile or desktop and navigate accordingly
+      const isMobile = window.location.pathname.includes('/mobile/');
+      const courseRoute = isMobile ? `/mobile/course/${nextRecommendedCourse.id}` : `/course/${nextRecommendedCourse.id}`;
+
+      console.log('Navigating to next course:', {
+        nextCourseId: nextRecommendedCourse.id,
+        isMobile,
+        route: courseRoute
+      });
+
+      navigate(courseRoute);
       // Also call the callback if provided
       if (onStartNextCourse) {
         onStartNextCourse(nextRecommendedCourse.id);
@@ -37,7 +46,12 @@ const CourseCompletionModal = ({ isOpen, onClose, completedCourseId, xpEarned, o
   };
 
   const handleBackToCourses = () => {
-    navigate('/mobile/explore');
+    // Detect if we're on mobile or desktop and navigate accordingly
+    const isMobile = window.location.pathname.includes('/mobile/');
+    const coursesRoute = isMobile ? '/mobile/explore' : '/courses';
+
+    console.log('Navigating back to courses:', { isMobile, route: coursesRoute });
+    navigate(coursesRoute);
     onClose();
   };
 

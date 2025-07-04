@@ -91,20 +91,42 @@ const Chat: React.FC = () => {
 
   const loadMessages = async (roomId: string) => {
     try {
+      console.log('Loading messages for room:', roomId);
+
       const { data, error } = await supabase
-        .from('chat_messages')
+        .from('direct_messages')
         .select(`
           *,
-          user_profile:user_profiles!inner(username, display_name, avatar_url)
+          profiles!inner(username, display_name, profile_picture)
         `)
-        .eq('room_id', roomId)
+        .or(`sender_id.eq.${user?.id},recipient_id.eq.${user?.id}`)
         .order('created_at', { ascending: true })
         .limit(50);
 
-      if (error) throw error;
-      setMessages(data || []);
+      if (error) {
+        console.error('Error loading messages:', error);
+        setMessages([]);
+        return;
+      }
+
+      // Transform data to match expected format
+      const transformedMessages = (data || []).map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        user_id: msg.sender_id,
+        created_at: msg.created_at,
+        user_profile: {
+          username: msg.profiles?.username || 'Unknown',
+          display_name: msg.profiles?.display_name || msg.profiles?.username || 'Unknown',
+          avatar_url: msg.profiles?.profile_picture
+        }
+      }));
+
+      setMessages(transformedMessages);
+      console.log('Loaded messages:', transformedMessages.length);
     } catch (error) {
       console.error('Error loading messages:', error);
+      setMessages([]);
     }
   };
 
@@ -139,19 +161,51 @@ const Chat: React.FC = () => {
     if (!user || !selectedRoom || !newMessage.trim()) return;
 
     try {
+      console.log('Sending message:', {
+        content: newMessage.trim(),
+        sender: user.id,
+        recipient: selectedRoom.id
+      });
+
       const { error } = await supabase
-        .from('chat_messages')
+        .from('direct_messages')
         .insert({
-          room_id: selectedRoom.id,
-          user_id: user.id,
+          sender_id: user.id,
+          recipient_id: selectedRoom.id, // In DM context, room ID is the other user's ID
           content: newMessage.trim(),
           message_type: 'text'
         });
 
-      if (error) throw error;
-      
+      if (error) {
+        console.error('Error sending message:', error);
+        return;
+      }
+
       setNewMessage('');
       loadMessages(selectedRoom.id); // Reload messages
+
+      // Create notification for recipient
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, display_name')
+        .eq('id', user.id)
+        .single();
+
+      const senderName = profile?.display_name || profile?.username || 'Someone';
+
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: selectedRoom.id,
+          type: 'message',
+          title: 'New Message',
+          message: `${senderName} sent you a message`,
+          data: {
+            sender_id: user.id,
+            message_preview: newMessage.trim().substring(0, 50)
+          }
+        });
+
     } catch (error) {
       console.error('Error sending message:', error);
     }
