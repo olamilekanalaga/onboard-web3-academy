@@ -11,8 +11,7 @@ import {
   MapPin,
   Activity,
   Award,
-  Filter,
-  RefreshCw
+  Filter
 } from "lucide-react";
 // Note: World map functionality temporarily disabled due to dependency issues
 // import {
@@ -38,7 +37,7 @@ import {
   Legend
 } from 'recharts';
 // import { motion } from 'framer-motion'; // Temporarily disabled
-import { adminDataService } from '@/services/adminDataService';
+import { useEnhancedUserCountryStats } from '@/hooks/useAdminData';
 
 const geoUrl = "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json";
 
@@ -73,45 +72,7 @@ const GeographicAnalytics: React.FC = () => {
   const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
   const [mapView, setMapView] = useState<'users' | 'xp' | 'engagement'>('users');
   
-  const [countryStats, setCountryStats] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadGeographicData = async () => {
-    setIsLoading(true);
-    try {
-      console.log('🌍 Loading geographic data from centralized service...');
-
-      const analytics = await adminDataService.getComprehensiveUserAnalytics();
-
-      // Convert to expected format for this component
-      const processedStats = analytics.countryStats.map(country => ({
-        country_name: country.country_name,
-        country_code: country.country_code,
-        flag_emoji: '🌍', // Default flag
-        user_count: country.user_count,
-        active_users: country.active_users,
-        avg_xp: Math.floor(Math.random() * 1000) + 500 // Simulated XP for now
-      }));
-
-      setCountryStats(processedStats);
-      console.log('✅ Loaded geographic data:', processedStats.length, 'countries');
-
-    } catch (error) {
-      console.error('❌ Error in loadGeographicData:', error);
-      setCountryStats([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    loadGeographicData();
-  }, []);
-
-  const handleRefresh = async () => {
-    await adminDataService.refreshData();
-    await loadGeographicData();
-  };
+  const { data: countryStats, isLoading } = useEnhancedUserCountryStats();
 
   // Process data for visualizations
   const topCountries = countryStats?.slice(0, 10) || [];
@@ -206,15 +167,6 @@ const GeographicAnalytics: React.FC = () => {
           <p className="text-gray-600">Global user distribution and engagement metrics</p>
         </div>
         <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
           <Button variant="outline" size="sm">
             <Filter className="w-4 h-4 mr-2" />
             Filter

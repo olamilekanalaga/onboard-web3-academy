@@ -60,7 +60,8 @@ const Dashboard = () => {
         return <EnhancedUserManagement />;
       case 'geographic':
         return <GeographicAnalytics />;
-
+      case 'courses':
+        return <UserAnalytics />;
       case 'notifications':
         return <NotificationsPanel />;
 
