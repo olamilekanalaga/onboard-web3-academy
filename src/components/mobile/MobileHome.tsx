@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,9 @@ import { useAppUsageTracking } from "@/hooks/useAppUsageTracking";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import MobileHeader from "./MobileHeader";
 import BottomNavigation from "./BottomNavigation";
-import { courses } from "@/data/courses";
 import PWALayout from "./PWALayout";
 import PWAContentWrapper from "./PWAContentWrapper";
+import { courses } from "@/data/courses";
 
 const MobileHome = () => {
   const navigate = useNavigate();
@@ -48,139 +48,32 @@ const MobileHome = () => {
     }
   };
 
-  // Smart course title formatting for mobile
-  const formatCourseTitle = (title: string) => {
-    // Handle specific long titles with better abbreviations
-    const titleMap: { [key: string]: string } = {
-      'Blockchain Development Mastery': 'Blockchain Dev',
-      'DeFi Fundamentals & Yield Farming': 'DeFi Fundamentals',
-      'Advanced Trading Strategies': 'Advanced Trading',
-      'Web3 Security & Best Practices': 'Web3 Security',
-      'DAO Governance & Participation': 'DAO Governance',
-      'Web3 Gaming & Metaverse': 'Web3 Gaming',
-      'Cryptocurrency Tax Planning': 'Crypto Tax',
-      'Web3 Social Media & Community Building': 'Web3 Social'
-    };
-
-    // Return mapped title if exists, otherwise truncate intelligently
-    if (titleMap[title]) return titleMap[title];
-
-    // For other titles, truncate at word boundaries
-    if (title.length <= 16) return title;
-
-    const words = title.split(' ');
-    let result = words[0];
-    for (let i = 1; i < words.length; i++) {
-      if ((result + ' ' + words[i]).length <= 16) {
-        result += ' ' + words[i];
-      } else {
-        break;
-      }
-    }
-    return result.length < title.length ? result + '...' : result;
-  };
-
-  // Determine current learning path based on progress
-  const getCurrentLearningPath = () => {
-    if (!userProgress) return 'Foundation';
-
+  // Get next course to continue
+  const getNextCourse = () => {
     const courseOrder = [
-      'foundation',
-      'defi-fundamentals',
-      'degen',
-      'advanced-trading',
-      'development',
-      'nft-creation',
-      'content-creation',
-      'web3-security',
-      'dao-governance',
-      'web3-gaming',
-      'crypto-tax',
-      'web3-social'
+      'foundation', 'beginner', 'intermediate', 'advanced',
+      'defi', 'nft', 'dao', 'security', 'degen', 'advanced-trading',
+      'institutional', 'developer'
     ];
 
-    // Find the first course that's not completed
+    const completedCourses = userProgress?.completedCourses || [];
+
     for (const courseId of courseOrder) {
-      if (!userProgress.completedCourses.includes(courseId)) {
-        const course = courses[courseId];
-        return course ? formatCourseTitle(course.title) : 'Foundation';
+      if (!completedCourses.includes(courseId)) {
+        return courses[courseId];
       }
     }
 
-    return "All Complete! 🎉";
+    return courses.foundation; // Default fallback
   };
 
-  // Format XP for better display
-  const formatXP = (xp: number) => {
-    if (xp >= 1000) {
-      return `${(xp / 1000).toFixed(1)}k`;
-    }
-    return xp.toString();
-  };
-
-  // Get XP from the same source as profile page
-  const getUserXP = () => {
-    return userProgress?.totalXP || 0;
-  };
-
-  // Real user stats - no mock data
-  const stats = [
-    {
-      label: "Courses Available",
-      value: totalCourses, // Show all 12 courses
-      icon: BookOpen,
-      color: "text-blue-600"
-    },
-    {
-      label: "Current Path",
-      value: getCurrentLearningPath(),
-      icon: Target,
-      color: "text-purple-600"
-    },
-    {
-      label: "Total XP",
-      value: formatXP(getUserXP()), // Real XP from user stats with better fallback
-      icon: Zap,
-      color: "text-amber-600"
-    }
-  ];
-
-  const getIconForCourse = (courseId: string) => {
-    switch (courseId) {
-      case "foundation": return "🏗️";
-      case "defi-fundamentals": return "🏦";
-      case "degen": return "⚡";
-      case "advanced-trading": return "📈";
-      case "development": return "💻";
-      case "nft-creation": return "🎨";
-      case "content-creation": return "📝";
-      case "web3-security": return "🔒";
-      case "dao-governance": return "🏛️";
-      case "web3-gaming": return "🎮";
-      case "crypto-tax": return "📊";
-      case "web3-social": return "🌐";
-      default: return "📖";
-    }
-  };
-
-  // Get learning path courses in order
-  const learningPathCourses = [
-    'foundation',
-    'defi-fundamentals',
-    'degen',
-    'advanced-trading',
-    'development',
-    'nft-creation'
-  ].map(id => courses[id]).filter(Boolean);
-
-  const handleCourseNavigation = (courseId: string) => {
-    // Navigate directly to course
-    navigate(`/mobile/course/${courseId}`);
-  };
+  const nextCourse = getNextCourse();
+  const completedCount = userProgress?.completedCourses?.length || 0;
+  const progressPercentage = Math.round((completedCount / totalCourses) * 100);
 
   return (
-    <PWALayout hasHeader={true} hasBottomNav={true} className="bg-slate-50">
-      <MobileHeader />
+    <PWALayout hasHeader={true} hasBottomNav={true} className="bg-gray-50">
+      <MobileHeader title="" showBackButton={false} showMenu={true} />
 
       <PWAContentWrapper padding="none">
         {/* Welcome Header - Redesigned */}
@@ -200,148 +93,30 @@ const MobileHome = () => {
                   className="w-full h-full object-cover rounded-full"
                 />
               ) : (
-                <span className="text-white font-bold text-xl">
+                <span className="text-white text-lg font-bold">
                   {getUserInitials(profile, user)}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Enhanced Stats Cards */}
-          <div className="grid grid-cols-3 gap-3">
-            {stats.map((stat, index) => (
-              <div key={index} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 text-center border border-gray-200 shadow-sm">
-                <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center ${
-                  index === 0 ? 'bg-blue-100' :
-                  index === 1 ? 'bg-purple-100' : 'bg-amber-100'
-                }`}>
-                  <stat.icon className={`h-5 w-5 ${
-                    index === 0 ? 'text-blue-600' :
-                    index === 1 ? 'text-purple-600' : 'text-amber-600'
-                  }`} />
-                </div>
-                <div className={`text-xl font-bold ${
-                  index === 0 ? 'text-blue-600' :
-                  index === 1 ? 'text-purple-600' : 'text-amber-600'
-                }`}>
-                  {stat.value}
-                </div>
-                <div className="text-xs text-gray-600 font-medium">{stat.label}</div>
+          {/* Progress Overview */}
+          <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-xl p-4 border border-emerald-100">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="font-semibold text-gray-900">Learning Progress</h3>
+                <p className="text-sm text-gray-600">{completedCount} of {totalCourses} courses completed</p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Moving Crypto Ticker */}
-        <div className="py-3 overflow-hidden bg-gray-50 border-y border-gray-100">
-          <div className="flex animate-scroll whitespace-nowrap opacity-70">
-            <div className="flex items-center space-x-10 text-gray-600 text-sm">
-              {/* Crypto Learning Topics */}
-              <div className="flex items-center space-x-2">
-                <span>₿</span>
-                <span>Bitcoin Trading</span>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-emerald-600">{progressPercentage}%</div>
+                <div className="text-xs text-gray-500">Complete</div>
               </div>
-              <div className="flex items-center space-x-2">
-                <span>Ξ</span>
-                <span>Ethereum Development</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>◎</span>
-                <span>Solana Programming</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>�</span>
-                <span>Avalanche DeFi</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>💜</span>
-                <span>Polygon Scaling</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🌊</span>
-                <span>Cardano Smart Contracts</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>💰</span>
-                <span>DeFi Protocols</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🔗</span>
-                <span>Chainlink Oracles</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🦊</span>
-                <span>MetaMask Wallet</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🔷</span>
-                <span>Trust Wallet</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>�</span>
-                <span>Phantom Wallet</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🔵</span>
-                <span>Coinbase Wallet</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🏦</span>
-                <span>Ledger Hardware</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>�</span>
-                <span>Trezor Security</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>💎</span>
-                <span>NFT Creation</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🚀</span>
-                <span>Crypto Trading</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>⚡</span>
-                <span>Lightning Network</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>�</span>
-                <span>Web3 Development</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🎯</span>
-                <span>Yield Farming</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🔄</span>
-                <span>Cross-Chain Bridges</span>
-              </div>
-              {/* Repeat for continuous scroll */}
-              <div className="flex items-center space-x-2">
-                <span>₿</span>
-                <span>Bitcoin Trading</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>Ξ</span>
-                <span>Ethereum Development</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>◎</span>
-                <span>Solana Programming</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>�</span>
-                <span>Avalanche DeFi</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>💜</span>
-                <span>Polygon Scaling</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🌊</span>
-                <span>Cardano Smart Contracts</span>
-              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-gradient-to-r from-emerald-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progressPercentage}%` }}
+              ></div>
             </div>
           </div>
         </div>
@@ -373,17 +148,17 @@ const MobileHome = () => {
           </div>
         </div>
 
-        {/* Special Note Section */}
+        {/* Special Note Section - Redesigned */}
         <div className="px-6 py-2">
-          <Card className="bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 border border-green-200 shadow-sm">
+          <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-blue-200 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-start space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Star className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-green-800 mb-1">🎉 Welcome to Academia!</h3>
-                  <p className="text-sm text-green-700 leading-relaxed">
+                  <h3 className="font-semibold text-blue-800 mb-1">🎉 Welcome to Academia!</h3>
+                  <p className="text-sm text-blue-700 leading-relaxed">
                     You're part of an exclusive community learning the future of finance. Complete courses, earn XP, and unlock new opportunities in the Web3 ecosystem!
                   </p>
                 </div>
@@ -409,33 +184,6 @@ const MobileHome = () => {
                 <div className="text-right">
                   <div className="text-lg font-bold text-purple-800">{userProgress?.completedCourses?.length || 0}</div>
                   <div className="text-xs text-purple-600">Courses Done</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Start Learning Section - Redesigned */}
-        <div className="px-6 py-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Start Your Journey</h2>
-          <Card className="border border-gray-200 shadow-lg bg-gradient-to-br from-blue-50 via-white to-purple-50">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg">
-                  🏗️
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-gray-900 mb-1 text-lg">Foundation Course</h3>
-                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                    Start with the basics - understand what money is and how crypto works
-                  </p>
-                  <Button
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md"
-                    onClick={() => handleCourseNavigation('foundation')}
-                  >
-                    <Play className="h-4 w-4 mr-2" />
-                    Start Learning
-                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -475,88 +223,49 @@ const MobileHome = () => {
           </div>
         </div>
 
-      {/* Learning Path - Redesigned */}
-      <div className="px-6 py-6 content-safe-bottom">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Your Learning Path</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/mobile/explore')}
-            className="text-blue-600 hover:text-blue-700"
-          >
-            View All
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
+        {/* Learning Path - Redesigned */}
+        <div className="px-6 py-4">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Continue Learning</h2>
 
-        <div className="space-y-4">
-          {learningPathCourses.map((course) => {
-            const isCompleted = userProgress?.completedCourses.includes(course.id) || false;
-
-            return (
-              <Card
-                key={course.id}
-                className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-white"
-                onClick={() => handleCourseNavigation(course.id)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start space-x-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-sm ${
-                      isCompleted
-                        ? 'bg-gradient-to-br from-green-500 to-green-600'
-                        : 'bg-gradient-to-br from-blue-500 to-purple-600'
-                      }`}>
-                      {isCompleted ? '✅' : getIconForCourse(course.id)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1 min-w-0 pr-2">
-                          <h3 className="font-semibold text-gray-900 text-base leading-tight">
-                            {formatCourseTitle(course.title)}
-                          </h3>
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                            {course.description}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end space-y-1">
-                          {isCompleted ? (
-                            <Badge className="bg-green-100 text-green-700 border-green-200">
-                              Complete
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
-                              {course.level || 'Beginner'}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+          {/* Next Course Card */}
+          <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer" onClick={() => navigate('/mobile/explore')}>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <BookOpen className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 truncate">{nextCourse?.title}</h3>
+                  <p className="text-sm text-gray-600 line-clamp-2">{nextCourse?.description}</p>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {nextCourse?.level}
+                    </Badge>
+                    <span className="text-xs text-gray-500">
+                      {nextCourse?.lessons} lessons
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-        {/* Call to Action */}
-        <div className="mt-6">
-          <Card className="border-0 shadow-sm bg-gradient-to-r from-blue-600 to-emerald-600">
-            <CardContent className="p-6 text-center text-white">
-              <h3 className="text-lg font-bold mb-2">Ready to Start?</h3>
-              <p className="text-blue-100 mb-4">
-                Begin with our Foundation course and unlock advanced topics as you progress
-              </p>
-              <Button
-                className="bg-white text-blue-600 hover:bg-blue-50"
-                onClick={() => navigate('/mobile/explore')}
-              >
-                View All Courses
-              </Button>
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
+              </div>
             </CardContent>
           </Card>
+
+          {/* Start Learning Button */}
+          <div className="mt-4">
+            <Button
+              onClick={() => navigate('/mobile/explore')}
+              className="w-full bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white py-3 rounded-xl font-medium"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Explore All Courses
+            </Button>
+          </div>
         </div>
+
+        {/* Bottom Padding for Navigation */}
+        <div className="h-20"></div>
+
       </PWAContentWrapper>
 
       <BottomNavigation />
