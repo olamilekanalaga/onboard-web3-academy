@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCourseProgressionDB } from "@/hooks/useCourseProgressionDB";
 import { useProfile } from "@/hooks/useProfile";
 import { useUserSettings, useUpdateUserSettings } from "@/hooks/useUserSettings";
+import { useAppUsageTracking } from "@/hooks/useAppUsageTracking";
 import { getUserInitials } from "@/utils/userDisplay";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -27,6 +28,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import BottomNavigation from "./BottomNavigation";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import MobileHeader from "./MobileHeader";
@@ -39,10 +42,17 @@ const MobileProfile = () => {
   const { userProgress, isLoading } = useCourseProgressionDB();
   const { data: profile } = useProfile();
   const { data: settings } = useUserSettings();
+
+  // Track app usage for streaks
+  useAppUsageTracking();
   const updateSettingsMutation = useUpdateUserSettings();
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [followersList, setFollowersList] = useState<any[]>([]);
+  const [followingList, setFollowingList] = useState<any[]>([]);
 
   const currentStreak = 7;
 
@@ -55,15 +65,15 @@ const MobileProfile = () => {
 
   const loadSocialStats = async () => {
     try {
-      // Get follower count
+      // Get follower count from social_follows table
       const { count: followers } = await supabase
-        .from('user_follows')
+        .from('social_follows')
         .select('*', { count: 'exact', head: true })
         .eq('following_id', user?.id);
 
-      // Get following count
+      // Get following count from social_follows table
       const { count: following } = await supabase
-        .from('user_follows')
+        .from('social_follows')
         .select('*', { count: 'exact', head: true })
         .eq('follower_id', user?.id);
 
@@ -72,6 +82,58 @@ const MobileProfile = () => {
     } catch (error) {
       console.error('Error loading social stats:', error);
     }
+  };
+
+  const loadFollowersList = async () => {
+    try {
+      const { data: followersData } = await supabase
+        .from('social_follows')
+        .select(`
+          follower_id,
+          profiles!social_follows_follower_id_fkey (
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('following_id', user?.id);
+
+      setFollowersList(followersData || []);
+    } catch (error) {
+      console.error('Error loading followers list:', error);
+    }
+  };
+
+  const loadFollowingList = async () => {
+    try {
+      const { data: followingData } = await supabase
+        .from('social_follows')
+        .select(`
+          following_id,
+          profiles!social_follows_following_id_fkey (
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('follower_id', user?.id);
+
+      setFollowingList(followingData || []);
+    } catch (error) {
+      console.error('Error loading following list:', error);
+    }
+  };
+
+  const handleFollowersClick = async () => {
+    await loadFollowersList();
+    setShowFollowersModal(true);
+  };
+
+  const handleFollowingClick = async () => {
+    await loadFollowingList();
+    setShowFollowingModal(true);
   };
 
   interface ProfileSection {
@@ -199,7 +261,7 @@ const MobileProfile = () => {
           <Card className="bg-white shadow-sm">
             <CardContent className="p-4 text-center">
               <BookOpen className="h-6 w-6 text-blue-500 mx-auto mb-2" />
-              <div className="text-lg font-bold text-slate-900">{userProgress.completedCourses.length}</div>
+              <div className="text-lg font-bold text-slate-900">{userProgress?.completedCourses?.length || 0}</div>
               <div className="text-xs text-slate-500">Completed</div>
             </CardContent>
           </Card>
@@ -223,21 +285,27 @@ const MobileProfile = () => {
 
         {/* Social Stats */}
         <div className="grid grid-cols-2 gap-3">
-          <Card className="bg-white shadow-sm">
-            <CardContent className="p-4 text-center">
+          <div
+            className="bg-white shadow-sm cursor-pointer hover:shadow-md transition-shadow rounded-lg border border-gray-200"
+            onClick={handleFollowersClick}
+          >
+            <div className="p-4 text-center">
               <User className="h-6 w-6 text-indigo-500 mx-auto mb-2" />
               <div className="text-lg font-bold text-slate-900">{followerCount}</div>
               <div className="text-xs text-slate-500">Followers</div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="bg-white shadow-sm">
-            <CardContent className="p-4 text-center">
+          <div
+            className="bg-white shadow-sm cursor-pointer hover:shadow-md transition-shadow rounded-lg border border-gray-200"
+            onClick={handleFollowingClick}
+          >
+            <div className="p-4 text-center">
               <User className="h-6 w-6 text-pink-500 mx-auto mb-2" />
               <div className="text-lg font-bold text-slate-900">{followingCount}</div>
               <div className="text-xs text-slate-500">Following</div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -326,6 +394,82 @@ const MobileProfile = () => {
       </PWAContentWrapper>
 
       <BottomNavigation />
+
+      {/* Followers Modal */}
+      <Dialog open={showFollowersModal} onOpenChange={setShowFollowersModal}>
+        <DialogContent className="max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle>Followers ({followerCount})</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto">
+            {followersList.length > 0 ? (
+              <div className="space-y-3">
+                {followersList.map((follower) => (
+                  <div key={follower.follower_id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={follower.profiles?.avatar_url} />
+                      <AvatarFallback className="bg-blue-100 text-blue-600">
+                        {(follower.profiles?.full_name || follower.profiles?.username || 'U').charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">
+                        {follower.profiles?.full_name || follower.profiles?.username || 'Unknown User'}
+                      </p>
+                      {follower.profiles?.username && (
+                        <p className="text-sm text-gray-500">@{follower.profiles.username}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <User className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p>No followers yet</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Following Modal */}
+      <Dialog open={showFollowingModal} onOpenChange={setShowFollowingModal}>
+        <DialogContent className="max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle>Following ({followingCount})</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto">
+            {followingList.length > 0 ? (
+              <div className="space-y-3">
+                {followingList.map((following) => (
+                  <div key={following.following_id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={following.profiles?.avatar_url} />
+                      <AvatarFallback className="bg-purple-100 text-purple-600">
+                        {(following.profiles?.full_name || following.profiles?.username || 'U').charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">
+                        {following.profiles?.full_name || following.profiles?.username || 'Unknown User'}
+                      </p>
+                      {following.profiles?.username && (
+                        <p className="text-sm text-gray-500">@{following.profiles.username}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <User className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p>Not following anyone yet</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </PWALayout>
   );
 };

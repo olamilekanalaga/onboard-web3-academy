@@ -423,6 +423,12 @@ export const useCourseProgressionDB = () => {
     unlockedCourses: userStats?.unlocked_courses || ['foundation'],
   };
 
+  // Debug completed courses
+  console.log('Hook - UserStats:', userStats);
+  console.log('Hook - Completed Courses Raw:', userStats?.completed_courses);
+  console.log('Hook - Completed Courses Final:', userProgress.completedCourses);
+  console.log('Hook - Completed Count:', userProgress.completedCourses.length);
+
   return {
     getCourseProgress,
     updateChapterProgress,

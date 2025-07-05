@@ -351,11 +351,11 @@ const MobileSocial = () => {
         // Create notification - use username instead of email
         const { data: profile } = await supabase
           .from('profiles')
-          .select('username, display_name')
+          .select('username, full_name')
           .eq('id', user.id)
           .single();
 
-        const displayName = profile?.display_name || profile?.username || 'Someone';
+        const displayName = profile?.full_name || profile?.username || 'Someone';
 
         await supabase
           .from('notifications')
@@ -363,9 +363,38 @@ const MobileSocial = () => {
             user_id: studentUserId,
             type: 'follow',
             title: 'New Follower',
-            message: `${displayName} started following you!`,
+            message: `${displayName} just followed you!`,
             data: { follower_id: user.id }
           });
+
+        // Check if this is a follow-back (if the student was already following the current user)
+        const { data: existingFollow } = await supabase
+          .from('social_follows')
+          .select('id')
+          .eq('follower_id', studentUserId)
+          .eq('following_id', user.id)
+          .maybeSingle();
+
+        if (existingFollow) {
+          // This is a follow-back, notify the current user
+          const { data: studentProfile } = await supabase
+            .from('profiles')
+            .select('username, full_name')
+            .eq('id', studentUserId)
+            .single();
+
+          const studentDisplayName = studentProfile?.full_name || studentProfile?.username || 'Someone';
+
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: user.id,
+              type: 'follow',
+              title: 'Follow Back',
+              message: `${studentDisplayName} followed you back!`,
+              data: { follower_id: studentUserId }
+            });
+        }
       }
 
       // Reload students to update follower counts

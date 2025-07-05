@@ -4,6 +4,40 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { initializeUserStats } from '@/utils/setupDatabase';
 
+// Function to record app usage activity for streak tracking
+const recordAppUsage = async (userId: string) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+
+    // Check if user already has app usage activity today
+    const { data: existingActivity } = await supabase
+      .from('user_activity_log')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('activity_date', today)
+      .eq('activity_type', 'app_usage')
+      .single();
+
+    // If no app usage activity today, record it
+    if (!existingActivity) {
+      await supabase
+        .from('user_activity_log')
+        .insert({
+          user_id: userId,
+          activity_type: 'app_usage',
+          activity_date: today,
+          created_at: new Date().toISOString()
+        });
+
+      console.log('✅ App usage activity recorded for streak tracking');
+    } else {
+      console.log('App usage already recorded for today');
+    }
+  } catch (error) {
+    console.error('Error recording app usage activity:', error);
+  }
+};
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -39,10 +73,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Initialize user stats when user signs in (non-blocking)
+        // Initialize user stats and record login activity when user signs in (non-blocking)
         if (event === 'SIGNED_IN' && session?.user) {
           initializeUserStats(session.user.id).catch(error => {
             console.log('Failed to initialize user stats:', error);
+            // Don't block the auth flow if this fails
+          });
+
+          // Record app usage activity for streak tracking
+          recordAppUsage(session.user.id).catch(error => {
+            console.log('Failed to record app usage activity:', error);
             // Don't block the auth flow if this fails
           });
         }

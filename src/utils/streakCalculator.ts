@@ -133,7 +133,7 @@ const isConsecutiveDay = (date1: Date, date2: Date): boolean => {
  */
 export const recordTodayActivity = async (
   userId: string,
-  activityType: 'course_completion' | 'chapter_completion' | 'quiz_completion' | 'login'
+  activityType: 'course_completion' | 'chapter_completion' | 'quiz_completion' | 'app_usage'
 ): Promise<StreakData> => {
   const today = new Date().toISOString().split('T')[0];
   

@@ -125,7 +125,7 @@ export const useStreaks = () => {
 
   // Update streak when user completes an activity
   const updateStreak = useMutation({
-    mutationFn: async (activityType: 'course_completion' | 'chapter_completion' | 'quiz_completion' | 'login') => {
+    mutationFn: async (activityType: 'course_completion' | 'chapter_completion' | 'quiz_completion' | 'app_usage') => {
       if (!user) throw new Error('User not authenticated');
       
       const today = new Date().toISOString().split('T')[0];
