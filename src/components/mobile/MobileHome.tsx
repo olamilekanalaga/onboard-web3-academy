@@ -233,66 +233,114 @@ const MobileHome = () => {
         </div>
 
         {/* Moving Crypto Ticker */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 py-3 overflow-hidden">
-          <div className="flex animate-scroll whitespace-nowrap">
-            <div className="flex items-center space-x-8 text-white text-sm font-medium">
+        <div className="py-3 overflow-hidden bg-gray-50 border-y border-gray-100">
+          <div className="flex animate-scroll whitespace-nowrap opacity-70">
+            <div className="flex items-center space-x-10 text-gray-600 text-sm">
               {/* Crypto Learning Topics */}
               <div className="flex items-center space-x-2">
-                <span className="text-yellow-300">₿</span>
+                <span>₿</span>
                 <span>Bitcoin Trading</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-blue-300">Ξ</span>
+                <span>Ξ</span>
                 <span>Ethereum Development</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-green-300">💰</span>
+                <span>◎</span>
+                <span>Solana Programming</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>�</span>
+                <span>Avalanche DeFi</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>💜</span>
+                <span>Polygon Scaling</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>🌊</span>
+                <span>Cardano Smart Contracts</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>💰</span>
                 <span>DeFi Protocols</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-purple-300">🔗</span>
-                <span>Smart Contracts</span>
+                <span>🔗</span>
+                <span>Chainlink Oracles</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-orange-300">🦊</span>
+                <span>🦊</span>
                 <span>MetaMask Wallet</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-red-300">🔥</span>
-                <span>Solana Development</span>
+                <span>🔷</span>
+                <span>Trust Wallet</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-cyan-300">💎</span>
+                <span>�</span>
+                <span>Phantom Wallet</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>🔵</span>
+                <span>Coinbase Wallet</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>🏦</span>
+                <span>Ledger Hardware</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>�</span>
+                <span>Trezor Security</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>💎</span>
                 <span>NFT Creation</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-pink-300">🚀</span>
+                <span>🚀</span>
                 <span>Crypto Trading</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-indigo-300">🏦</span>
-                <span>Ledger Security</span>
+                <span>⚡</span>
+                <span>Lightning Network</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-emerald-300">⚡</span>
-                <span>Lightning Network</span>
+                <span>�</span>
+                <span>Web3 Development</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>🎯</span>
+                <span>Yield Farming</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>🔄</span>
+                <span>Cross-Chain Bridges</span>
               </div>
               {/* Repeat for continuous scroll */}
               <div className="flex items-center space-x-2">
-                <span className="text-yellow-300">₿</span>
+                <span>₿</span>
                 <span>Bitcoin Trading</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-blue-300">Ξ</span>
+                <span>Ξ</span>
                 <span>Ethereum Development</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-green-300">💰</span>
-                <span>DeFi Protocols</span>
+                <span>◎</span>
+                <span>Solana Programming</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-purple-300">🔗</span>
-                <span>Smart Contracts</span>
+                <span>�</span>
+                <span>Avalanche DeFi</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>💜</span>
+                <span>Polygon Scaling</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>🌊</span>
+                <span>Cardano Smart Contracts</span>
               </div>
             </div>
           </div>
