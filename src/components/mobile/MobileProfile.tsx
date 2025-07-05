@@ -86,11 +86,11 @@ const MobileProfile = () => {
 
   const loadFollowersList = async () => {
     try {
-      const { data: followersData } = await supabase
+      const { data: followersData, error } = await supabase
         .from('social_follows')
         .select(`
           follower_id,
-          profiles!social_follows_follower_id_fkey (
+          follower:profiles!social_follows_follower_id_fkey (
             id,
             username,
             full_name,
@@ -98,6 +98,11 @@ const MobileProfile = () => {
           )
         `)
         .eq('following_id', user?.id);
+
+      if (error) {
+        console.error('Error loading followers list:', error);
+        return;
+      }
 
       setFollowersList(followersData || []);
     } catch (error) {
@@ -107,11 +112,11 @@ const MobileProfile = () => {
 
   const loadFollowingList = async () => {
     try {
-      const { data: followingData } = await supabase
+      const { data: followingData, error } = await supabase
         .from('social_follows')
         .select(`
           following_id,
-          profiles!social_follows_following_id_fkey (
+          following:profiles!social_follows_following_id_fkey (
             id,
             username,
             full_name,
@@ -119,6 +124,11 @@ const MobileProfile = () => {
           )
         `)
         .eq('follower_id', user?.id);
+
+      if (error) {
+        console.error('Error loading following list:', error);
+        return;
+      }
 
       setFollowingList(followingData || []);
     } catch (error) {
@@ -407,17 +417,17 @@ const MobileProfile = () => {
                 {followersList.map((follower) => (
                   <div key={follower.follower_id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg">
                     <Avatar className="w-10 h-10">
-                      <AvatarImage src={follower.profiles?.avatar_url} />
+                      <AvatarImage src={follower.follower?.avatar_url} />
                       <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {(follower.profiles?.full_name || follower.profiles?.username || 'U').charAt(0).toUpperCase()}
+                        {(follower.follower?.full_name || follower.follower?.username || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">
-                        {follower.profiles?.full_name || follower.profiles?.username || 'Unknown User'}
+                        {follower.follower?.full_name || follower.follower?.username || 'Unknown User'}
                       </p>
-                      {follower.profiles?.username && (
-                        <p className="text-sm text-gray-500">@{follower.profiles.username}</p>
+                      {follower.follower?.username && (
+                        <p className="text-sm text-gray-500">@{follower.follower.username}</p>
                       )}
                     </div>
                   </div>
@@ -445,17 +455,17 @@ const MobileProfile = () => {
                 {followingList.map((following) => (
                   <div key={following.following_id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg">
                     <Avatar className="w-10 h-10">
-                      <AvatarImage src={following.profiles?.avatar_url} />
+                      <AvatarImage src={following.following?.avatar_url} />
                       <AvatarFallback className="bg-purple-100 text-purple-600">
-                        {(following.profiles?.full_name || following.profiles?.username || 'U').charAt(0).toUpperCase()}
+                        {(following.following?.full_name || following.following?.username || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">
-                        {following.profiles?.full_name || following.profiles?.username || 'Unknown User'}
+                        {following.following?.full_name || following.following?.username || 'Unknown User'}
                       </p>
-                      {following.profiles?.username && (
-                        <p className="text-sm text-gray-500">@{following.profiles.username}</p>
+                      {following.following?.username && (
+                        <p className="text-sm text-gray-500">@{following.following.username}</p>
                       )}
                     </div>
                   </div>

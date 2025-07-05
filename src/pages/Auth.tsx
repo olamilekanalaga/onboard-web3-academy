@@ -159,7 +159,7 @@ const Auth = () => {
                   <span className="text-3xl">🚀</span>
                 </div>
                 <div>
-                  <h1 className="text-4xl font-bold text-white">Onboard</h1>
+                  <h1 className="text-4xl font-bold text-white">Academia</h1>
                   <p className="text-blue-200">Web3 Learning Academy</p>
                 </div>
               </div>
@@ -204,7 +204,7 @@ const Auth = () => {
                   <span className="text-3xl">🚀</span>
                 </div>
                 <CardTitle className="text-2xl font-bold text-white">
-                  Welcome to Onboard
+                  Welcome to Academia
                 </CardTitle>
                 <p className="text-blue-200">Your Web3 learning journey starts here</p>
               </CardHeader>

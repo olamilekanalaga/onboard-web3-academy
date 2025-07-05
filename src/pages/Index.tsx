@@ -556,11 +556,17 @@ const Index = () => {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <div className="bg-blue-600 p-2 rounded-lg">
-                  <BookOpen className="h-6 w-6 text-white" />
-                </div>
+                <img
+                  src="/academia web display.png"
+                  alt="Academia"
+                  className="h-12 w-auto object-contain"
+                  onError={(e) => {
+                    console.error("Failed to load footer logo");
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
                 <div>
-                  <h3 className="text-xl font-bold">Onboard</h3>
+                  <h3 className="text-xl font-bold">Academia</h3>
                   <p className="text-slate-400 text-sm">Web3 Learning Platform</p>
                 </div>
               </div>
@@ -606,7 +612,7 @@ const Index = () => {
           </div>
 
           <div className="border-t border-slate-800 pt-8 text-center text-slate-400 text-sm">
-            <p>&copy; 2024 Onboard. All rights reserved. Empowering Web3 education worldwide.</p>
+            <p>&copy; 2024 Academia. All rights reserved. Empowering Web3 education worldwide.</p>
           </div>
         </div>
       </footer>

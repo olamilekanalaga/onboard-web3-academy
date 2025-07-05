@@ -156,7 +156,7 @@ const MobileAuth = () => {
                 <span className="text-3xl">🚀</span>
               </div>
               <CardTitle className="text-2xl font-bold text-white">
-                Welcome to Onboard
+                Welcome to Academia
               </CardTitle>
               <p className="text-blue-200">Your Web3 learning journey starts here</p>
             </CardHeader>
