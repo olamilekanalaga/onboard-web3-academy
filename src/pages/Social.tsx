@@ -41,6 +41,8 @@ interface ProgressItem {
   reactions_count: number;
   created_at: string;
   user_email?: string;
+  user_name?: string;
+  user_avatar?: string;
   user_reactions?: Array<{
     reaction_type: string;
     user_id: string;
@@ -53,6 +55,9 @@ interface StudentStats {
   level: number;
   current_streak: number;
   completed_courses: string[];
+  user_name?: string;
+  user_email?: string;
+  user_avatar?: string;
 }
 
 const Social: React.FC = () => {

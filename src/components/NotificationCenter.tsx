@@ -10,16 +10,17 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { 
-  Bell, 
-  Heart, 
-  UserPlus, 
-  MessageSquare, 
-  Trophy, 
+import {
+  Bell,
+  Heart,
+  UserPlus,
+  MessageSquare,
+  Trophy,
   Target,
   Check,
   CheckCheck,
-  X
+  X,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -162,6 +163,20 @@ const NotificationCenter: React.FC = () => {
       });
     } catch (error) {
       console.error('Error deleting notification:', error);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user?.id);
+
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error clearing all notifications:', error);
     }
   };
 
