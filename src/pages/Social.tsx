@@ -68,7 +68,6 @@ const Social: React.FC = () => {
   const [students, setStudents] = useState<StudentStats[]>([]);
   const [recentCompletions, setRecentCompletions] = useState<ProgressItem[]>([]);
   const [following, setFollowing] = useState<Set<string>>(new Set());
-  const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [showChatModal, setShowChatModal] = useState(false);
@@ -209,16 +208,6 @@ const Social: React.FC = () => {
 
       // Load who you're following
       setFollowing(new Set(followingIds));
-
-      // Load notifications
-      const { data: notificationsData } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      setNotifications(notificationsData || []);
 
     } catch (error) {
       console.error('Error loading social data:', error);

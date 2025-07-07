@@ -79,12 +79,16 @@ const translations: Record<string, Record<string, string>> = {
     'social.recent_activity': 'Recent Activity',
     
     // Notifications
+    'notifications.title': 'Notifications',
     'notifications.new_follower': 'New Follower',
     'notifications.reaction': 'Reaction on your post',
     'notifications.comment': 'Comment on your post',
     'notifications.course_completed': 'Course Completed',
     'notifications.mark_read': 'Mark as read',
     'notifications.mark_all_read': 'Mark all as read',
+    'notifications.clear_all': 'Clear All',
+    'notifications.no_notifications': 'No notifications yet',
+    'notifications.view_all': 'View All Notifications',
     
     // Stats
     'stats.active_students': 'Active Students',

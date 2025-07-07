@@ -51,17 +51,52 @@ const NotificationCenter: React.FC = () => {
       // Set up real-time subscription
       const subscription = supabase
         .channel('notifications')
-        .on('postgres_changes', 
-          { 
-            event: 'INSERT', 
-            schema: 'public', 
+        .on('postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
             table: 'notifications',
             filter: `user_id=eq.${user.id}`
-          }, 
+          },
           (payload) => {
             const newNotification = payload.new as Notification;
             setNotifications(prev => [newNotification, ...prev]);
             setUnreadCount(prev => prev + 1);
+          }
+        )
+        .on('postgres_changes',
+          {
+            event: 'DELETE',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            const deletedNotification = payload.old as Notification;
+            setNotifications(prev => prev.filter(n => n.id !== deletedNotification.id));
+            setUnreadCount(prev => {
+              return deletedNotification.read ? prev : Math.max(0, prev - 1);
+            });
+          }
+        )
+        .on('postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            const updatedNotification = payload.new as Notification;
+            setNotifications(prev =>
+              prev.map(n => n.id === updatedNotification.id ? updatedNotification : n)
+            );
+            // Recalculate unread count
+            setNotifications(current => {
+              const unread = current.filter(n => !n.read).length;
+              setUnreadCount(unread);
+              return current;
+            });
           }
         )
         .subscribe();
@@ -151,16 +186,28 @@ const NotificationCenter: React.FC = () => {
 
   const deleteNotification = async (notificationId: string) => {
     try {
-      await supabase
+      console.log('Deleting notification:', notificationId);
+
+      const { error } = await supabase
         .from('notifications')
         .delete()
         .eq('id', notificationId);
 
+      if (error) {
+        console.error('Error deleting notification from database:', error);
+        return;
+      }
+
+      console.log('Successfully deleted notification from database');
+
+      // Update local state
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
       setUnreadCount(prev => {
         const notification = notifications.find(n => n.id === notificationId);
-        return notification && !notification.read_at ? prev - 1 : prev;
+        return notification && !notification.read ? prev - 1 : prev;
       });
+
+      console.log('Updated local state after deletion');
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
@@ -168,13 +215,24 @@ const NotificationCenter: React.FC = () => {
 
   const clearAllNotifications = async () => {
     try {
-      await supabase
+      console.log('Clearing all notifications for user:', user?.id);
+
+      const { error } = await supabase
         .from('notifications')
         .delete()
         .eq('user_id', user?.id);
 
+      if (error) {
+        console.error('Error clearing all notifications from database:', error);
+        return;
+      }
+
+      console.log('Successfully cleared all notifications from database');
+
       setNotifications([]);
       setUnreadCount(0);
+
+      console.log('Updated local state - cleared all notifications');
     } catch (error) {
       console.error('Error clearing all notifications:', error);
     }
@@ -235,29 +293,42 @@ const NotificationCenter: React.FC = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between p-3 border-b">
-          <h3 className="font-semibold text-gray-900">{t('notifications.title') || 'Notifications'}</h3>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={markAllAsRead}
-              className="text-xs"
-            >
-              <CheckCheck className="w-3 h-3 mr-1" />
-              {t('notifications.mark_all_read')}
-            </Button>
-          )}
+          <h3 className="font-semibold text-gray-900">Notifications</h3>
+          <div className="flex items-center space-x-2">
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                className="text-xs"
+              >
+                <CheckCheck className="w-3 h-3 mr-1" />
+                Mark All Read
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllNotifications}
+                className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="w-3 h-3 mr-1" />
+                Clear All
+              </Button>
+            )}
+          </div>
         </div>
 
         <ScrollArea className="h-96">
           {loading ? (
             <div className="p-4 text-center text-gray-500">
-              {t('common.loading')}
+              Loading...
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-8 text-center">
               <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">{t('notifications.no_notifications') || 'No notifications yet'}</p>
+              <p className="text-gray-600">No notifications yet</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -336,7 +407,7 @@ const NotificationCenter: React.FC = () => {
             <DropdownMenuSeparator />
             <div className="p-2">
               <Button variant="ghost" className="w-full text-sm">
-                {t('notifications.view_all') || 'View All Notifications'}
+                View All Notifications
               </Button>
             </div>
           </>
