@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Eye, EyeOff, Shield, Sparkles, BarChart3, Users, Settings } from "lucide-react";
+import { Eye, EyeOff, Sparkles, BarChart3, Users, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -77,13 +77,17 @@ const Login = () => {
           <div className="max-w-lg">
             {/* Logo and Title */}
             <div className="mb-12">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-2xl">
-                  <Shield className="w-8 h-8 text-white" />
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center shadow-2xl backdrop-blur-sm">
+                  <img
+                    src="/academia mobile.png"
+                    alt="Academia Logo"
+                    className="w-12 h-12 object-contain"
+                  />
                 </div>
                 <div>
-                  <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
-                  <p className="text-blue-200">Onboard Web3 Academy</p>
+                  <h1 className="text-4xl font-bold text-white">Academia</h1>
+                  <p className="text-blue-200">Admin Dashboard</p>
                 </div>
               </div>
               <p className="text-xl text-slate-300 leading-relaxed">

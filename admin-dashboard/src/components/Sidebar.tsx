@@ -191,16 +191,28 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          {!collapsed && (
+          {!collapsed ? (
+            <div className="flex items-center space-x-3 py-2">
+              <img
+                src="/academia mobile.png"
+                alt="Academia Logo"
+                className="h-10 w-10 object-contain flex-shrink-0"
+              />
+              <div className="flex flex-col">
+                <span className="text-lg font-bold text-gray-900">Academia</span>
+                <span className="text-sm text-gray-600">Admin Dashboard</span>
+              </div>
+            </div>
+          ) : (
             <div className="flex items-center justify-center py-2">
               <img
-                src="/academia web display.png"
+                src="/academia mobile.png"
                 alt="Academia Logo"
-                className="h-16 w-auto object-contain max-w-full"
+                className="h-8 w-8 object-contain"
               />
             </div>
           )}
-          
+
           {onToggleCollapse && (
             <Button
               variant="ghost"

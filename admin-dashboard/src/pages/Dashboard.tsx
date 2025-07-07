@@ -115,12 +115,16 @@ const Dashboard = () => {
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <div className="flex items-center justify-center">
+            <div className="flex items-center space-x-2">
               <img
-                src="/academia web display.png"
+                src="/academia mobile.png"
                 alt="Academia Logo"
-                className="h-12 w-auto object-contain max-w-[200px]"
+                className="h-8 w-8 object-contain"
               />
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-gray-900">Academia</span>
+                <span className="text-xs text-gray-600">Admin Dashboard</span>
+              </div>
             </div>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-5 h-5" />
