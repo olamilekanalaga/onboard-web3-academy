@@ -101,7 +101,7 @@ const Social: React.FC = () => {
 
       const followingIds = followingData?.map(f => f.following_id) || [];
 
-      // Load progress items from ALL users with user info
+      // Load progress items from ALL users with user info and avatars
       const { data: progressData } = await supabase
         .from('social_progress')
         .select(`
@@ -113,15 +113,44 @@ const Social: React.FC = () => {
         .limit(50); // Show more users
 
       if (progressData) {
-        const enrichedProgress = progressData.map(item => ({
-          ...item,
-          user_email: item.user_email || 'Student',
-          user_name: item.user_name || 'Academia Student',
-          user_avatar: item.user_avatar,
-          user_reactions: item.social_reactions || []
-        }));
+        // Get unique user IDs from progress data
+        const userIds = [...new Set(progressData.map(item => item.user_id))];
 
-        setProgressItems(enrichedProgress);
+        // Fetch user profiles for these users
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .in('id', userIds);
+
+        // Create a map of user profiles for quick lookup
+        const profilesMap = new Map(profilesData?.map(profile => [profile.id, profile]) || []);
+
+        const enrichedProgress = progressData.map(item => {
+          const profile = profilesMap.get(item.user_id);
+          return {
+            ...item,
+            user_email: profile?.username || item.user_email || 'Student',
+            user_name: profile?.full_name || item.user_name || 'Academia Student',
+            user_avatar: profile?.avatar_url || item.user_avatar,
+            user_reactions: item.social_reactions || []
+          };
+        });
+
+        // Filter to show only unique users (latest activity per user)
+        const uniqueProgress = enrichedProgress.reduce((acc, current) => {
+          const existingIndex = acc.findIndex(item => item.user_id === current.user_id);
+          if (existingIndex === -1) {
+            acc.push(current);
+          } else {
+            // Keep the more recent activity
+            if (new Date(current.created_at) > new Date(acc[existingIndex].created_at)) {
+              acc[existingIndex] = current;
+            }
+          }
+          return acc;
+        }, [] as typeof enrichedProgress);
+
+        setProgressItems(uniqueProgress);
       }
 
       // Load all students with stats and user info
@@ -146,7 +175,32 @@ const Social: React.FC = () => {
         .order('created_at', { ascending: false })
         .limit(50); // Increased from 10 to 50
 
-      setRecentCompletions(recentData || []);
+      if (recentData && recentData.length > 0) {
+        // Get unique user IDs from recent completions
+        const recentUserIds = [...new Set(recentData.map(item => item.user_id))];
+
+        // Fetch user profiles for these users
+        const { data: recentProfilesData } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .in('id', recentUserIds);
+
+        // Create a map of user profiles for quick lookup
+        const recentProfilesMap = new Map(recentProfilesData?.map(profile => [profile.id, profile]) || []);
+
+        const enrichedRecentData = recentData.map(item => {
+          const profile = recentProfilesMap.get(item.user_id);
+          return {
+            ...item,
+            user_name: profile?.full_name || item.user_name || 'Academia Student',
+            user_avatar: profile?.avatar_url || item.user_avatar
+          };
+        });
+
+        setRecentCompletions(enrichedRecentData);
+      } else {
+        setRecentCompletions([]);
+      }
 
       // Load who you're following
       setFollowing(new Set(followingIds));
@@ -229,11 +283,11 @@ const Social: React.FC = () => {
           // Get user profile for display name
           const { data: profile } = await supabase
             .from('profiles')
-            .select('username, display_name')
+            .select('username, full_name')
             .eq('id', user.id)
             .single();
 
-          const senderName = profile?.display_name || profile?.username || 'Someone';
+          const senderName = profile?.full_name || profile?.username || 'Someone';
 
           await supabase
             .from('notifications')
@@ -293,11 +347,11 @@ const Social: React.FC = () => {
         // Create notification with username instead of email
         const { data: profile } = await supabase
           .from('profiles')
-          .select('username, display_name')
+          .select('username, full_name')
           .eq('id', user.id)
           .single();
 
-        const displayName = profile?.display_name || profile?.username || 'Someone';
+        const displayName = profile?.full_name || profile?.username || 'Someone';
 
         await supabase
           .from('notifications')

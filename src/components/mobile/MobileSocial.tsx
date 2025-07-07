@@ -245,15 +245,44 @@ const MobileSocial = () => {
           setProgressItems(fallbackData || []);
         }
       } else if (progressData) {
-        const enrichedProgress = progressData.map(item => ({
-          ...item,
-          user_name: item.user_name || 'Academia Student',
-          user_avatar: item.user_avatar,
-          user_reactions: item.social_reactions || []
-        }));
+        // Get unique user IDs from progress data
+        const userIds = [...new Set(progressData.map(item => item.user_id))];
 
-        console.log('Mobile progress feed loaded:', enrichedProgress.length, 'items');
-        setProgressItems(enrichedProgress);
+        // Fetch user profiles for these users
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .in('id', userIds);
+
+        // Create a map of user profiles for quick lookup
+        const profilesMap = new Map(profilesData?.map(profile => [profile.id, profile]) || []);
+
+        const enrichedProgress = progressData.map(item => {
+          const profile = profilesMap.get(item.user_id);
+          return {
+            ...item,
+            user_name: profile?.full_name || item.user_name || 'Academia Student',
+            user_avatar: profile?.avatar_url || item.user_avatar,
+            user_reactions: item.social_reactions || []
+          };
+        });
+
+        // Filter to show only unique users (latest activity per user)
+        const uniqueProgress = enrichedProgress.reduce((acc, current) => {
+          const existingIndex = acc.findIndex(item => item.user_id === current.user_id);
+          if (existingIndex === -1) {
+            acc.push(current);
+          } else {
+            // Keep the more recent activity
+            if (new Date(current.created_at) > new Date(acc[existingIndex].created_at)) {
+              acc[existingIndex] = current;
+            }
+          }
+          return acc;
+        }, [] as typeof enrichedProgress);
+
+        console.log('Mobile progress feed loaded:', uniqueProgress.length, 'unique users');
+        setProgressItems(uniqueProgress);
       } else {
         console.log('No progress data returned');
         setProgressItems([]);
@@ -295,7 +324,32 @@ const MobileSocial = () => {
         .order('created_at', { ascending: false })
         .limit(50); // Increased from 10 to 50
 
-      setRecentCompletions(recentData || []);
+      if (recentData && recentData.length > 0) {
+        // Get unique user IDs from recent completions
+        const recentUserIds = [...new Set(recentData.map(item => item.user_id))];
+
+        // Fetch user profiles for these users
+        const { data: recentProfilesData } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .in('id', recentUserIds);
+
+        // Create a map of user profiles for quick lookup
+        const recentProfilesMap = new Map(recentProfilesData?.map(profile => [profile.id, profile]) || []);
+
+        const enrichedRecentData = recentData.map(item => {
+          const profile = recentProfilesMap.get(item.user_id);
+          return {
+            ...item,
+            user_name: profile?.full_name || item.user_name || 'Academia Student',
+            user_avatar: profile?.avatar_url || item.user_avatar
+          };
+        });
+
+        setRecentCompletions(enrichedRecentData);
+      } else {
+        setRecentCompletions([]);
+      }
     } catch (error) {
       console.error('Error loading recent completions:', error);
       setRecentCompletions([]);
@@ -639,12 +693,12 @@ const MobileSocial = () => {
                   .map((student) => (
                     <Card key={student.user_id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-3">
                           <div
-                            className="flex items-center space-x-3 flex-1 cursor-pointer"
+                            className="flex items-center space-x-3 flex-1 min-w-0 cursor-pointer"
                             onClick={() => handleUserClick(student.user_id)}
                           >
-                            <Avatar className="w-12 h-12">
+                            <Avatar className="w-12 h-12 flex-shrink-0">
                               <AvatarImage src={student.user_avatar} />
                               <AvatarFallback className="text-sm">
                                 {student.user_name?.charAt(0).toUpperCase() || 'S'}
@@ -654,27 +708,30 @@ const MobileSocial = () => {
                               <p className="font-medium text-slate-900 text-sm truncate hover:text-blue-600 transition-colors">
                                 {student.user_name || `Student ${student.user_id.slice(-4)}`}
                               </p>
-                              <div className="flex items-center space-x-2 text-xs text-slate-500">
-                                <span>{student.total_xp || 0} XP</span>
+                              <div className="flex items-center space-x-2 text-xs text-slate-500 truncate">
+                                <span className="truncate">{student.total_xp || 0} XP</span>
                                 <span>•</span>
-                                <span>{student.completed_courses || 0} courses</span>
+                                <span className="truncate">{student.completed_courses?.length || 0} courses</span>
                               </div>
-                              <div className="flex items-center space-x-1 text-xs text-slate-500 mt-1">
-                                <Users className="w-3 h-3" />
-                                <span>{student.follower_count || 0} followers</span>
+                              <div className="flex items-center space-x-1 text-xs text-slate-500 mt-1 truncate">
+                                <Users className="w-3 h-3 flex-shrink-0" />
+                                <span className="truncate">{student.follower_count || 0} followers</span>
                               </div>
                             </div>
                           </div>
-                          <div className="flex flex-col space-y-2">
+                          <div className="flex flex-col space-y-2 flex-shrink-0">
                             <Button
                               size="sm"
                               variant={following.has(student.user_id) ? "outline" : "default"}
-                              className={`text-xs px-2 py-1 ${
+                              className={`text-xs px-3 py-1 whitespace-nowrap ${
                                 following.has(student.user_id)
                                   ? "text-red-600 border-red-200 hover:bg-red-50"
                                   : ""
                               }`}
-                              onClick={() => handleFollow(student.user_id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleFollow(student.user_id);
+                              }}
                             >
                               {following.has(student.user_id) ? (
                                 <>
@@ -691,8 +748,9 @@ const MobileSocial = () => {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-xs px-2 py-1"
-                              onClick={() => {
+                              className="text-xs px-3 py-1 whitespace-nowrap"
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setChatRecipient({
                                   id: student.user_id,
                                   name: student.user_name,
