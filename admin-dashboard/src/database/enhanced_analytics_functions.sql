@@ -120,7 +120,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to get course completion analytics
+-- Function to get course completion analytics for all 12 courses
 CREATE OR REPLACE FUNCTION get_course_completion_analytics()
 RETURNS TABLE (
   course_id TEXT,
@@ -133,32 +133,76 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
   RETURN QUERY
-  WITH course_data AS (
-    SELECT 
+  WITH all_courses AS (
+    -- Define all 12 courses with their proper names
+    SELECT 'foundation' as id, 'Foundation Course' as name
+    UNION ALL SELECT 'defi-fundamentals', 'DeFi Fundamentals'
+    UNION ALL SELECT 'degen', 'Degen Trading'
+    UNION ALL SELECT 'nft-creation', 'NFT Creation'
+    UNION ALL SELECT 'content-creation', 'Content Creation'
+    UNION ALL SELECT 'advanced-trading', 'Advanced Trading'
+    UNION ALL SELECT 'development', 'Blockchain Development'
+    UNION ALL SELECT 'web3-security', 'Web3 Security'
+    UNION ALL SELECT 'dao-governance', 'DAO Governance'
+    UNION ALL SELECT 'web3-gaming', 'Web3 Gaming'
+    UNION ALL SELECT 'crypto-tax', 'Crypto Tax & Legal'
+    UNION ALL SELECT 'web3-social', 'Web3 Social'
+  ),
+  course_progress AS (
+    -- Get all course progress data
+    SELECT
+      cp.course_id,
+      cp.user_id,
+      cp.progress_percentage,
+      cp.completed_at,
+      CASE WHEN cp.progress_percentage = 100 THEN 1 ELSE 0 END as is_completed
+    FROM course_progress cp
+  ),
+  completed_courses_from_stats AS (
+    -- Also get completed courses from user_stats table
+    SELECT
       unnest(us.completed_courses) as course_id,
       us.user_id,
-      us.total_xp
+      100 as progress_percentage,
+      us.updated_at as completed_at,
+      1 as is_completed
     FROM user_stats us
-    WHERE us.completed_courses IS NOT NULL
+    WHERE us.completed_courses IS NOT NULL AND array_length(us.completed_courses, 1) > 0
+  ),
+  combined_progress AS (
+    -- Combine both sources and deduplicate
+    SELECT DISTINCT course_id, user_id, progress_percentage, completed_at, is_completed
+    FROM (
+      SELECT * FROM course_progress
+      UNION ALL
+      SELECT * FROM completed_courses_from_stats
+    ) combined
   ),
   course_stats AS (
-    SELECT 
-      cd.course_id,
-      COUNT(DISTINCT cd.user_id) as completions,
-      SUM(cd.total_xp) as total_xp
-    FROM course_data cd
-    GROUP BY cd.course_id
+    SELECT
+      ac.id as course_id,
+      ac.name as course_name,
+      COUNT(DISTINCT cp.user_id) as total_enrollments,
+      COUNT(DISTINCT CASE WHEN cp.is_completed = 1 THEN cp.user_id END) as total_completions,
+      CASE
+        WHEN COUNT(DISTINCT cp.user_id) > 0
+        THEN (COUNT(DISTINCT CASE WHEN cp.is_completed = 1 THEN cp.user_id END)::NUMERIC / COUNT(DISTINCT cp.user_id)::NUMERIC) * 100
+        ELSE 0
+      END as completion_rate
+    FROM all_courses ac
+    LEFT JOIN combined_progress cp ON ac.id = cp.course_id
+    GROUP BY ac.id, ac.name
   )
-  SELECT 
+  SELECT
     cs.course_id,
-    cs.course_id as course_name, -- You can join with a courses table if available
-    cs.completions as total_enrollments, -- Simplified for now
-    cs.completions as total_completions,
-    100.0 as completion_rate, -- Simplified calculation
+    cs.course_name,
+    COALESCE(cs.total_enrollments, 0)::BIGINT as total_enrollments,
+    COALESCE(cs.total_completions, 0)::BIGINT as total_completions,
+    ROUND(cs.completion_rate, 1) as completion_rate,
     0.0 as avg_completion_time, -- Would need session tracking
-    COALESCE(cs.total_xp, 0)::BIGINT as total_xp_awarded
+    (cs.total_completions * 500)::BIGINT as total_xp_awarded -- Estimated XP
   FROM course_stats cs
-  ORDER BY cs.completions DESC;
+  ORDER BY cs.total_completions DESC, cs.course_id;
 END;
 $$ LANGUAGE plpgsql;
 

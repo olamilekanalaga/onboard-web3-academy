@@ -199,7 +199,15 @@ export const useEnhancedUserCountryStats = () => {
         engagement: c.engagement_rate
       })));
 
-      return sortedCountryStats;
+      // Return both country stats and totals
+      return {
+        countries: sortedCountryStats,
+        totals: {
+          totalUsers: totalUsers || 0,
+          totalActiveUsers: activeUsers,
+          totalCountries: sortedCountryStats.length
+        }
+      };
     },
     refetchInterval: 60000,
   });
@@ -430,15 +438,107 @@ export const useUserProgressAnalytics = () => {
   });
 };
 
-// Course completion analytics
+// Course completion analytics with all 12 courses
 export const useCourseCompletionAnalytics = () => {
   return useQuery({
     queryKey: ['course-completion-analytics'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_course_completion_analytics');
-      if (error) throw error;
-      return data;
+      // Define all 12 courses with proper names
+      const allCourses = [
+        { id: 'foundation', name: 'Foundation Course', xp: 500 },
+        { id: 'defi-fundamentals', name: 'DeFi Fundamentals', xp: 600 },
+        { id: 'degen', name: 'Degen Trading', xp: 800 },
+        { id: 'nft-creation', name: 'NFT Creation', xp: 700 },
+        { id: 'content-creation', name: 'Content Creation', xp: 650 },
+        { id: 'advanced-trading', name: 'Advanced Trading', xp: 1200 },
+        { id: 'development', name: 'Blockchain Development', xp: 2500 },
+        { id: 'web3-security', name: 'Web3 Security', xp: 900 },
+        { id: 'dao-governance', name: 'DAO Governance', xp: 800 },
+        { id: 'web3-gaming', name: 'Web3 Gaming', xp: 750 },
+        { id: 'crypto-tax', name: 'Crypto Tax & Legal', xp: 550 },
+        { id: 'web3-social', name: 'Web3 Social', xp: 600 }
+      ];
+
+      try {
+        // Try to get data from the updated database function
+        const { data: dbData, error } = await supabase.rpc('get_course_completion_analytics');
+
+        if (!error && dbData && dbData.length > 0) {
+          return dbData;
+        }
+      } catch (error) {
+        console.log('Database function not available, using fallback method');
+      }
+
+      // Fallback: Get data manually for all courses
+      try {
+        // Get course progress data
+        const { data: progressData, error: progressError } = await supabaseAdmin
+          .from('course_progress')
+          .select('course_id, user_id, progress_percentage, completed_at');
+
+        if (progressError) throw progressError;
+
+        // Get completed courses from user_stats
+        const { data: userStats, error: statsError } = await supabaseAdmin
+          .from('user_stats')
+          .select('user_id, completed_courses');
+
+        if (statsError) throw statsError;
+
+        // Process data for all courses
+        const courseAnalytics = allCourses.map(course => {
+          // Count enrollments (users who have progress > 0)
+          const enrollments = progressData?.filter(p =>
+            p.course_id === course.id && p.progress_percentage > 0
+          ).length || 0;
+
+          // Count completions from progress table
+          const progressCompletions = progressData?.filter(p =>
+            p.course_id === course.id && p.progress_percentage === 100
+          ).length || 0;
+
+          // Count completions from user_stats
+          const statsCompletions = userStats?.filter(us =>
+            us.completed_courses && us.completed_courses.includes(course.id)
+          ).length || 0;
+
+          // Use the higher count (in case of data inconsistency)
+          const totalCompletions = Math.max(progressCompletions, statsCompletions);
+
+          // Calculate completion rate
+          const completionRate = enrollments > 0 ? (totalCompletions / enrollments) * 100 : 0;
+
+          return {
+            course_id: course.id,
+            course_name: course.name,
+            total_enrollments: enrollments,
+            total_completions: totalCompletions,
+            completion_rate: Math.round(completionRate * 10) / 10, // Round to 1 decimal
+            avg_completion_time: 0,
+            total_xp_awarded: totalCompletions * course.xp
+          };
+        });
+
+        // Sort by completions descending, but ensure all courses are shown
+        return courseAnalytics.sort((a, b) => b.total_completions - a.total_completions);
+
+      } catch (fallbackError) {
+        console.error('Fallback method failed:', fallbackError);
+
+        // Final fallback: return all courses with zero data
+        return allCourses.map(course => ({
+          course_id: course.id,
+          course_name: course.name,
+          total_enrollments: 0,
+          total_completions: 0,
+          completion_rate: 0,
+          avg_completion_time: 0,
+          total_xp_awarded: 0
+        }));
+      }
     },
+    refetchInterval: 60000, // Refresh every minute
   });
 };
 

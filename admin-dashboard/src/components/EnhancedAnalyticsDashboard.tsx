@@ -47,7 +47,21 @@ import {
   useEnhancedUserCountryStats
 } from '@/hooks/useAdminData';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+// Enhanced color palette with better contrast and visibility
+const COLORS = [
+  '#2563eb', // Blue
+  '#dc2626', // Red
+  '#16a34a', // Green
+  '#ca8a04', // Yellow
+  '#9333ea', // Purple
+  '#ea580c', // Orange
+  '#0891b2', // Cyan
+  '#be185d', // Pink
+  '#65a30d', // Lime
+  '#7c2d12', // Brown
+  '#374151', // Gray
+  '#1e40af'  // Dark Blue
+];
 
 interface MetricCardProps {
   title: string;
@@ -123,7 +137,7 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
     cumulativeUsers: item.cumulative_users
   })) || [];
 
-  const topCountriesData = countryStats?.slice(0, 10).map(country => ({
+  const topCountriesData = countryStats?.countries?.slice(0, 10).map(country => ({
     name: country.country_name,
     users: country.user_count,
     avg_xp: country.avg_xp || 0
@@ -282,23 +296,43 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
                 <CardTitle>User Distribution by Country</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={400}>
                   <RechartsPieChart>
                     <Pie
                       data={topCountriesData}
                       cx="50%"
-                      cy="50%"
+                      cy="45%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
+                      label={({ name, percent }) =>
+                        percent > 0.05 ? `${name} ${(percent * 100).toFixed(1)}%` : ''
+                      }
+                      outerRadius={100}
+                      innerRadius={40}
                       fill="#8884d8"
                       dataKey="users"
+                      stroke="#ffffff"
+                      strokeWidth={2}
                     >
                       {topCountriesData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`${value} users`, 'Users']} />
+                    <Tooltip
+                      formatter={(value, name) => [`${value} users`, 'Users']}
+                      labelFormatter={(label) => `Country: ${label}`}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                      formatter={(value, entry) => (
+                        <span style={{ color: entry.color, fontWeight: 500 }}>
+                          {value}
+                        </span>
+                      )}
+                    />
                   </RechartsPieChart>
                 </ResponsiveContainer>
               </CardContent>

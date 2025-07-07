@@ -22,11 +22,36 @@ const UserAnalytics = () => {
   // Load country statistics
   const loadCountryStats = async () => {
     try {
-      const { data, error } = await supabaseAdmin.rpc('get_user_country_stats');
+      // Use the same method as GeographicAnalytics for consistency
+      const { data: profiles, error } = await supabaseAdmin
+        .from('profiles')
+        .select('country_code, country_name')
+        .not('country_code', 'is', null);
+
       if (error) throw error;
-      setCountryStats(data || []);
+
+      // Group by country and count users
+      const countryGroups: { [key: string]: any } = {};
+      profiles?.forEach(profile => {
+        const code = profile.country_code;
+        const name = profile.country_name || 'Unknown';
+
+        if (!countryGroups[code]) {
+          countryGroups[code] = {
+            country_code: code,
+            country_name: name,
+            user_count: 0
+          };
+        }
+        countryGroups[code].user_count++;
+      });
+
+      const countryData = Object.values(countryGroups);
+      console.log('Country stats loaded:', countryData.length, 'countries');
+      setCountryStats(countryData);
     } catch (error: any) {
       console.error('Error loading country stats:', error);
+      setCountryStats([]);
     }
   };
 
@@ -68,29 +93,19 @@ const UserAnalytics = () => {
     try {
       console.log('Loading course stats...');
 
-      // Get all users first
-      const { data: allUsers, error: usersError } = await supabaseAdmin
+      // Get total user count using the same method as other components
+      const { count: totalUsers, error: countError } = await supabaseAdmin
         .from('profiles')
-        .select('id, created_at');
+        .select('*', { count: 'exact', head: true });
 
-      if (usersError) {
-        console.error('Error loading users:', usersError);
-        throw usersError;
+      if (countError) {
+        console.error('Error loading user count:', countError);
+        throw countError;
       }
 
-      console.log('Total users found:', allUsers?.length || 0);
+      console.log('Total users found:', totalUsers || 0);
 
-      // Get course completion stats
-      const { data: progressData, error: progressError } = await supabaseAdmin
-        .from('user_progress')
-        .select('course_id, progress_percentage, completed_at, user_id');
-
-      if (progressError) {
-        console.error('Error loading progress:', progressError);
-        // Don't throw, continue with user stats
-      }
-
-      console.log('Progress data found:', progressData?.length || 0);
+      // Skip user_progress query - we'll use user_stats for consistency
 
       // Get user stats for XP data
       const { data: userStatsData, error: statsError } = await supabaseAdmin
@@ -104,16 +119,19 @@ const UserAnalytics = () => {
 
       console.log('User stats found:', userStatsData?.length || 0);
 
-      // Calculate course completion stats
-      const completedCourses = progressData?.filter(p => p.progress_percentage === 100).length || 0;
+      // Calculate course completion stats using the same method as Overview page
+      // This ensures consistency between Course Analytics and Overview
+      const totalCourseCompletions = userStatsData?.reduce((sum, stat) =>
+        sum + (stat.completed_courses?.length || 0), 0) || 0;
+
       const totalXP = userStatsData?.reduce((sum, user) => sum + (user.total_xp || 0), 0) || 0;
       const avgLevel = userStatsData?.length > 0
         ? userStatsData.reduce((sum, user) => sum + (user.level || 1), 0) / userStatsData.length
         : 1;
 
       const stats = {
-        total_users: allUsers?.length || 0,
-        completed_courses: completedCourses,
+        total_users: totalUsers || 0,
+        completed_courses: totalCourseCompletions,
         total_xp: totalXP,
         average_level: Math.round(avgLevel * 10) / 10,
         active_learners: userStatsData?.filter(u => u.total_xp > 0).length || 0
