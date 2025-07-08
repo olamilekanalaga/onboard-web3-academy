@@ -15,7 +15,7 @@ interface NotificationPayload {
 
 class PushNotificationService {
   private registration: ServiceWorkerRegistration | null = null;
-  private vapidPublicKey = 'YOUR_VAPID_PUBLIC_KEY'; // Replace with actual VAPID key
+  private vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa40HI0DLLuxazjqAKVXTdtToTnMqz9YBPw6zV6DKBM6Q1JX_3_NM_A3SQ8TkE';
 
   async initialize() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -203,6 +203,38 @@ class PushNotificationService {
         }
       ]
     });
+  }
+
+  // Test method to send a push notification via service worker
+  async sendTestPushNotification(title: string, body: string) {
+    if (!this.registration) {
+      console.error('Service Worker not registered');
+      return false;
+    }
+
+    try {
+      // Send message to service worker to show notification
+      if (this.registration.active) {
+        this.registration.active.postMessage({
+          type: 'SHOW_NOTIFICATION',
+          payload: {
+            title,
+            body,
+            icon: '/ACADEMIA MOBILE.PNG',
+            badge: '/ACADEMIA MOBILE.PNG',
+            tag: 'academia-test',
+            requireInteraction: true,
+            data: {
+              url: '/mobile/social'
+            }
+          }
+        });
+        return true;
+      }
+    } catch (error) {
+      console.error('Error sending test push notification:', error);
+    }
+    return false;
   }
 
   async sendStreakReminder(currentStreak: number) {

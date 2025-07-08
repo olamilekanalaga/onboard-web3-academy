@@ -231,6 +231,34 @@ self.addEventListener('sync', (event) => {
   }
 });
 
+// Handle messages from the main thread
+self.addEventListener('message', (event) => {
+  console.log('[SW] Received message:', event.data);
+
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { payload } = event.data;
+
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: payload.icon || '/ACADEMIA MOBILE.PNG',
+      badge: payload.badge || '/ACADEMIA MOBILE.PNG',
+      tag: payload.tag || 'academia-notification',
+      requireInteraction: payload.requireInteraction || true,
+      data: payload.data || {},
+      actions: payload.actions || [
+        {
+          action: 'view',
+          title: 'View'
+        }
+      ]
+    }).then(() => {
+      console.log('[SW] Notification shown successfully');
+    }).catch((error) => {
+      console.error('[SW] Error showing notification:', error);
+    });
+  }
+});
+
 // Handle background sync (optional)
 self.addEventListener('sync', (event) => {
   console.log('[SW] Background sync:', event.tag);

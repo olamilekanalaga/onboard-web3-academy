@@ -94,17 +94,27 @@ const MobileNotificationSettings: React.FC = () => {
       
       if (permission === 'granted') {
         await pushNotificationService.initialize();
-        await pushNotificationService.requestPermission();
-        
+
         if (user) {
-          await notificationListener.initialize(user.id);
+          // Subscribe to push notifications
+          const subscribed = await pushNotificationService.subscribe(user.id);
+          if (subscribed) {
+            console.log('✅ Successfully subscribed to push notifications');
+
+            // Initialize notification listener
+            await notificationListener.initialize(user.id);
+
+            // Update preferences
+            const newPreferences = { ...preferences, push_enabled: true };
+            setPreferences(newPreferences);
+            await savePreferences(newPreferences);
+
+            // Send test notification
+            await notificationListener.sendTestNotification();
+          } else {
+            console.error('❌ Failed to subscribe to push notifications');
+          }
         }
-        
-        const newPreferences = { ...preferences, push_enabled: true };
-        setPreferences(newPreferences);
-        await savePreferences(newPreferences);
-        
-        await notificationListener.sendTestNotification();
       }
     } catch (error) {
       console.error('Error requesting notification permission:', error);
@@ -308,14 +318,32 @@ const MobileNotificationSettings: React.FC = () => {
       {/* Test Notification */}
       {permissionStatus === 'granted' && preferences.push_enabled && (
         <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-3">
             <Button
               variant="outline"
               onClick={() => notificationListener.sendTestNotification()}
               className="w-full"
             >
               <Bell className="w-4 h-4 mr-2" />
-              Send Test Notification
+              Send In-App Test
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const success = await pushNotificationService.sendTestPushNotification(
+                  'Academia Test',
+                  'This is a test push notification! 🔔'
+                );
+                if (success) {
+                  console.log('✅ Test push notification sent');
+                } else {
+                  console.error('❌ Failed to send test push notification');
+                }
+              }}
+              className="w-full bg-blue-50 border-blue-200 text-blue-700"
+            >
+              <Bell className="w-4 h-4 mr-2" />
+              Send Push Test
             </Button>
           </CardContent>
         </Card>
