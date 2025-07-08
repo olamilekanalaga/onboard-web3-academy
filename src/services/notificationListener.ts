@@ -31,7 +31,7 @@ class NotificationListener {
 
     // Set up real-time listener for new notifications
     this.subscription = supabase
-      .channel('notification-listener')
+      .channel(`notifications-${this.userId}`)
       .on('postgres_changes',
         {
           event: 'INSERT',
@@ -47,6 +47,12 @@ class NotificationListener {
       )
       .subscribe((status) => {
         console.log('🔔 Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to notifications');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Channel error - retrying subscription');
+          setTimeout(() => this.setupRealtimeListener(), 2000);
+        }
       });
 
     console.log('🔔 Notification listener initialized for user:', this.userId);
