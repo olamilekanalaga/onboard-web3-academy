@@ -40,11 +40,14 @@ class NotificationListener {
           filter: `user_id=eq.${this.userId}`
         },
         async (payload) => {
+          console.log('🔔 Real-time notification received:', payload);
           const notification = payload.new as NotificationData;
           await this.handleNewNotification(notification);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔔 Subscription status:', status);
+      });
 
     console.log('🔔 Notification listener initialized for user:', this.userId);
   }
@@ -61,12 +64,20 @@ class NotificationListener {
 
     // Check if user is currently active (optional - you might want to skip notifications if user is active)
     const isUserActive = document.hasFocus() && document.visibilityState === 'visible';
+    console.log('📱 User active status:', isUserActive, 'Focus:', document.hasFocus(), 'Visibility:', document.visibilityState);
     
     // Send push notification based on type
     switch (notification.type) {
       case 'message':
-        if (!isUserActive) { // Only send if user is not actively using the app
-          const data = notification.data || {};
+        const data = notification.data || {};
+        if (!isUserActive) {
+          // Send push notification when user is not active
+          await pushNotificationService.sendTestPushNotification(
+            notification.title,
+            `${data.sender_name || 'Someone'}: ${data.message_preview || notification.message}`
+          );
+        } else {
+          // Send in-app notification when user is active
           await pushNotificationService.sendMessageNotification(
             data.sender_name || 'Someone',
             data.message_preview || notification.message,
@@ -76,28 +87,49 @@ class NotificationListener {
         break;
 
       case 'follow':
-        await pushNotificationService.sendSocialNotification(
-          'follow',
-          notification.message,
-          notification.data?.url
-        );
+        if (!isUserActive) {
+          await pushNotificationService.sendTestPushNotification(
+            notification.title,
+            notification.message
+          );
+        } else {
+          await pushNotificationService.sendSocialNotification(
+            'follow',
+            notification.message,
+            notification.data?.url
+          );
+        }
         break;
 
       case 'reaction':
-        await pushNotificationService.sendSocialNotification(
-          'reaction',
-          notification.message,
-          notification.data?.url
-        );
+        if (!isUserActive) {
+          await pushNotificationService.sendTestPushNotification(
+            notification.title,
+            notification.message
+          );
+        } else {
+          await pushNotificationService.sendSocialNotification(
+            'reaction',
+            notification.message,
+            notification.data?.url
+          );
+        }
         break;
 
       case 'course_completion':
       case 'achievement':
-        await pushNotificationService.sendSocialNotification(
-          'achievement',
-          notification.message,
-          notification.data?.url
-        );
+        if (!isUserActive) {
+          await pushNotificationService.sendTestPushNotification(
+            notification.title,
+            notification.message
+          );
+        } else {
+          await pushNotificationService.sendSocialNotification(
+            'achievement',
+            notification.message,
+            notification.data?.url
+          );
+        }
         break;
 
       default:
@@ -136,11 +168,20 @@ class NotificationListener {
           message: 'This is a test notification from Academia!',
           data: { url: '/social' }
         });
-      
+
       console.log('✅ Test notification sent');
     } catch (error) {
       console.error('❌ Error sending test notification:', error);
     }
+  }
+
+  // Method to check if listener is active
+  getStatus() {
+    return {
+      isInitialized: !!this.subscription,
+      userId: this.userId,
+      subscriptionState: this.subscription?.state
+    };
   }
 }
 

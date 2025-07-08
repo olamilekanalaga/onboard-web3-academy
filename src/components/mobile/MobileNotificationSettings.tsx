@@ -345,6 +345,18 @@ const MobileNotificationSettings: React.FC = () => {
               <Bell className="w-4 h-4 mr-2" />
               Send Push Test
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const status = notificationListener.getStatus();
+                console.log('🔔 Notification Listener Status:', status);
+                alert(`Listener Status:\nInitialized: ${status.isInitialized}\nUser ID: ${status.userId}\nState: ${status.subscriptionState}`);
+              }}
+              className="w-full bg-gray-50 border-gray-200 text-gray-700"
+            >
+              <AlertCircle className="w-4 h-4 mr-2" />
+              Check Status
+            </Button>
           </CardContent>
         </Card>
       )}
