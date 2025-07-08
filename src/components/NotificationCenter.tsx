@@ -291,7 +291,7 @@ const NotificationCenter: React.FC = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80 max-w-[90vw] md:w-80">
         <div className="flex items-center justify-between p-3 border-b">
           <h3 className="font-semibold text-gray-900">Notifications</h3>
           <div className="flex items-center space-x-2">

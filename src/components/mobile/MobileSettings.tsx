@@ -17,7 +17,8 @@ import {
   ArrowLeft,
   Trash2,
   Download,
-  Globe
+  Globe,
+  Bell
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
@@ -28,8 +29,9 @@ import BottomNavigation from "./BottomNavigation";
 import MobileHeader from "./MobileHeader";
 import PWALayout from "./PWALayout";
 import PWAContentWrapper from "./PWAContentWrapper";
+import MobileNotificationSettings from "./MobileNotificationSettings";
 
-type SettingsView = 'main' | 'preferences' | 'privacy';
+type SettingsView = 'main' | 'notifications' | 'preferences' | 'privacy';
 
 const MobileSettings = () => {
   const { user, signOut } = useAuth();
@@ -124,6 +126,13 @@ const MobileSettings = () => {
 
   const settingsMenuItems = [
     {
+      id: 'notifications',
+      title: 'Notifications',
+      description: 'Manage notification preferences',
+      icon: Bell,
+      view: 'notifications' as SettingsView,
+    },
+    {
       id: 'preferences',
       title: 'Preferences',
       description: 'Language and regional settings',
@@ -204,7 +213,9 @@ const MobileSettings = () => {
     </div>
   );
 
-  // Removed non-functional notifications view and appearance view
+  const renderNotificationsView = () => (
+    <MobileNotificationSettings />
+  );
 
   const renderPreferencesView = () => (
     <div className="space-y-6">
@@ -384,6 +395,8 @@ const MobileSettings = () => {
 
   const renderCurrentView = () => {
     switch (currentView) {
+      case 'notifications':
+        return renderNotificationsView();
       case 'preferences':
         return renderPreferencesView();
       case 'privacy':
