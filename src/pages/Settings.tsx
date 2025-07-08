@@ -15,7 +15,8 @@ import {
   Settings as SettingsIcon,
   Save,
   Download,
-  Globe
+  Globe,
+  Bell
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -23,6 +24,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useUserSettings, useUpdateUserSettings } from "@/hooks/useUserSettings";
 import ThemeToggle from "@/components/ThemeToggle";
 import Header from "@/components/Header";
+import NotificationSettings from "@/components/notifications/NotificationSettings";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -105,10 +107,14 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="appearance" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="appearance" className="flex items-center space-x-2">
               <Palette className="h-4 w-4" />
               <span>Appearance</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center space-x-2">
+              <Bell className="h-4 w-4" />
+              <span>Notifications</span>
             </TabsTrigger>
             <TabsTrigger value="preferences" className="flex items-center space-x-2">
               <Globe className="h-4 w-4" />
@@ -157,6 +163,11 @@ const Settings = () => {
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="space-y-6">
+            <NotificationSettings />
           </TabsContent>
 
           {/* Preferences Tab */}

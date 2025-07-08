@@ -1,5 +1,5 @@
 // Simple, robust service worker for Academia PWA
-const CACHE_NAME = 'academia-v4'; // Updated with mobile features: notifications, language, country, social
+const CACHE_NAME = 'academia-v5'; // Updated with push notifications and enhanced social features
 const STATIC_CACHE_URLS = [
   '/',
   '/academia mobile.png',
@@ -138,6 +138,97 @@ self.addEventListener('fetch', (event) => {
           });
       })
   );
+});
+
+// Push notification event handler
+self.addEventListener('push', (event) => {
+  console.log('[SW] Push notification received');
+
+  if (!event.data) {
+    console.log('[SW] No data in push event');
+    return;
+  }
+
+  try {
+    const data = event.data.json();
+    console.log('[SW] Push data:', data);
+
+    const options = {
+      body: data.body || data.message || 'New notification from Academia',
+      icon: data.icon || '/ACADEMIA MOBILE.PNG',
+      badge: data.badge || '/ACADEMIA MOBILE.PNG',
+      data: data.data || {},
+      actions: data.actions || [
+        {
+          action: 'view',
+          title: 'View'
+        }
+      ],
+      requireInteraction: true,
+      tag: 'academia-notification'
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(
+        data.title || 'Academia Notification',
+        options
+      )
+    );
+  } catch (error) {
+    console.error('[SW] Error handling push notification:', error);
+
+    // Fallback notification
+    event.waitUntil(
+      self.registration.showNotification('Academia Notification', {
+        body: 'You have a new notification',
+        icon: '/ACADEMIA MOBILE.PNG',
+        badge: '/ACADEMIA MOBILE.PNG'
+      })
+    );
+  }
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event.notification);
+
+  event.notification.close();
+
+  const data = event.notification.data || {};
+  const url = data.url || '/social';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // Check if there's already a window/tab open
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin)) {
+            // Focus existing window and navigate to the URL
+            client.focus();
+            if (client.navigate) {
+              return client.navigate(url);
+            }
+            return client;
+          }
+        }
+
+        // No existing window, open a new one
+        if (clients.openWindow) {
+          return clients.openWindow(url);
+        }
+      })
+      .catch((error) => {
+        console.error('[SW] Error handling notification click:', error);
+      })
+  );
+});
+
+// Background sync for offline notifications (optional)
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'background-sync-notifications') {
+    console.log('[SW] Background sync for notifications');
+    // Handle any queued notifications when back online
+  }
 });
 
 // Handle background sync (optional)

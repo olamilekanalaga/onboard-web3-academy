@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useNotificationInit } from '@/hooks/useNotificationInit';
 import { initializeUserStats } from '@/utils/setupDatabase';
 
 // Function to record app usage activity for streak tracking
@@ -57,6 +58,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [showFollowFlow, setShowFollowFlow] = useState(false);
+
+  // Initialize notifications when user changes
+  useNotificationInit(user?.id || null);
 
   useEffect(() => {
     // Set timeout to prevent infinite loading

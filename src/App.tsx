@@ -13,6 +13,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import CourseReminderPopup from "./components/notifications/CourseReminderPopup";
 import SocialMediaFollowPopup from "./components/onboarding/SocialMediaFollowPopup";
 import CountrySelectionPopup from "./components/onboarding/CountrySelectionPopup";
+import { notificationListener } from "./services/notificationListener";
+import { pushNotificationService } from "./services/pushNotificationService";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Courses from "./pages/Courses";

@@ -159,12 +159,34 @@ class PushNotificationService {
     });
   }
 
+  async sendMessageNotification(senderName: string, messagePreview: string, conversationUrl?: string) {
+    await this.showLocalNotification({
+      title: '💬 New Message',
+      body: `${senderName}: ${messagePreview}`,
+      data: {
+        type: 'message',
+        url: conversationUrl || '/social'
+      },
+      actions: [
+        {
+          action: 'reply',
+          title: 'Reply'
+        },
+        {
+          action: 'view',
+          title: 'View'
+        }
+      ]
+    });
+  }
+
   async sendSocialNotification(type: string, message: string, actionUrl?: string) {
     const titles = {
       follow: '👥 New Follower',
       reaction: '❤️ New Reaction',
       comment: '💬 New Comment',
-      achievement: '🏆 Achievement Unlocked'
+      achievement: '🏆 Achievement Unlocked',
+      message: '💬 New Message'
     };
 
     await this.showLocalNotification({
