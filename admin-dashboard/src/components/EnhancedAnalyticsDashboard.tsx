@@ -19,7 +19,9 @@ import {
   Eye,
   BarChart3,
   PieChart,
-  LineChart
+  LineChart,
+  FileText,
+  FileSpreadsheet
 } from "lucide-react";
 import {
   LineChart as RechartsLineChart,
@@ -203,62 +205,77 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
           <p className="text-gray-600 mt-1">Comprehensive platform insights and metrics</p>
         </div>
-        <div className="flex space-x-3">
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2"
-          >
-            <Filter className="w-4 h-4" />
-            <span>Filters</span>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center space-x-2"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </Button>
-          <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap gap-3 items-center">
+          {/* Control Buttons */}
+          <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={handleExportAnalyticsPDF}
-              disabled={!comprehensiveStats}
-              className="flex items-center space-x-2"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
             >
-              <Download className="w-4 h-4" />
-              <span>PDF Report</span>
+              <Filter className="w-4 h-4" />
+              <span>Filters</span>
             </Button>
             <Button
               variant="outline"
-              onClick={handleExportAnalyticsExcel}
-              disabled={!comprehensiveStats}
-              className="flex items-center space-x-2"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-2"
             >
-              <Download className="w-4 h-4" />
-              <span>Excel Report</span>
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
             </Button>
           </div>
-          <div className="flex items-center space-x-2">
+
+          {/* Export Buttons */}
+          <div className="flex gap-2">
+            <div className="text-xs text-gray-500 self-center mr-2">Quick Export:</div>
             <Button
               variant="outline"
-              onClick={handleExportComprehensivePDF}
+              size="sm"
+              onClick={handleExportAnalyticsPDF}
               disabled={!comprehensiveStats}
-              className="flex items-center space-x-2"
+              className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
             >
-              <Download className="w-4 h-4" />
-              <span>Full PDF</span>
+              <FileText className="w-4 h-4" />
+              <span>PDF</span>
             </Button>
             <Button
               variant="outline"
+              size="sm"
+              onClick={handleExportAnalyticsExcel}
+              disabled={!comprehensiveStats}
+              className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Excel</span>
+            </Button>
+          </div>
+
+          {/* Comprehensive Export */}
+          <div className="flex gap-2">
+            <div className="text-xs text-gray-500 self-center mr-2">Full Report:</div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportComprehensivePDF}
+              disabled={!comprehensiveStats}
+              className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Complete PDF</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleExportComprehensiveExcel}
               disabled={!comprehensiveStats}
-              className="flex items-center space-x-2"
+              className="flex items-center gap-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
             >
-              <Download className="w-4 h-4" />
-              <span>Full Excel</span>
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Complete Excel</span>
             </Button>
           </div>
         </div>
@@ -266,32 +283,40 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
 
       {/* Filter Panel */}
       {showFilters && (
-        <Card>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              Analytics Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
                   Time Period
                 </label>
                 <select
                   value={selectedPeriod}
                   onChange={(e) => setSelectedPeriod(e.target.value as 'daily' | 'weekly' | 'monthly')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
+                  <option value="daily">Daily View</option>
+                  <option value="weekly">Weekly View</option>
+                  <option value="monthly">Monthly View</option>
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
                   Date Range
                 </label>
                 <select
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | '1y')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
                   <option value="7d">Last 7 days</option>
                   <option value="30d">Last 30 days</option>
@@ -307,18 +332,20 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
                     setSelectedPeriod('daily');
                     setDateRange('30d');
                   }}
-                  className="w-full"
+                  className="w-full flex items-center gap-2"
                 >
-                  Reset Filters
+                  <RefreshCw className="w-4 h-4" />
+                  Reset
                 </Button>
               </div>
 
               <div className="flex items-end">
                 <Button
                   onClick={() => setShowFilters(false)}
-                  className="w-full"
+                  className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
                 >
-                  Apply Filters
+                  <Eye className="w-4 h-4" />
+                  Apply & Close
                 </Button>
               </div>
             </div>
@@ -327,7 +354,12 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
       )}
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
+          <BarChart3 className="w-5 h-5" />
+          Key Performance Metrics
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Total Users"
           value={comprehensiveStats?.total_users?.toLocaleString() || '0'}
@@ -360,10 +392,16 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
           icon={<Award className="w-5 h-5" />}
           loading={statsLoading}
         />
+        </div>
       </div>
 
       {/* Charts and Analytics */}
-      <Tabs defaultValue="growth" className="space-y-6">
+      <div className="mt-12">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
+          <PieChart className="w-5 h-5" />
+          Detailed Analytics
+        </h2>
+        <Tabs defaultValue="growth" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="growth">User Growth</TabsTrigger>
           <TabsTrigger value="geographic">Geographic</TabsTrigger>
@@ -529,7 +567,8 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
             />
           </div>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 };

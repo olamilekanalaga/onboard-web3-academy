@@ -11,7 +11,10 @@ import {
   MapPin,
   Activity,
   Award,
-  Filter
+  Filter,
+  Download,
+  FileText,
+  FileSpreadsheet
 } from "lucide-react";
 // Removed react-simple-maps - using better visualization
 import {
@@ -166,29 +169,34 @@ const GeographicAnalytics: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Geographic Analytics</h2>
           <p className="text-gray-600">Global user distribution and engagement metrics</p>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
+        <div className="flex flex-wrap gap-3">
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Filter className="w-4 h-4" />
+            <span>Filter</span>
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCountriesPDF}
-            disabled={!countryStats || countryStats.length === 0}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            PDF Report
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCountriesExcel}
-            disabled={!countryStats || countryStats.length === 0}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Excel Report
-          </Button>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCountriesPDF}
+              disabled={!countryStats || countryStats.length === 0}
+              className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+            >
+              <FileText className="w-4 h-4" />
+              <span>PDF</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCountriesExcel}
+              disabled={!countryStats || countryStats.length === 0}
+              className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Excel</span>
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -17,7 +17,9 @@ import {
   Activity,
   ChevronDown,
   ChevronUp,
-  MoreHorizontal
+  MoreHorizontal,
+  FileText,
+  FileSpreadsheet
 } from "lucide-react";
 // import { motion } from 'framer-motion'; // Temporarily disabled
 import { useUserProgressAnalytics } from '@/hooks/useAdminData';
@@ -194,25 +196,30 @@ const EnhancedUserManagement: React.FC = () => {
             Live data from Supabase • {userProgress?.filter(u => u.has_stats).length || 0} users have learning progress
           </p>
         </div>
-        <div className="flex space-x-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportUsersPDF}
-            disabled={isLoading || !userProgress}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            PDF Report
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportUsersExcel}
-            disabled={isLoading || !userProgress}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Excel Report
-          </Button>
+        <div className="flex gap-3 items-center">
+          <div className="text-xs text-gray-500">Export Users:</div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportUsersPDF}
+              disabled={isLoading || !userProgress}
+              className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+            >
+              <FileText className="w-4 h-4" />
+              <span>PDF</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportUsersExcel}
+              disabled={isLoading || !userProgress}
+              className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Excel</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -261,9 +268,10 @@ const EnhancedUserManagement: React.FC = () => {
                 setFilterLevel('all');
                 setFilterCountry('all');
               }}
+              className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100"
             >
-              <Filter className="w-4 h-4 mr-2" />
-              Clear Filters
+              <Filter className="w-4 h-4" />
+              <span>Clear</span>
             </Button>
 
             <Button variant="outline" className="flex items-center space-x-2">
