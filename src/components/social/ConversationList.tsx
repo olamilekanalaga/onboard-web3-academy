@@ -95,14 +95,10 @@ const ConversationList: React.FC<ConversationListProps> = ({
     try {
       console.log('Loading conversations for user:', user.id);
 
-      // Get latest messages for each conversation directly from direct_messages
+      // Get latest messages for each conversation directly from direct_messages (simplified)
       const { data: messages, error } = await supabase
         .from('direct_messages')
-        .select(`
-          *,
-          sender_profile:profiles!sender_id(first_name, last_name, avatar_url),
-          receiver_profile:profiles!receiver_id(first_name, last_name, avatar_url)
-        `)
+        .select('*')
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
@@ -120,27 +116,44 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
         // Group messages by conversation (other user)
         const conversationMap = new Map();
+        const userIds = new Set();
 
         messages.forEach(message => {
           const otherUserId = message.sender_id === user.id ? message.receiver_id : message.sender_id;
-          const otherUserProfile = message.sender_id === user.id ? message.receiver_profile : message.sender_profile;
+          userIds.add(otherUserId);
 
           if (!conversationMap.has(otherUserId)) {
-            const otherUserName = otherUserProfile
-              ? `${otherUserProfile.first_name || ''} ${otherUserProfile.last_name || ''}`.trim() || 'User'
-              : 'User';
-
             conversationMap.set(otherUserId, {
               id: `${user.id}-${otherUserId}`,
               other_user_id: otherUserId,
-              other_user_name: otherUserName,
-              other_user_full_name: otherUserName,
-              other_user_avatar: otherUserProfile?.avatar_url || '',
+              other_user_name: 'Loading...', // Will be updated below
+              other_user_full_name: 'Loading...',
+              other_user_avatar: '',
               last_message_content: message.message,
               last_message_at: message.created_at
             });
           }
         });
+
+        // Get profile data for all other users
+        if (userIds.size > 0) {
+          const { data: profiles, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, avatar_url')
+            .in('id', Array.from(userIds));
+
+          if (!profileError && profiles) {
+            profiles.forEach(profile => {
+              const conversation = conversationMap.get(profile.id);
+              if (conversation) {
+                const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User';
+                conversation.other_user_name = fullName;
+                conversation.other_user_full_name = fullName;
+                conversation.other_user_avatar = profile.avatar_url || '';
+              }
+            });
+          }
+        }
 
         const transformedConversations = Array.from(conversationMap.values());
         console.log('Transformed conversations:', transformedConversations);
