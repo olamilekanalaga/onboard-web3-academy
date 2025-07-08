@@ -58,6 +58,30 @@ const WEB3_KNOWLEDGE_BASE = {
     answer: 'Web3 security involves protecting your digital assets and personal information. Key practices include using hardware wallets, securing private keys and seed phrases, avoiding phishing scams, verifying smart contracts, and using reputable platforms. Never share your private keys or seed phrases, and always verify URLs and contract addresses.',
     sources: ['Web3 Security Course', 'Foundation Course', 'DeFi Fundamentals Course'],
     relatedTopics: ['Hardware Wallets', 'Private Keys', 'Phishing Protection', 'Smart Contract Audits', 'Cold Storage']
+  },
+  airdrop: {
+    keywords: ['airdrop', 'free tokens', 'token distribution', 'claim tokens', 'retroactive'],
+    answer: 'An airdrop is a marketing strategy where cryptocurrency projects distribute free tokens to users\' wallets. Airdrops are used to increase awareness, reward early users, or distribute governance tokens. Types include holder airdrops (for existing token holders), retroactive airdrops (for past platform users), and bounty airdrops (for completing tasks). Always verify legitimacy to avoid scams.',
+    sources: ['DeFi Fundamentals Course', 'Web3 Security Course'],
+    relatedTopics: ['Token Distribution', 'Governance Tokens', 'Marketing Strategy', 'Wallet Security', 'Scam Prevention']
+  },
+  staking: {
+    keywords: ['staking', 'stake', 'validator', 'rewards', 'proof of stake', 'delegation'],
+    answer: 'Staking involves locking up cryptocurrency tokens to support network operations and earn rewards. In Proof of Stake networks, validators are chosen to create new blocks based on their stake. Users can delegate tokens to validators to earn staking rewards. Staking helps secure the network while providing passive income, but tokens are typically locked for a period.',
+    sources: ['DeFi Fundamentals Course', 'Foundation Course'],
+    relatedTopics: ['Proof of Stake', 'Validators', 'Delegation', 'Network Security', 'Passive Income']
+  },
+  wallet: {
+    keywords: ['wallet', 'metamask', 'hardware wallet', 'software wallet', 'cold wallet', 'hot wallet'],
+    answer: 'A cryptocurrency wallet is a digital tool that stores private keys and allows users to send, receive, and manage crypto assets. Types include hot wallets (connected to internet, like MetaMask) for convenience and cold wallets (offline, like hardware wallets) for security. Wallets don\'t store coins directly but provide access to blockchain addresses.',
+    sources: ['Foundation Course', 'Web3 Security Course'],
+    relatedTopics: ['Private Keys', 'Hardware Wallets', 'MetaMask', 'Security', 'Seed Phrases']
+  },
+  gas: {
+    keywords: ['gas', 'gas fee', 'transaction fee', 'gwei', 'gas limit', 'gas price'],
+    answer: 'Gas refers to the fee required to execute transactions or smart contracts on blockchain networks like Ethereum. Gas fees compensate miners/validators for computational work and prevent spam. Fees vary based on network congestion and transaction complexity. Users can adjust gas prices to prioritize transaction speed, with higher fees resulting in faster confirmation.',
+    sources: ['Foundation Course', 'Development Course', 'DeFi Fundamentals Course'],
+    relatedTopics: ['Transaction Fees', 'Network Congestion', 'Miners', 'Smart Contracts', 'Blockchain Scalability']
   }
 };
 
@@ -87,13 +111,16 @@ export const searchWithAI = async (request: AISearchRequest): Promise<AISearchRe
     }
   }
   
-  // If no specific match found, provide general guidance
+  // If no specific match found, provide intelligent general guidance
   if (!bestMatch || maxScore === 0) {
+    // Try to provide contextual information based on common Web3 terms
+    const generalAnswer = generateGeneralAnswer(queryLower);
+
     return {
-      answer: `I understand you're asking about "${query}". While this specific topic isn't covered in detail in our current courses, I can suggest exploring our Foundation Course for basic Web3 concepts, the DeFi Fundamentals Course for financial applications, or the Development Course for technical implementation. Our courses cover blockchain basics, cryptocurrency trading, NFTs, smart contracts, and Web3 security.`,
-      sources: ['Foundation Course', 'DeFi Fundamentals Course', 'Development Course', 'Web3 Security Course'],
-      confidence: 70,
-      relatedTopics: ['Web3 Basics', 'Cryptocurrency', 'Smart Contracts', 'DeFi', 'NFTs', 'Trading'],
+      answer: generalAnswer,
+      sources: ['AI Knowledge Base', 'Web3 Community Resources'],
+      confidence: 75,
+      relatedTopics: getRelatedTopicsForQuery(queryLower),
       timestamp: new Date()
     };
   }
@@ -108,6 +135,70 @@ export const searchWithAI = async (request: AISearchRequest): Promise<AISearchRe
     relatedTopics: bestMatch.relatedTopics,
     timestamp: new Date()
   };
+};
+
+// Generate intelligent general answers for unknown queries
+const generateGeneralAnswer = (query: string): string => {
+  // Common Web3 terms and their explanations
+  const termExplanations: { [key: string]: string } = {
+    'bridge': 'A blockchain bridge is a protocol that connects two different blockchains, allowing users to transfer assets between them. Bridges enable interoperability by locking tokens on one chain and minting equivalent tokens on another. Popular bridges include Polygon Bridge, Arbitrum Bridge, and cross-chain protocols like LayerZero.',
+    'layer 2': 'Layer 2 solutions are scaling technologies built on top of existing blockchains (Layer 1) to increase transaction throughput and reduce fees. Examples include Polygon, Arbitrum, and Optimism for Ethereum. They process transactions off the main chain while inheriting security from the base layer.',
+    'minting': 'Minting refers to creating new tokens or NFTs on a blockchain. For NFTs, minting involves uploading metadata to IPFS and creating a unique token on the blockchain. For cryptocurrencies, minting can refer to creating new tokens through various mechanisms like staking rewards or algorithmic protocols.',
+    'burn': 'Token burning is the permanent removal of cryptocurrency tokens from circulation by sending them to an unrecoverable address. This reduces total supply and can increase scarcity. Many projects use burning mechanisms to manage tokenomics and potentially increase token value.',
+    'fork': 'A fork is a change to blockchain protocol rules. Hard forks create permanent divergence (like Bitcoin Cash from Bitcoin), while soft forks are backward-compatible upgrades. Forks can also refer to copying existing project code to create new projects.',
+    'oracle': 'Blockchain oracles are services that provide external data to smart contracts. Since blockchains can\'t access off-chain data directly, oracles bridge this gap. Chainlink is the most popular oracle network, providing price feeds, weather data, and other real-world information to DeFi protocols.',
+    'liquidity': 'Liquidity refers to how easily an asset can be bought or sold without affecting its price. In DeFi, liquidity pools contain tokens that enable trading on decentralized exchanges. Liquidity providers earn fees by depositing tokens into these pools.',
+    'slippage': 'Slippage is the difference between expected and actual trade execution prices, often occurring during high volatility or low liquidity. In DeFi, users can set slippage tolerance to control maximum acceptable price deviation for their trades.',
+    'impermanent loss': 'Impermanent loss occurs when providing liquidity to AMM pools and the price ratio of deposited tokens changes. The loss is "impermanent" because it only becomes permanent when withdrawing. It\'s a key risk consideration for liquidity providers in DeFi.',
+    'yield': 'Yield in DeFi refers to returns earned from various strategies like lending, staking, or providing liquidity. Yield farming involves moving assets between protocols to maximize returns. Annual Percentage Yield (APY) shows compound returns including reinvested earnings.'
+  };
+
+  // Check for direct matches
+  for (const [term, explanation] of Object.entries(termExplanations)) {
+    if (query.includes(term)) {
+      return explanation;
+    }
+  }
+
+  // Provide contextual guidance based on query content
+  if (query.includes('how to') || query.includes('how do')) {
+    return `Great question about "${query}"! While I don't have specific step-by-step instructions for this topic, I can suggest checking our comprehensive courses that cover practical Web3 skills. For hands-on learning, explore our Foundation Course for basics, DeFi Fundamentals for financial protocols, or Development Course for technical implementation. You can also join our community discussions for peer-to-peer learning.`;
+  }
+
+  if (query.includes('what is') || query.includes('what are')) {
+    return `You're asking about "${query}" - this is a great Web3 topic to explore! While I don't have detailed information on this specific term, it's likely related to blockchain technology, DeFi protocols, NFTs, or Web3 development. I recommend checking our course library which covers fundamental concepts, or joining our community where experienced members often discuss emerging topics and trends.`;
+  }
+
+  if (query.includes('price') || query.includes('invest') || query.includes('buy')) {
+    return `I understand you're interested in the financial aspects of "${query}". Please note that I cannot provide financial advice or price predictions. For trading and investment education, our Advanced Trading Course covers technical analysis, risk management, and market psychology. Always do your own research (DYOR) and never invest more than you can afford to lose.`;
+  }
+
+  // Default intelligent response
+  return `Thank you for your question about "${query}". This appears to be a Web3/crypto-related topic that's worth exploring further. While I don't have specific information on this exact term, it may be covered in our comprehensive course library or discussed in our active community. Web3 is a rapidly evolving space with new concepts emerging regularly. I encourage you to explore our courses for foundational knowledge and join community discussions for the latest insights.`;
+};
+
+// Get related topics based on query content
+const getRelatedTopicsForQuery = (query: string): string[] => {
+  const topicMap: { [key: string]: string[] } = {
+    'bridge': ['Cross-chain', 'Interoperability', 'Layer 2', 'Multi-chain', 'Asset Transfer'],
+    'layer': ['Scaling', 'Ethereum', 'Polygon', 'Arbitrum', 'Optimism', 'Rollups'],
+    'mint': ['NFTs', 'Token Creation', 'Smart Contracts', 'IPFS', 'Metadata'],
+    'burn': ['Tokenomics', 'Supply Management', 'Deflationary', 'Token Economics'],
+    'fork': ['Governance', 'Protocol Upgrades', 'Blockchain Evolution', 'Community Decisions'],
+    'oracle': ['Chainlink', 'Price Feeds', 'External Data', 'Smart Contracts', 'DeFi'],
+    'liquidity': ['AMM', 'DEX', 'Trading', 'Yield Farming', 'Impermanent Loss'],
+    'yield': ['DeFi', 'Staking', 'Lending', 'Farming', 'APY', 'Returns'],
+    'trading': ['Technical Analysis', 'Risk Management', 'Market Psychology', 'Portfolio'],
+    'security': ['Wallet Safety', 'Private Keys', 'Scam Prevention', 'Audits']
+  };
+
+  for (const [term, topics] of Object.entries(topicMap)) {
+    if (query.includes(term)) {
+      return topics;
+    }
+  }
+
+  return ['Web3 Basics', 'Blockchain', 'DeFi', 'NFTs', 'Smart Contracts', 'Trading'];
 };
 
 // Get suggested questions based on popular topics

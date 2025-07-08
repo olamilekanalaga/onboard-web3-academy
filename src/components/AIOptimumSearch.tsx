@@ -68,8 +68,8 @@ const AIOptimumSearch: React.FC<AIOptimumSearchProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+      <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-white/20 rounded-lg">
@@ -93,7 +93,7 @@ const AIOptimumSearch: React.FC<AIOptimumSearchProps> = ({
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 overflow-y-auto">
+        <CardContent className="p-6 overflow-y-auto flex-1 min-h-0">
           {/* Search Input */}
           <div className="space-y-4">
             <div className="relative">

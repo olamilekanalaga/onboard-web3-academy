@@ -180,11 +180,6 @@ const MobileProfile = () => {
       action: "privacy",
     },
     {
-      icon: Palette,
-      label: "Appearance",
-      action: "appearance",
-    },
-    {
       icon: Globe,
       label: "Language & Region",
       action: "language",

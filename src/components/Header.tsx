@@ -16,7 +16,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useProfile } from "@/hooks/useProfile";
 import { getDisplayName, getUserInitials } from "@/utils/userDisplay";
 import { useToast } from "@/components/ui/use-toast";
-import ThemeToggle from "./ThemeToggle";
+
 import SearchPopup from "./SearchPopup";
 import LanguageSelector from "./LanguageSelector";
 import NotificationCenter from "./NotificationCenter";
@@ -257,13 +257,7 @@ const Header = () => {
                       <LanguageSelector variant="dropdown" />
                     </div>
 
-                    <DropdownMenuSeparator />
 
-                    {/* Theme Toggle in Dropdown */}
-                    <div className="px-3 py-2 flex items-center justify-between">
-                      <span className="text-sm">{t('profile.theme') || 'Theme'}</span>
-                      <ThemeToggle />
-                    </div>
 
                     <DropdownMenuSeparator />
 
@@ -310,7 +304,7 @@ const Header = () => {
                 >
                   <Search className="h-4 w-4" />
                 </Button>
-                <ThemeToggle />
+
                 <Link to="/auth">
                   <Button variant="ghost" className="text-white hover:text-emerald-100 hover:bg-emerald-500 font-medium">
                     Log In

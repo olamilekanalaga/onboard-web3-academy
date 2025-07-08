@@ -97,9 +97,9 @@ const Chat: React.FC = () => {
         .from('direct_messages')
         .select(`
           *,
-          profiles!inner(username, display_name, profile_picture)
+          profiles!inner(first_name, last_name, avatar_url)
         `)
-        .or(`sender_id.eq.${user?.id},recipient_id.eq.${user?.id}`)
+        .or(`sender_id.eq.${user?.id},receiver_id.eq.${user?.id}`)
         .order('created_at', { ascending: true })
         .limit(50);
 
@@ -171,10 +171,8 @@ const Chat: React.FC = () => {
         .from('direct_messages')
         .insert({
           sender_id: user.id,
-          recipient_id: selectedRoom.id, // In DM context, room ID is the other user's ID
-          message: newMessage.trim(), // Required NOT NULL column
-          content: newMessage.trim(), // Additional content column
-          message_type: 'text'
+          receiver_id: selectedRoom.id, // In DM context, room ID is the other user's ID
+          message: newMessage.trim() // Required NOT NULL column
         });
 
       if (error) {
@@ -188,24 +186,29 @@ const Chat: React.FC = () => {
       // Create notification for recipient
       const { data: profile } = await supabase
         .from('profiles')
-        .select('username, display_name')
+        .select('first_name, last_name')
         .eq('id', user.id)
         .single();
 
-      const senderName = profile?.display_name || profile?.username || 'Someone';
+      const senderName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Someone' : 'Someone';
 
-      await supabase
+      const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
           user_id: selectedRoom.id,
           type: 'message',
           title: 'New Message',
           message: `${senderName} sent you a message`,
-          data: {
+          read: false,
+          metadata: {
             sender_id: user.id,
             message_preview: newMessage.trim().substring(0, 50)
           }
         });
+
+      if (notificationError) {
+        console.error('⚠️ Notification creation failed:', notificationError);
+      }
 
     } catch (error) {
       console.error('Error sending message:', error);

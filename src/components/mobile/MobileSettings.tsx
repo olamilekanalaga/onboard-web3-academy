@@ -29,7 +29,7 @@ import MobileHeader from "./MobileHeader";
 import PWALayout from "./PWALayout";
 import PWAContentWrapper from "./PWAContentWrapper";
 
-type SettingsView = 'main' | 'appearance' | 'preferences' | 'privacy';
+type SettingsView = 'main' | 'preferences' | 'privacy';
 
 const MobileSettings = () => {
   const { user, signOut } = useAuth();
@@ -49,7 +49,6 @@ const MobileSettings = () => {
   });
 
   const [settings, setSettings] = useState({
-    theme: 'light' as 'light' | 'dark',
     language: 'en',
     timezone: '',
     show_progress: true,
@@ -61,7 +60,6 @@ const MobileSettings = () => {
   useEffect(() => {
     if (userSettings) {
       setSettings({
-        theme: userSettings.theme,
         language: userSettings.language,
         timezone: userSettings.timezone || '',
         show_progress: userSettings.show_progress,
@@ -125,13 +123,6 @@ const MobileSettings = () => {
   };
 
   const settingsMenuItems = [
-    {
-      id: 'appearance',
-      title: 'Appearance',
-      description: 'Customize theme and display',
-      icon: Palette,
-      view: 'appearance' as SettingsView,
-    },
     {
       id: 'preferences',
       title: 'Preferences',
@@ -213,44 +204,7 @@ const MobileSettings = () => {
     </div>
   );
 
-  // Removed non-functional notifications view
-
-  const renderAppearanceView = () => (
-    <div className="space-y-6">
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle>Appearance Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Theme</Label>
-            <Select
-              value={settings.theme}
-              onValueChange={(value: 'light' | 'dark') =>
-                setSettings(prev => ({ ...prev, theme: value }))
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select theme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light Mode</SelectItem>
-                <SelectItem value="dark">Dark Mode (Coming Soon)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button
-            onClick={handleSettingsSave}
-            disabled={updateSettings.isPending}
-            className="w-full"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {updateSettings.isPending ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  // Removed non-functional notifications view and appearance view
 
   const renderPreferencesView = () => (
     <div className="space-y-6">
@@ -430,8 +384,6 @@ const MobileSettings = () => {
 
   const renderCurrentView = () => {
     switch (currentView) {
-      case 'appearance':
-        return renderAppearanceView();
       case 'preferences':
         return renderPreferencesView();
       case 'privacy':

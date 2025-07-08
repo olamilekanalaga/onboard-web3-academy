@@ -21,14 +21,15 @@ interface DirectMessageModalProps {
 
 interface Message {
   id: string;
-  content: string;
+  message: string;
   sender_id: string;
-  recipient_id: string;
+  receiver_id: string;
   created_at: string;
+  read_at?: string;
   sender_profile?: {
-    username: string;
-    display_name: string;
-    profile_picture: string;
+    first_name: string;
+    last_name: string;
+    avatar_url: string;
   };
 }
 
@@ -54,6 +55,11 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
   // Load messages when modal opens
   useEffect(() => {
     if (isOpen && user && recipientId) {
+      console.log('🔄 Modal opened, loading messages:', {
+        userId: user.id,
+        recipientId,
+        userEmail: user.email
+      });
       loadMessages();
       
       // Set up real-time subscription for new messages
@@ -65,7 +71,7 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
             event: 'INSERT',
             schema: 'public',
             table: 'direct_messages',
-            filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${user.id}))`
+            filter: `or(and(sender_id.eq.${user.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${user.id}))`
           },
           (payload) => {
             console.log('New message received via real-time:', payload);
@@ -109,24 +115,22 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
     try {
       console.log('Loading messages between:', user.id, 'and', recipientId);
 
-      // Get messages between current user and recipient
+      // Get messages between current user and recipient (simplified query first)
       const { data, error } = await supabase
         .from('direct_messages')
-        .select(`
-          *,
-          sender_profile:profiles!sender_id(username, display_name, profile_picture)
-        `)
-        .or(`and(sender_id.eq.${user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${user.id})`)
+        .select('*')
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${user.id})`)
         .order('created_at', { ascending: true });
 
       if (error) {
         console.error('Error loading messages:', error);
-        // If table doesn't exist, create some sample messages
+        console.error('Error details:', error.message, error.details, error.hint);
         setMessages([]);
         return;
       }
 
       console.log('Loaded messages:', data?.length || 0);
+      console.log('Message data:', data);
       setMessages(data || []);
 
     } catch (error) {
@@ -137,15 +141,28 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
     }
   };
 
+
+
   const sendMessage = async () => {
-    if (!user || !recipientId || !newMessage.trim() || sending) return;
+    if (!user || !recipientId || !newMessage.trim() || sending) {
+      console.log('❌ Cannot send message:', {
+        hasUser: !!user,
+        hasRecipient: !!recipientId,
+        hasMessage: !!newMessage.trim(),
+        isSending: sending,
+        userId: user?.id,
+        recipientId
+      });
+      return;
+    }
 
     setSending(true);
     try {
-      console.log('Sending message:', {
+      console.log('📤 Attempting to send message:', {
         sender: user.id,
         recipient: recipientId,
-        content: newMessage.trim()
+        message: newMessage.trim(),
+        messageLength: newMessage.trim().length
       });
 
       // Try to insert into direct_messages table
@@ -153,47 +170,84 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
         .from('direct_messages')
         .insert({
           sender_id: user.id,
-          recipient_id: recipientId,
-          message: newMessage.trim(), // Required NOT NULL column
-          content: newMessage.trim(), // Additional content column
-          message_type: 'text'
+          receiver_id: recipientId,
+          message: newMessage.trim() // Required NOT NULL column
         })
         .select()
         .single();
 
       if (error) {
-        console.error('Error sending message:', error);
+        console.error('❌ Error sending message:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+
+        // Show user-friendly error
+        alert(`Failed to send message: ${error.message}`);
         setSending(false);
         return;
       }
 
-      console.log('✅ Message sent successfully');
+      console.log('✅ Message sent successfully!');
+      console.log('Message data:', data);
+      console.log('📊 Database insert result:', {
+        messageId: data?.id,
+        senderId: data?.sender_id,
+        receiverId: data?.receiver_id,
+        message: data?.message,
+        createdAt: data?.created_at
+      });
       setNewMessage('');
 
       // Reload messages to show the new message immediately
       await loadMessages();
 
+      // Verify the message was actually saved
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('direct_messages')
+        .select('*')
+        .eq('id', data.id)
+        .single();
+
+      if (verifyError) {
+        console.error('❌ Message verification failed:', verifyError);
+      } else {
+        console.log('✅ Message verified in database:', verifyData);
+      }
+
       // Create notification for recipient
       const { data: profile } = await supabase
         .from('profiles')
-        .select('username, display_name')
+        .select('first_name, last_name')
         .eq('id', user.id)
         .single();
 
-      const senderName = profile?.display_name || profile?.username || 'Someone';
+      const senderName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Someone' : 'Someone';
 
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: recipientId,
-          type: 'message',
-          title: 'New Message',
-          message: `${senderName} sent you a message`,
-          data: {
-            sender_id: user.id,
-            message_preview: newMessage.trim().substring(0, 50)
-          }
-        });
+      // Create notification (simplified)
+      try {
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: recipientId,
+            type: 'message',
+            title: 'New Message',
+            message: `${senderName} sent you a message`,
+            read: false
+          });
+
+        if (notificationError) {
+          console.error('⚠️ Notification creation failed:', notificationError);
+        } else {
+          console.log('✅ Notification created successfully');
+        }
+      } catch (notifError) {
+        console.error('⚠️ Notification error:', notifError);
+        // Don't block message sending if notification fails
+      }
 
       // Reload messages to get the new one
       loadMessages();
@@ -234,7 +288,7 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
       const { error: messagesError } = await supabase
         .from('direct_messages')
         .delete()
-        .or(`and(sender_id.eq.${user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${user.id})`);
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${user.id})`);
 
       if (messagesError) {
         console.error('Error deleting messages:', messagesError);
@@ -401,7 +455,7 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
                             onMouseUp={isOwnMessage ? handleLongPressEnd : undefined}
                             onMouseLeave={isOwnMessage ? handleLongPressEnd : undefined}
                           >
-                            <p className="text-sm leading-relaxed">{message.content}</p>
+                            <p className="text-sm leading-relaxed">{message.message}</p>
                             <p className={`text-xs mt-1 ${
                               isOwnMessage ? 'text-blue-100' : 'text-gray-500'
                             }`}>

@@ -64,7 +64,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
             event: '*',
             schema: 'public',
             table: 'direct_messages',
-            filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`
+            filter: `or(sender_id.eq.${user.id},receiver_id.eq.${user.id})`
           },
           (payload) => {
             console.log('Message change detected, refreshing conversations:', payload);
@@ -95,16 +95,56 @@ const ConversationList: React.FC<ConversationListProps> = ({
     try {
       console.log('Loading conversations for user:', user.id);
 
-      const { data, error } = await supabase
-        .from('conversation_list')
-        .select('*');
+      // Get latest messages for each conversation directly from direct_messages
+      const { data: messages, error } = await supabase
+        .from('direct_messages')
+        .select(`
+          *,
+          sender_profile:profiles!sender_id(first_name, last_name, avatar_url),
+          receiver_profile:profiles!receiver_id(first_name, last_name, avatar_url)
+        `)
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error loading conversations:', error);
+        console.error('Error details:', error.message, error.details, error.hint);
         setConversations([]);
       } else {
-        console.log('Loaded conversations:', data?.length || 0);
-        setConversations(data || []);
+        console.log('Loaded messages for conversations:', messages?.length || 0);
+
+        if (!messages || messages.length === 0) {
+          setConversations([]);
+          return;
+        }
+
+        // Group messages by conversation (other user)
+        const conversationMap = new Map();
+
+        messages.forEach(message => {
+          const otherUserId = message.sender_id === user.id ? message.receiver_id : message.sender_id;
+          const otherUserProfile = message.sender_id === user.id ? message.receiver_profile : message.sender_profile;
+
+          if (!conversationMap.has(otherUserId)) {
+            const otherUserName = otherUserProfile
+              ? `${otherUserProfile.first_name || ''} ${otherUserProfile.last_name || ''}`.trim() || 'User'
+              : 'User';
+
+            conversationMap.set(otherUserId, {
+              id: `${user.id}-${otherUserId}`,
+              other_user_id: otherUserId,
+              other_user_name: otherUserName,
+              other_user_full_name: otherUserName,
+              other_user_avatar: otherUserProfile?.avatar_url || '',
+              last_message_content: message.message,
+              last_message_at: message.created_at
+            });
+          }
+        });
+
+        const transformedConversations = Array.from(conversationMap.values());
+        console.log('Transformed conversations:', transformedConversations);
+        setConversations(transformedConversations);
       }
     } catch (error) {
       console.error('Error loading conversations:', error);
