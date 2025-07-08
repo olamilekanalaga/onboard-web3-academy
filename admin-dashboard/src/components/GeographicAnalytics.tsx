@@ -31,6 +31,7 @@ import {
 } from 'recharts';
 // import { motion } from 'framer-motion'; // Temporarily disabled
 import { useEnhancedUserCountryStats } from '@/hooks/useAdminData';
+import { exportToExcel, exportToPDF, formatCountryDataForExport } from '@/utils/dataExport';
 
 // Removed geoUrl - using better visualization approach
 
@@ -104,6 +105,28 @@ const GeographicAnalytics: React.FC = () => {
     color: COLORS[index % COLORS.length]
   }));
 
+  const handleExportCountriesPDF = () => {
+    if (!countryStats || countryStats.length === 0) {
+      alert('No country data to export');
+      return;
+    }
+
+    const exportData = formatCountryDataForExport(countryStats);
+    const timestamp = new Date().toISOString().split('T')[0];
+    exportToPDF(exportData, `countries-report-${timestamp}`, 'Geographic Analytics Report');
+  };
+
+  const handleExportCountriesExcel = () => {
+    if (!countryStats || countryStats.length === 0) {
+      alert('No country data to export');
+      return;
+    }
+
+    const exportData = formatCountryDataForExport(countryStats);
+    const timestamp = new Date().toISOString().split('T')[0];
+    exportToExcel(exportData, `countries-report-${timestamp}`, 'Countries');
+  };
+
   // Removed getCountryColor function - no longer needed without map
 
   const formatNumber = (num: number) => {
@@ -147,6 +170,24 @@ const GeographicAnalytics: React.FC = () => {
           <Button variant="outline" size="sm">
             <Filter className="w-4 h-4 mr-2" />
             Filter
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCountriesPDF}
+            disabled={!countryStats || countryStats.length === 0}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            PDF Report
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCountriesExcel}
+            disabled={!countryStats || countryStats.length === 0}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Excel Report
           </Button>
         </div>
       </div>

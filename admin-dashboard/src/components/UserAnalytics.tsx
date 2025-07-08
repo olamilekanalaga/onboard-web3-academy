@@ -164,21 +164,25 @@ const UserAnalytics = () => {
   };
 
   // Export data
-  const exportData = () => {
-    const data = {
-      countryStats,
-      userGrowth,
-      bookingStats,
-      exportDate: new Date().toISOString()
-    };
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `analytics-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const exportData = async () => {
+    const timestamp = new Date().toISOString().split('T')[0];
+
+    // Prepare comprehensive data for export
+    const analyticsData = [{
+      'Export Date': new Date().toLocaleDateString(),
+      'Total Users': totalUsers,
+      'Course Stats': JSON.stringify(courseStats),
+      'Country Count': countryStats.length,
+      'User Growth Data Points': userGrowth.length
+    }];
+
+    try {
+      const { exportToExcel } = await import('@/utils/dataExport');
+      exportToExcel(analyticsData, `course-analytics-${timestamp}`, 'Course Analytics');
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Export failed. Please try again.');
+    }
   };
 
   useEffect(() => {

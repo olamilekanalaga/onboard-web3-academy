@@ -95,7 +95,7 @@ const SettingsPanel: React.FC = () => {
     alert('Settings saved successfully!');
   };
 
-  const exportData = async (format: 'csv' | 'json') => {
+  const exportData = async (format: 'pdf' | 'excel') => {
     setLoading(true);
     try {
       const { data: users } = await supabaseAdmin
@@ -104,20 +104,24 @@ const SettingsPanel: React.FC = () => {
         .limit(1000);
 
       if (users) {
-        const dataStr = format === 'json' 
-          ? JSON.stringify(users, null, 2)
-          : convertToCSV(users);
-        
-        const blob = new Blob([dataStr], { 
-          type: format === 'json' ? 'application/json' : 'text/csv' 
-        });
-        
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `academia-users-${new Date().toISOString().split('T')[0]}.${format}`;
-        link.click();
-        URL.revokeObjectURL(url);
+        const timestamp = new Date().toISOString().split('T')[0];
+        const formattedData = users.map(user => ({
+          'User ID': user.id,
+          'Email': user.email || 'N/A',
+          'Full Name': user.full_name || 'N/A',
+          'Username': user.username || 'N/A',
+          'Country': user.country_name || 'Unknown',
+          'Created At': new Date(user.created_at).toLocaleDateString(),
+          'Updated At': new Date(user.updated_at).toLocaleDateString()
+        }));
+
+        if (format === 'pdf') {
+          const { exportToPDF } = await import('@/utils/dataExport');
+          exportToPDF(formattedData, `academia-users-${timestamp}`, 'Academia Users Report');
+        } else {
+          const { exportToExcel } = await import('@/utils/dataExport');
+          exportToExcel(formattedData, `academia-users-${timestamp}`, 'Users');
+        }
       }
     } catch (error) {
       console.error('Export error:', error);
@@ -296,23 +300,23 @@ const SettingsPanel: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <Button
-                  onClick={() => exportData('csv')}
+                  onClick={() => exportData('pdf')}
                   disabled={loading}
                   variant="outline"
                   className="h-20 flex flex-col items-center justify-center space-y-2"
                 >
                   <Download className="w-6 h-6" />
-                  <span>Export CSV</span>
+                  <span>Export PDF</span>
                 </Button>
-                
+
                 <Button
-                  onClick={() => exportData('json')}
+                  onClick={() => exportData('excel')}
                   disabled={loading}
                   variant="outline"
                   className="h-20 flex flex-col items-center justify-center space-y-2"
                 >
                   <Download className="w-6 h-6" />
-                  <span>Export JSON</span>
+                  <span>Export Excel</span>
                 </Button>
               </div>
               

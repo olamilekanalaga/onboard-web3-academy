@@ -46,6 +46,13 @@ import {
   useCourseCompletionAnalytics,
   useEnhancedUserCountryStats
 } from '@/hooks/useAdminData';
+import {
+  exportToExcel,
+  exportToPDF,
+  formatAnalyticsDataForExport,
+  generateComprehensivePDFReport,
+  generateComprehensiveExcelReport
+} from '@/utils/dataExport';
 
 // Enhanced color palette with better contrast and visibility
 const COLORS = [
@@ -110,6 +117,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
 const EnhancedAnalyticsDashboard: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [refreshing, setRefreshing] = useState(false);
+  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Data hooks
   const { data: comprehensiveStats, isLoading: statsLoading, refetch: refetchStats } = useComprehensiveUserAnalytics();
@@ -124,9 +133,46 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
     setRefreshing(false);
   };
 
-  const exportData = () => {
-    // Implementation for data export
-    console.log('Exporting data...');
+  const handleExportAnalyticsPDF = () => {
+    if (!comprehensiveStats) {
+      alert('No analytics data to export');
+      return;
+    }
+
+    const exportData = formatAnalyticsDataForExport(comprehensiveStats);
+    const timestamp = new Date().toISOString().split('T')[0];
+    exportToPDF(exportData, `analytics-report-${timestamp}`, 'Analytics Dashboard Report');
+  };
+
+  const handleExportAnalyticsExcel = () => {
+    if (!comprehensiveStats) {
+      alert('No analytics data to export');
+      return;
+    }
+
+    const exportData = formatAnalyticsDataForExport(comprehensiveStats);
+    const timestamp = new Date().toISOString().split('T')[0];
+    exportToExcel(exportData, `analytics-report-${timestamp}`, 'Analytics');
+  };
+
+  const handleExportComprehensivePDF = async () => {
+    const data = {
+      analytics: comprehensiveStats,
+      countries: countryStats?.countries,
+      courses: courseStats
+    };
+
+    await generateComprehensivePDFReport(data);
+  };
+
+  const handleExportComprehensiveExcel = async () => {
+    const data = {
+      analytics: comprehensiveStats,
+      countries: countryStats?.countries,
+      courses: courseStats
+    };
+
+    await generateComprehensiveExcelReport(data);
   };
 
   // Prepare chart data
@@ -160,6 +206,14 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
         <div className="flex space-x-3">
           <Button
             variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center space-x-2"
+          >
+            <Filter className="w-4 h-4" />
+            <span>Filters</span>
+          </Button>
+          <Button
+            variant="outline"
             onClick={handleRefresh}
             disabled={refreshing}
             className="flex items-center space-x-2"
@@ -167,16 +221,110 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </Button>
-          <Button
-            variant="outline"
-            onClick={exportData}
-            className="flex items-center space-x-2"
-          >
-            <Download className="w-4 h-4" />
-            <span>Export</span>
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={handleExportAnalyticsPDF}
+              disabled={!comprehensiveStats}
+              className="flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>PDF Report</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExportAnalyticsExcel}
+              disabled={!comprehensiveStats}
+              className="flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Excel Report</span>
+            </Button>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={handleExportComprehensivePDF}
+              disabled={!comprehensiveStats}
+              className="flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Full PDF</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExportComprehensiveExcel}
+              disabled={!comprehensiveStats}
+              className="flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Full Excel</span>
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Time Period
+                </label>
+                <select
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value as 'daily' | 'weekly' | 'monthly')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Date Range
+                </label>
+                <select
+                  value={dateRange}
+                  onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | '1y')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="7d">Last 7 days</option>
+                  <option value="30d">Last 30 days</option>
+                  <option value="90d">Last 90 days</option>
+                  <option value="1y">Last year</option>
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedPeriod('daily');
+                    setDateRange('30d');
+                  }}
+                  className="w-full"
+                >
+                  Reset Filters
+                </Button>
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  onClick={() => setShowFilters(false)}
+                  className="w-full"
+                >
+                  Apply Filters
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

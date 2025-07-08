@@ -22,6 +22,7 @@ import {
 // import { motion } from 'framer-motion'; // Temporarily disabled
 import { useUserProgressAnalytics } from '@/hooks/useAdminData';
 import UserProfileDetail from './UserProfileDetail';
+import { exportToExcel, exportToPDF, formatUserDataForExport } from '@/utils/dataExport';
 
 interface UserData {
   user_id: string;
@@ -120,6 +121,28 @@ const EnhancedUserManagement: React.FC = () => {
     }
   };
 
+  const handleExportUsersPDF = () => {
+    if (!filteredAndSortedUsers || filteredAndSortedUsers.length === 0) {
+      alert('No user data to export');
+      return;
+    }
+
+    const exportData = formatUserDataForExport(filteredAndSortedUsers);
+    const timestamp = new Date().toISOString().split('T')[0];
+    exportToPDF(exportData, `users-report-${timestamp}`, 'User Management Report');
+  };
+
+  const handleExportUsersExcel = () => {
+    if (!filteredAndSortedUsers || filteredAndSortedUsers.length === 0) {
+      alert('No user data to export');
+      return;
+    }
+
+    const exportData = formatUserDataForExport(filteredAndSortedUsers);
+    const timestamp = new Date().toISOString().split('T')[0];
+    exportToExcel(exportData, `users-report-${timestamp}`, 'Users');
+  };
+
   const getLevelBadge = (level: number) => {
     if (level <= 3) return { label: 'Beginner', color: 'bg-gray-500' };
     if (level <= 7) return { label: 'Intermediate', color: 'bg-blue-500' };
@@ -172,9 +195,23 @@ const EnhancedUserManagement: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportUsersPDF}
+            disabled={isLoading || !userProgress}
+          >
             <Download className="w-4 h-4 mr-2" />
-            Export
+            PDF Report
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportUsersExcel}
+            disabled={isLoading || !userProgress}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Excel Report
           </Button>
         </div>
       </div>
@@ -215,6 +252,19 @@ const EnhancedUserManagement: React.FC = () => {
                 <option key={country} value={country}>{country}</option>
               ))}
             </select>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearchTerm('');
+                setFilterLevel('all');
+                setFilterCountry('all');
+              }}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Clear Filters
+            </Button>
 
             <Button variant="outline" className="flex items-center space-x-2">
               <Filter className="w-4 h-4" />
