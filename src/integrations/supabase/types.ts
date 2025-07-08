@@ -580,7 +580,22 @@ export type Database = {
           receiver_id?: string | null
           sender_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "direct_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exchange_rates: {
         Row: {
@@ -919,10 +934,12 @@ export type Database = {
           country_name: string | null
           created_at: string | null
           email: string | null
+          first_name: string | null
           follow_flow_completed: boolean | null
           full_name: string | null
           id: string
           language_code: string | null
+          last_name: string | null
           phone: string | null
           timezone: string | null
           updated_at: string | null
@@ -935,10 +952,12 @@ export type Database = {
           country_name?: string | null
           created_at?: string | null
           email?: string | null
+          first_name?: string | null
           follow_flow_completed?: boolean | null
           full_name?: string | null
           id: string
           language_code?: string | null
+          last_name?: string | null
           phone?: string | null
           timezone?: string | null
           updated_at?: string | null
@@ -951,10 +970,12 @@ export type Database = {
           country_name?: string | null
           created_at?: string | null
           email?: string | null
+          first_name?: string | null
           follow_flow_completed?: boolean | null
           full_name?: string | null
           id?: string
           language_code?: string | null
+          last_name?: string | null
           phone?: string | null
           timezone?: string | null
           updated_at?: string | null

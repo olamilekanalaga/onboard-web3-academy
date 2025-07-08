@@ -153,14 +153,32 @@ const SocialMediaFollowPopup: React.FC = () => {
 
   const handleDismiss = async () => {
     try {
-      // Update dismiss count and last shown time
-      await supabase
+      // Update dismiss count and last shown time - try update first, then insert
+      const { error: updateError } = await supabase
         .from('user_onboarding_status')
-        .upsert({
-          user_id: user?.id,
+        .update({
           social_popup_dismissed_count: dismissCount + 1,
           last_social_popup_shown: new Date().toISOString()
-        });
+        })
+        .eq('user_id', user?.id);
+
+      if (updateError && updateError.code === 'PGRST116') {
+        // No rows updated, try insert
+        const { error: insertError } = await supabase
+          .from('user_onboarding_status')
+          .insert({
+            user_id: user?.id,
+            social_popup_dismissed_count: dismissCount + 1,
+            last_social_popup_shown: new Date().toISOString()
+          });
+
+        if (insertError && insertError.code !== '23505') {
+          // Ignore unique constraint violations (409), but log other errors
+          console.error('Error inserting onboarding status:', insertError);
+        }
+      } else if (updateError) {
+        console.error('Error updating onboarding status:', updateError);
+      }
 
       setShowPopup(false);
     } catch (error) {
@@ -171,13 +189,28 @@ const SocialMediaFollowPopup: React.FC = () => {
 
   const handleComplete = async () => {
     try {
-      // Mark social follows as completed
-      await supabase
+      // Mark social follows as completed - try update first, then insert
+      const { error: updateError } = await supabase
         .from('user_onboarding_status')
-        .upsert({
-          user_id: user?.id,
-          social_follows_completed: true
-        });
+        .update({ social_follows_completed: true })
+        .eq('user_id', user?.id);
+
+      if (updateError && updateError.code === 'PGRST116') {
+        // No rows updated, try insert
+        const { error: insertError } = await supabase
+          .from('user_onboarding_status')
+          .insert({
+            user_id: user?.id,
+            social_follows_completed: true
+          });
+
+        if (insertError && insertError.code !== '23505') {
+          // Ignore unique constraint violations (409), but log other errors
+          console.error('Error inserting onboarding status:', insertError);
+        }
+      } else if (updateError) {
+        console.error('Error updating onboarding status:', updateError);
+      }
 
       setShowPopup(false);
     } catch (error) {

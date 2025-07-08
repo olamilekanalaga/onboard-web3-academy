@@ -142,7 +142,11 @@ const ConversationList: React.FC<ConversationListProps> = ({
             .select('id, first_name, last_name, avatar_url')
             .in('id', Array.from(userIds));
 
-          if (!profileError && profiles) {
+          if (profileError) {
+            console.error('Error fetching profiles:', profileError);
+          }
+
+          if (profiles) {
             profiles.forEach(profile => {
               const conversation = conversationMap.get(profile.id);
               if (conversation) {
